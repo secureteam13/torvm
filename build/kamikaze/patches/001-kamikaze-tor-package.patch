@@ -1,0 +1,291 @@
+diff -Naur x86-uclibc-orig/package/tor/Makefile x86-uclibc-torvm/package/tor/Makefile
+--- x86-uclibc-orig/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
++++ x86-uclibc-torvm/package/tor/Makefile	2008-07-09 03:50:07.851861387 +0000
+@@ -0,0 +1,114 @@
++#
++# Copyright (C) 2008 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++# $Id: Makefile 11265 2008-05-25 13:45:00Z blogic $
++
++include $(TOPDIR)/rules.mk
++include $(INCLUDE_DIR)/kernel.mk
++
++PKG_NAME:=tor
++#PKG_VERSION:=0.2.0.28-rc
++PKG_VERSION:=0.2.1.2-alpha
++
++PKG_RELEASE:=1
++
++PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
++PKG_SOURCE_URL:=http://www.torproject.org/dist/
++#PKG_MD5SUM:=d65dd5c9e1f82912aa0c736c5daec22d
++PKG_MD5SUM:=122778603272fd3e53f6c2e7b6be4a81
++
++include $(INCLUDE_DIR)/package.mk
++
++define Package/tor
++  SECTION:=net
++  CATEGORY:=Network
++  DEPENDS:=+libevent +libopenssl +libpthread +zlib
++  TITLE:=An anonymous Internet communication system
++  URL:=http://tor.eff.org/
++endef
++
++define Package/tor/description
++ Tor is a toolset for a wide range of organizations and people that want to 
++ improve their safety and security on the Internet. Using Tor can help you 
++ anonymize web browsing and publishing, instant messaging, IRC, SSH, and 
++ more. Tor also provides a platform on which software developers can build 
++ new applications with built-in anonymity, safety, and privacy features.
++endef
++
++define Package/tor/conffiles
++/etc/tor/torrc
++endef
++
++define Package/tor/postinst
++#!/bin/sh
++
++name=tor
++id=52
++
++# do not change below
++# # check if we are on real system
++if [ -z "$${IPKG_INSTROOT}" ]; then
++        # create copies of passwd and group, if we use squashfs
++        rootfs=`mount |awk '/root/ { print $$5 }'`
++        if [ "$$rootfs" = "squashfs" ]; then
++                if [ -h /etc/group ]; then
++                        rm /etc/group
++                        cp /rom/etc/group /etc/group
++                fi
++                if [ -h /etc/passwd ]; then
++                        rm /etc/passwd
++                        cp /rom/etc/passwd /etc/passwd
++                fi
++        fi
++fi
++
++echo ""
++if [ -z "$$(grep ^\\$${name}: $${IPKG_INSTROOT}/etc/group)" ]; then
++        echo "adding group $$name to /etc/group"
++        echo "$${name}:x:$${id}:" >> $${IPKG_INSTROOT}/etc/group
++fi
++
++if [ -z "$$(grep ^\\$${name}: $${IPKG_INSTROOT}/etc/passwd)" ]; then
++        echo "adding user $name to /etc/passwd"
++        echo "$${name}:x:$${id}:$${id}:$${name}:/tmp/.$${name}:/bin/false" >> $${IPKG_INSTROOT}/etc/passwd
++fi
++endef
++
++EXTRA_CFLAGS += -I$(LINUX_DIR)/include
++EXTRA_CPPFLAGS += -I$(LINUX_DIR)/include
++
++CONFIGURE_ARGS += \
++	--enable-eventdns \
++	--disable-threads \
++	--enable-transparent \
++	--with-libevent-dir="$(STAGING_DIR)/usr" \
++	--with-ssl-dir="$(STAGING_DIR)/usr" \
++
++CONFIGURE_VARS += \
++	CROSS_COMPILE="yes" \
++
++
++# pass CFLAGS again to override -O2 set by configure
++define Build/Compile
++	$(MAKE) -C $(PKG_BUILD_DIR) \
++		CFLAGS="$(TARGET_CFLAGS) -I$(LINUX_DIR)/include" \
++		DESTDIR="$(PKG_INSTALL_DIR)" \
++		all install
++endef
++
++define Package/tor/install
++	$(INSTALL_DIR) $(1)/usr/sbin
++	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/or/tor $(1)/usr/sbin/
++	$(INSTALL_DIR) $(1)/etc/init.d
++	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
++	$(INSTALL_DIR) $(1)/etc/tor
++	$(INSTALL_DATA) ./files/torrc $(1)/etc/tor/torrc
++	$(INSTALL_DIR) $(1)/var/log/tor
++	$(INSTALL_DIR) $(1)/var/lib/tor
++	$(INSTALL_DIR) $(1)/var/run/tor
++endef
++
++$(eval $(call BuildPackage,tor))
+diff -Naur x86-uclibc-orig/package/tor/files/tor.init x86-uclibc-torvm/package/tor/files/tor.init
+--- x86-uclibc-orig/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
++++ x86-uclibc-torvm/package/tor/files/tor.init	2008-07-09 03:48:57.228743488 +0000
+@@ -0,0 +1,78 @@
++#!/bin/sh 
++
++BIN=tor
++DEFAULT=/etc/default/$BIN
++LOG_D=/var/log/$BIN
++SLOG_F=$LOG_D/start.log
++LIB_D=/var/lib/$BIN
++RUN_D=/var/run/$BIN
++PID_F=$RUN_D/$BIN.pid
++RUN_USER=$BIN
++RUN_GROUP=$BIN
++TOR_INTF=eth0
++MYIP=$(ifconfig $TOR_INTF | grep 'inet addr' | sed 's/.*inet addr://' | sed 's/ .*//')
++
++if [ "$1" = "start" ]; then
++	[ -f $DEFAULT ] && . $DEFAULT
++	[ -d $LOG_D ] || mkdir -p $LOG_D
++	chown $RUN_USER:$RUN_GROUP $LOG_D
++	[ -d $LIB_D ] || mkdir -p $LIB_D
++	chown $RUN_USER:$RUN_GROUP $LIB_D
++	chmod 700 $LIB_D
++	[ -d $RUN_D ] || mkdir -p $RUN_D
++	chown $RUN_USER:$RUN_GROUP $RUN_D
++	chmod 700 $RUN_D
++	$BIN $OPTIONS > $SLOG_F 2>&1
++	# forcibly filter some traffic which should never go over Tor:
++	# no SMTP
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 25 -j DROP
++	# no TCP DNS
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 53 -j DROP
++	# no NetBIOS
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 137 -j DROP
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 138 -j DROP
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 139 -j DROP
++	# trans proxy TCP and DNS
++	iptables -t nat -A PREROUTING -s ! $MYIP -p tcp -j REDIRECT --to 9095
++	iptables -t nat -A PREROUTING -s ! $MYIP -p udp --dport 53 -j REDIRECT --to 9093
++	# drop everything else ...
++	iptables -t nat -A PREROUTING -s ! $MYIP -j DROP
++
++elif [ "$1" = "stop" ]; then
++	# XXX TODO: replace this with a fail-safe shutdown
++	iptables -F
++	iptables -t nat -F
++	[ -f $PID_F ] && kill $(cat $PID_F)
++
++elif [ "$1" = "restart" ]; then
++	$0 stop
++	$0 start
++
++elif [ "$1" = "status" ]; then
++	while true; do
++	  clear;echo
++	  date
++	  echo
++	  echo "TorVM IP Address: $MYIP"
++	  echo
++	  # check if we are fully bootstrapped yet
++	  grep 'Bootstrapped 100' /var/log/tor/notices.log >/dev/null 2>&1
++	  if [ -x $? ]; then
++	  	echo "Tor is still trying to bootstrap into the network..."
++		echo "Be sure the TorVM clock is correct and that your traffic"
++		echo " is not getting filtered upstream."
++		echo
++	  	grep Bootstrapped /var/log/tor/notices.log | sed 's/.*Bootstrapped/Bootstrapped/' | tail -6
++	  else
++	  	echo "Tor is fully connected into the Tor network."
++	  	echo "Transparent proxy traffic:"
++	  	iptables -n --verbose -t nat --list PREROUTING | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v PREROUTING
++	  fi
++	  sleep 2
++	done  
++
++else
++	echo "Usage: $0 {start|stop|restart|status}" >&2
++	exit 1
++fi
++exit 0
+diff -Naur x86-uclibc-orig/package/tor/files/torrc x86-uclibc-torvm/package/tor/files/torrc
+--- x86-uclibc-orig/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
++++ x86-uclibc-torvm/package/tor/files/torrc	2008-07-09 03:49:34.792072977 +0000
+@@ -0,0 +1,27 @@
++# Configuration for TorVM
++RunAsDaemon 1
++AllowUnverifiedNodes middle,rendezvous
++User tor
++Group tor
++PidFile /var/run/tor/pid
++DataDirectory /var/lib/tor
++Log notice file /var/log/tor/notices.log
++ControlSocket /var/run/tor/control
++
++# Disable SOCKS support for now.
++#SocksPort 9050
++#SocksBindAddress 0.0.0.0
++
++# Rely on netfilter for access control to transproxy ports
++TransListenAddress 0.0.0.0
++TransPort 9095
++DNSListenAddress 0.0.0.0
++DNSPort 9093
++
++
++# This needs to be a network available via host default route
++VirtualAddrNetwork 10.254.0.0/16
++
++# Misc. options
++AutomapHostsOnResolve 1
++CircuitBuildTimeout  20
+diff -Naur x86-uclibc-orig/package/tor/patches/001-correct-configure.patch x86-uclibc-torvm/package/tor/patches/001-correct-configure.patch
+--- x86-uclibc-orig/package/tor/patches/001-correct-configure.patch	1970-01-01 00:00:00.000000000 +0000
++++ x86-uclibc-torvm/package/tor/patches/001-correct-configure.patch	2008-07-09 02:42:10.366852465 +0000
+@@ -0,0 +1,56 @@
++diff -Naur tor-0.2.1.2-alpha-orig/configure tor-0.2.1.2-alpha-mod/configure
++--- tor-0.2.1.2-alpha-orig/configure	2008-06-20 06:27:43.000000000 +0000
+++++ tor-0.2.1.2-alpha-mod/configure	2008-07-09 02:41:33.378944558 +0000
++@@ -8115,7 +8115,7 @@
++ 
++ 
++ 
++-for ac_header in stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netintet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h
+++for ac_header in stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netinet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h
++ do
++ as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
++ if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
++@@ -8474,6 +8474,9 @@
++ #ifdef HAVE_SYS_SOCKET_H
++ #include <sys/socket.h>
++ #endif
+++#ifdef HAVE_NETINET_IN_H
+++#include <netinet/in.h>
+++#endif
++ 
++ #include <$ac_header>
++ _ACEOF
++diff -Naur tor-0.2.1.2-alpha-orig/configure.in tor-0.2.1.2-alpha-mod/configure.in
++--- tor-0.2.1.2-alpha-orig/configure.in	2008-06-20 06:26:59.000000000 +0000
+++++ tor-0.2.1.2-alpha-mod/configure.in	2008-07-09 02:41:45.215604782 +0000
++@@ -315,7 +315,7 @@
++ 
++ dnl These headers are not essential
++ 
++-AC_CHECK_HEADERS(stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netintet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h)
+++AC_CHECK_HEADERS(stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netinet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h)
++ 
++ TOR_CHECK_PROTOTYPE(malloc_good_size, HAVE_MALLOC_GOOD_SIZE_PROTOTYPE,
++ [#ifdef HAVE_MALLOC_H
++@@ -349,6 +349,9 @@
++ #endif
++ #ifdef HAVE_SYS_SOCKET_H
++ #include <sys/socket.h>
+++#endif
+++#ifdef HAVE_NETINET_IN_H
+++#include <netinet/in.h>
++ #endif])
++ 
++ if test x$transparent = xtrue ; then
++diff -Naur tor-0.2.1.2-alpha-orig/orconfig.h.in tor-0.2.1.2-alpha-mod/orconfig.h.in
++--- tor-0.2.1.2-alpha-orig/orconfig.h.in	2008-06-20 06:28:31.000000000 +0000
+++++ tor-0.2.1.2-alpha-mod/orconfig.h.in	2008-07-09 02:41:19.685608073 +0000
++@@ -153,7 +153,7 @@
++ /* Define to 1 if you have the <netinet/in.h> header file. */
++ #undef HAVE_NETINET_IN_H
++ 
++-/* Define to 1 if you have the <netintet/in.h> header file. */
+++/* Define to 1 if you have the <netinet/in.h> header file. */
++ #undef HAVE_NETINTET_IN_H
++ 
++ /* Define to 1 if you have the <net/if.h> header file. */
