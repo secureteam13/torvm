@@ -1,4 +1,3 @@
-REM
 set ISODRV=D:\
 set DDRV=C:\
 set DDIR=MinGW
@@ -30,16 +29,7 @@ bzip2 -d *.bz2
 gzip -d *.gz
 cd /d %DDRV%
 cd %MDIR%\%MVER%
-bsdtar xvf dl\msysCORE-1.0.11-2007.01.19-1.tar
-bsdtar xvf dl\mingw-runtime-3.14.tar
-bsdtar xvf dl\bash-3.1-MSYS-1.0.11-1.tar
-bsdtar xvf dl\mingw32-make-3.81-20080326-3.tar
-bsdtar xvf dl\binutils-2.18.50-20080109-2.tar
-bsdtar xvf dl\diffutils-2.8.7-MSYS-1.0.11-1.tar
-bsdtar xvf dl\gcc-core-3.4.5-20060117-3.tar
-bsdtar xvf dl\gcc-g++-3.4.5-20060117-3.tar
-bsdtar xvf dl\libtool1.5-1.5.25a-1-bin.tar
-bsdtar xvf dl\w32api-3.11.tar
+for %%f in (dl\*.tar) do bsdtar xvf %%f
 cd /d %ISODRV%
 cd bin
 copy fstab %DDRV%%MDIR%\%MVER%\etc\

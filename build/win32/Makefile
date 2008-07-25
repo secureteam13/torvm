@@ -169,6 +169,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	fi; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
+	cp files/run.bat $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \

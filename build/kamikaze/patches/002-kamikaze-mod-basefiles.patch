@@ -1,6 +1,6 @@
-diff -Naur x86-uclibc-orig/package/base-files/Makefile x86-uclibc-torvm/package/base-files/Makefile
---- x86-uclibc-orig/package/base-files/Makefile	2008-06-11 19:59:16.494753000 +0000
-+++ x86-uclibc-torvm/package/base-files/Makefile	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/Makefile kamikaze-mod/package/base-files/Makefile
+--- kamikaze-orig/package/base-files/Makefile	2008-06-11 19:59:16.494753000 +0000
++++ kamikaze-mod/package/base-files/Makefile	2008-07-25 11:32:02.090961485 +0000
 @@ -36,8 +36,8 @@
    URL:=http://openwrt.org/
    VERSION:=$(PKG_RELEASE)-$(REVISION)
@@ -40,9 +40,9 @@ diff -Naur x86-uclibc-orig/package/base-files/Makefile x86-uclibc-torvm/package/
  	mkdir -p $(1)/root
  	ln -sf /proc/mounts $(1)/etc/mtab
  	rm -f $(1)/var
-diff -Naur x86-uclibc-orig/package/base-files/files/bin/firstboot x86-uclibc-torvm/package/base-files/files/bin/firstboot
---- x86-uclibc-orig/package/base-files/files/bin/firstboot	2007-07-11 20:46:25.691898000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/bin/firstboot	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/bin/firstboot kamikaze-mod/package/base-files/files/bin/firstboot
+--- kamikaze-orig/package/base-files/files/bin/firstboot	2007-07-11 20:46:25.691898000 +0000
++++ kamikaze-mod/package/base-files/files/bin/firstboot	1970-01-01 00:00:00.000000000 +0000
 @@ -1,126 +0,0 @@
 -#!/bin/sh
 -# $Id: firstboot 5544 2006-11-17 03:07:10Z nbd $
@@ -170,9 +170,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/bin/firstboot x86-uclibc-tor
 -	mount "$mtdpart" /jffs -t jffs2
 -	fopivot /jffs /rom 1
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/banner x86-uclibc-torvm/package/base-files/files/etc/banner
---- x86-uclibc-orig/package/base-files/files/etc/banner	2005-12-20 15:03:08.038259000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/banner	2008-07-09 03:57:16.155151830 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/banner kamikaze-mod/package/base-files/files/etc/banner
+--- kamikaze-orig/package/base-files/files/etc/banner	2005-12-20 15:03:08.038259000 +0000
++++ kamikaze-mod/package/base-files/files/etc/banner	2008-07-25 11:32:02.090961485 +0000
 @@ -1,10 +1,2 @@
 -  _______                     ________        __
 - |       |.-----.-----.-----.|  |  |  |.----.|  |_
@@ -186,9 +186,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/banner x86-uclibc-torvm/
 - ---------------------------------------------------
 +Tor Virtual Machine BUILDDATE BUILDVER
 +
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/config/fstab x86-uclibc-torvm/package/base-files/files/etc/config/fstab
---- x86-uclibc-orig/package/base-files/files/etc/config/fstab	2007-09-22 13:47:20.783817000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/config/fstab	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/config/fstab kamikaze-mod/package/base-files/files/etc/config/fstab
+--- kamikaze-orig/package/base-files/files/etc/config/fstab	2007-09-22 13:47:20.783817000 +0000
++++ kamikaze-mod/package/base-files/files/etc/config/fstab	1970-01-01 00:00:00.000000000 +0000
 @@ -1,10 +0,0 @@
 -config mount
 -	option target	/home
@@ -200,9 +200,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/config/fstab x86-uclibc-
 -config swap
 -	option device	/dev/sda2
 -	option enabled	0
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/config/network x86-uclibc-torvm/package/base-files/files/etc/config/network
---- x86-uclibc-orig/package/base-files/files/etc/config/network	2007-10-18 13:20:02.347557000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/config/network	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/config/network kamikaze-mod/package/base-files/files/etc/config/network
+--- kamikaze-orig/package/base-files/files/etc/config/network	2007-10-18 13:20:02.347557000 +0000
++++ kamikaze-mod/package/base-files/files/etc/config/network	1970-01-01 00:00:00.000000000 +0000
 @@ -1,14 +0,0 @@
 -# Copyright (C) 2006 OpenWrt.org
 -
@@ -218,24 +218,24 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/config/network x86-uclib
 -	option proto	static
 -	option ipaddr	192.168.1.1
 -	option netmask	255.255.255.0
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/config/system x86-uclibc-torvm/package/base-files/files/etc/config/system
---- x86-uclibc-orig/package/base-files/files/etc/config/system	2008-06-11 19:59:16.494753000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/config/system	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/config/system kamikaze-mod/package/base-files/files/etc/config/system
+--- kamikaze-orig/package/base-files/files/etc/config/system	2008-06-11 19:59:16.494753000 +0000
++++ kamikaze-mod/package/base-files/files/etc/config/system	1970-01-01 00:00:00.000000000 +0000
 @@ -1,3 +0,0 @@
 -config system
 -	option hostname	OpenWrt
 -	option timezone	UTC
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/diag.sh x86-uclibc-torvm/package/base-files/files/etc/diag.sh
---- x86-uclibc-orig/package/base-files/files/etc/diag.sh	2007-05-10 19:19:23.337706000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/diag.sh	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/diag.sh kamikaze-mod/package/base-files/files/etc/diag.sh
+--- kamikaze-orig/package/base-files/files/etc/diag.sh	2007-05-10 19:19:23.337706000 +0000
++++ kamikaze-mod/package/base-files/files/etc/diag.sh	1970-01-01 00:00:00.000000000 +0000
 @@ -1,4 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 -
 -set_state() :
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/functions.sh x86-uclibc-torvm/package/base-files/files/etc/functions.sh
---- x86-uclibc-orig/package/base-files/files/etc/functions.sh	2008-02-05 01:47:47.130132000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/functions.sh	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/functions.sh kamikaze-mod/package/base-files/files/etc/functions.sh
+--- kamikaze-orig/package/base-files/files/etc/functions.sh	2008-02-05 01:47:47.130132000 +0000
++++ kamikaze-mod/package/base-files/files/etc/functions.sh	1970-01-01 00:00:00.000000000 +0000
 @@ -1,211 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -448,16 +448,16 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/functions.sh x86-uclibc-
 -)}
 -
 -[ -z "$IPKG_INSTROOT" -a -f /lib/config/uci.sh ] && . /lib/config/uci.sh
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/iface/00-netstate x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/iface/00-netstate
---- x86-uclibc-orig/package/base-files/files/etc/hotplug.d/iface/00-netstate	2008-02-03 06:48:15.292457000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/iface/00-netstate	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug.d/iface/00-netstate kamikaze-mod/package/base-files/files/etc/hotplug.d/iface/00-netstate
+--- kamikaze-orig/package/base-files/files/etc/hotplug.d/iface/00-netstate	2008-02-03 06:48:15.292457000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug.d/iface/00-netstate	1970-01-01 00:00:00.000000000 +0000
 @@ -1,3 +0,0 @@
 -[ ifup = "$ACTION" ] && {
 -	uci_set_state network "$INTERFACE" up 1 
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/iface/10-routes x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/iface/10-routes
---- x86-uclibc-orig/package/base-files/files/etc/hotplug.d/iface/10-routes	2008-06-06 18:49:23.308519000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/iface/10-routes	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug.d/iface/10-routes kamikaze-mod/package/base-files/files/etc/hotplug.d/iface/10-routes
+--- kamikaze-orig/package/base-files/files/etc/hotplug.d/iface/10-routes	2008-06-06 18:49:23.308519000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug.d/iface/10-routes	1970-01-01 00:00:00.000000000 +0000
 @@ -1,67 +0,0 @@
 -add_route() {
 -	local config="$1"
@@ -526,9 +526,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/iface/10-route
 -		config_foreach "add_route6" route6
 -	;;
 -esac
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/net/10-net x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/net/10-net
---- x86-uclibc-orig/package/base-files/files/etc/hotplug.d/net/10-net	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/net/10-net	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug.d/net/10-net kamikaze-mod/package/base-files/files/etc/hotplug.d/net/10-net
+--- kamikaze-orig/package/base-files/files/etc/hotplug.d/net/10-net	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug.d/net/10-net	1970-01-01 00:00:00.000000000 +0000
 @@ -1,40 +0,0 @@
 -# Copyright (C) 2006 OpenWrt.org
 -
@@ -570,9 +570,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/net/10-net x86
 -		addif
 -	;;
 -esac
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/usb/10-usb-storage x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/usb/10-usb-storage
---- x86-uclibc-orig/package/base-files/files/etc/hotplug.d/usb/10-usb-storage	2007-06-20 22:05:15.338323000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug.d/usb/10-usb-storage	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug.d/usb/10-usb-storage kamikaze-mod/package/base-files/files/etc/hotplug.d/usb/10-usb-storage
+--- kamikaze-orig/package/base-files/files/etc/hotplug.d/usb/10-usb-storage	2007-06-20 22:05:15.338323000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug.d/usb/10-usb-storage	1970-01-01 00:00:00.000000000 +0000
 @@ -1,13 +0,0 @@
 -#!/bin/sh
 -
@@ -587,9 +587,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug.d/usb/10-usb-sto
 -		;;
 -esac	
 -		
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug2-common.rules x86-uclibc-torvm/package/base-files/files/etc/hotplug2-common.rules
---- x86-uclibc-orig/package/base-files/files/etc/hotplug2-common.rules	2008-01-26 03:16:11.438222000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug2-common.rules	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug2-common.rules kamikaze-mod/package/base-files/files/etc/hotplug2-common.rules
+--- kamikaze-orig/package/base-files/files/etc/hotplug2-common.rules	2008-01-26 03:16:11.438222000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug2-common.rules	1970-01-01 00:00:00.000000000 +0000
 @@ -1,35 +0,0 @@
 -
 -DEVICENAME ~~ (null|full|ptmx|tty|zero|gpio) {
@@ -626,18 +626,18 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug2-common.rules x8
 -	exec /sbin/hotplug-call firmware;
 -	next
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/hotplug2-init.rules x86-uclibc-torvm/package/base-files/files/etc/hotplug2-init.rules
---- x86-uclibc-orig/package/base-files/files/etc/hotplug2-init.rules	2007-12-01 17:08:04.802538000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/hotplug2-init.rules	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/hotplug2-init.rules kamikaze-mod/package/base-files/files/etc/hotplug2-init.rules
+--- kamikaze-orig/package/base-files/files/etc/hotplug2-init.rules	2007-12-01 17:08:04.802538000 +0000
++++ kamikaze-mod/package/base-files/files/etc/hotplug2-init.rules	1970-01-01 00:00:00.000000000 +0000
 @@ -1,5 +0,0 @@
 -$include /etc/hotplug2-common.rules
 -
 -SUBSYSTEM ~~ button {
 -	exec kill -USR1 1 ;
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/boot x86-uclibc-torvm/package/base-files/files/etc/init.d/boot
---- x86-uclibc-orig/package/base-files/files/etc/init.d/boot	2008-06-16 19:37:00.739972000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/boot	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/boot kamikaze-mod/package/base-files/files/etc/init.d/boot
+--- kamikaze-orig/package/base-files/files/etc/init.d/boot	2008-06-16 19:37:00.739972000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/boot	1970-01-01 00:00:00.000000000 +0000
 @@ -1,66 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org
@@ -705,9 +705,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/boot x86-uclibc-t
 -
 -	load_modules /etc/modules.d/*
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/done x86-uclibc-torvm/package/base-files/files/etc/init.d/done
---- x86-uclibc-orig/package/base-files/files/etc/init.d/done	2007-05-10 14:37:47.286148000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/done	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/done kamikaze-mod/package/base-files/files/etc/init.d/done
+--- kamikaze-orig/package/base-files/files/etc/init.d/done	2007-05-10 14:37:47.286148000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/done	1970-01-01 00:00:00.000000000 +0000
 @@ -1,15 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org
@@ -724,9 +724,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/done x86-uclibc-t
 -	. /etc/diag.sh
 -	set_state done
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/fstab x86-uclibc-torvm/package/base-files/files/etc/init.d/fstab
---- x86-uclibc-orig/package/base-files/files/etc/init.d/fstab	2008-05-20 19:02:19.166035000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/fstab	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/fstab kamikaze-mod/package/base-files/files/etc/init.d/fstab
+--- kamikaze-orig/package/base-files/files/etc/init.d/fstab	2008-05-20 19:02:19.166035000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/fstab	1970-01-01 00:00:00.000000000 +0000
 @@ -1,66 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2007 OpenWrt.org
@@ -794,9 +794,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/fstab x86-uclibc-
 -	config_foreach do_swapoff swap
 -}
 -
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/network x86-uclibc-torvm/package/base-files/files/etc/init.d/network
---- x86-uclibc-orig/package/base-files/files/etc/init.d/network	2008-04-15 16:29:49.167688000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/network	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/network kamikaze-mod/package/base-files/files/etc/init.d/network
+--- kamikaze-orig/package/base-files/files/etc/init.d/network	2008-04-15 16:29:49.167688000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/network	1970-01-01 00:00:00.000000000 +0000
 @@ -1,33 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org
@@ -831,9 +831,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/network x86-uclib
 -stop() {
 -	ifdown -a
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/rcS x86-uclibc-torvm/package/base-files/files/etc/init.d/rcS
---- x86-uclibc-orig/package/base-files/files/etc/init.d/rcS	2007-11-28 02:36:14.270663000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/rcS	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/rcS kamikaze-mod/package/base-files/files/etc/init.d/rcS
+--- kamikaze-orig/package/base-files/files/etc/init.d/rcS	2007-11-28 02:36:14.270663000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/rcS	2008-07-25 11:32:02.094188683 +0000
 @@ -1,8 +1,2 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -844,9 +844,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/rcS x86-uclibc-to
 -	done 
 -} | logger -s -p 6 -t '' &
 +exit 0
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/sysctl x86-uclibc-torvm/package/base-files/files/etc/init.d/sysctl
---- x86-uclibc-orig/package/base-files/files/etc/init.d/sysctl	2007-05-10 10:07:38.965405000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/sysctl	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/sysctl kamikaze-mod/package/base-files/files/etc/init.d/sysctl
+--- kamikaze-orig/package/base-files/files/etc/init.d/sysctl	2007-05-10 10:07:38.965405000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/sysctl	2008-07-25 11:32:02.094188683 +0000
 @@ -1,7 +1,2 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org 
@@ -857,9 +857,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/sysctl x86-uclibc
 -}
 +#!/bin/sh
 +[ -f /etc/sysctl.conf ] && sysctl -p >&-
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/umount x86-uclibc-torvm/package/base-files/files/etc/init.d/umount
---- x86-uclibc-orig/package/base-files/files/etc/init.d/umount	2007-05-10 10:45:04.317089000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/umount	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/umount kamikaze-mod/package/base-files/files/etc/init.d/umount
+--- kamikaze-orig/package/base-files/files/etc/init.d/umount	2007-05-10 10:45:04.317089000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/umount	1970-01-01 00:00:00.000000000 +0000
 @@ -1,8 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org 
@@ -869,9 +869,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/umount x86-uclibc
 -	sync
 -	umount -a -r
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/usb x86-uclibc-torvm/package/base-files/files/etc/init.d/usb
---- x86-uclibc-orig/package/base-files/files/etc/init.d/usb	2007-04-06 16:07:36.852022000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/usb	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/usb kamikaze-mod/package/base-files/files/etc/init.d/usb
+--- kamikaze-orig/package/base-files/files/etc/init.d/usb	2007-04-06 16:07:36.852022000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/usb	1970-01-01 00:00:00.000000000 +0000
 @@ -1,9 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2006 OpenWrt.org 
@@ -882,9 +882,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/usb x86-uclibc-to
 -		/bin/mount -t usbfs none /proc/bus/usb
 -	}		
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/watchdog x86-uclibc-torvm/package/base-files/files/etc/init.d/watchdog
---- x86-uclibc-orig/package/base-files/files/etc/init.d/watchdog	2008-04-03 21:01:16.263826000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/init.d/watchdog	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/init.d/watchdog kamikaze-mod/package/base-files/files/etc/init.d/watchdog
+--- kamikaze-orig/package/base-files/files/etc/init.d/watchdog	2008-04-03 21:01:16.263826000 +0000
++++ kamikaze-mod/package/base-files/files/etc/init.d/watchdog	1970-01-01 00:00:00.000000000 +0000
 @@ -1,7 +0,0 @@
 -#!/bin/sh /etc/rc.common
 -# Copyright (C) 2008 OpenWrt.org
@@ -893,28 +893,31 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/init.d/watchdog x86-ucli
 -start() {
 -        [ -c /dev/watchdog ] && watchdog -t 5 /dev/watchdog
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/inittab x86-uclibc-torvm/package/base-files/files/etc/inittab
---- x86-uclibc-orig/package/base-files/files/etc/inittab	2007-05-10 14:50:42.865525000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/inittab	2008-07-09 04:02:36.868453139 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/inittab kamikaze-mod/package/base-files/files/etc/inittab
+--- kamikaze-orig/package/base-files/files/etc/inittab	2007-05-10 14:50:42.865525000 +0000
++++ kamikaze-mod/package/base-files/files/etc/inittab	2008-07-25 11:32:02.094188683 +0000
 @@ -1,5 +1,3 @@
  ::sysinit:/etc/init.d/rcS S boot
  ::shutdown:/etc/init.d/rcS K stop
 -tts/0::askfirst:/bin/ash --login
 -ttyS0::askfirst:/bin/ash --login
  tty1::askfirst:/bin/ash --login
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/ipkg.conf x86-uclibc-torvm/package/base-files/files/etc/ipkg.conf
---- x86-uclibc-orig/package/base-files/files/etc/ipkg.conf	2008-02-29 02:41:39.429442000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/ipkg.conf	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/ipkg.conf kamikaze-mod/package/base-files/files/etc/ipkg.conf
+--- kamikaze-orig/package/base-files/files/etc/ipkg.conf	2008-02-29 02:41:39.429442000 +0000
++++ kamikaze-mod/package/base-files/files/etc/ipkg.conf	1970-01-01 00:00:00.000000000 +0000
 @@ -1,3 +0,0 @@
 -src snapshots http://downloads.openwrt.org/snapshots/$S/packages
 -dest root /
 -dest ram /tmp
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/preinit x86-uclibc-torvm/package/base-files/files/etc/preinit
---- x86-uclibc-orig/package/base-files/files/etc/preinit	2008-04-23 16:20:46.084166000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/preinit	2008-07-09 04:08:34.418417829 +0000
-@@ -1,92 +1,78 @@
+diff -Naur kamikaze-orig/package/base-files/files/etc/preinit kamikaze-mod/package/base-files/files/etc/preinit
+--- kamikaze-orig/package/base-files/files/etc/preinit	2008-04-23 16:20:46.084166000 +0000
++++ kamikaze-mod/package/base-files/files/etc/preinit	2008-07-25 12:35:53.673800071 +0000
+@@ -1,92 +1,127 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
++# Copyright (C) 2008  The Tor Project, Inc.
++# See LICENSE file for rights and terms.
++
  export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 -. /etc/diag.sh
  
@@ -981,6 +984,18 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/preinit x86-uclibc-torvm
  
  mkdir -p /dev/pts /dev/shm
  mount devpts /dev/pts -t devpts
++hddev=/dev/hda1
++hdopt="b 3 1"
++if [ ! -e $hddev ]; then
++  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    mknod $hddev $hdopt
++  fi
++fi
++mkdir /home
++if [ -e $hddev ]; then
++  mount $hddev /home
++fi
  
 -# the shell really doesn't like having stdin/out closed
 -# that's why we use /dev/pty/m0 and m1 as replacement
@@ -989,10 +1004,71 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/preinit x86-uclibc-torvm
 -	M0=/dev/console
 -	M1=/dev/console
 -}
--
--exec <$M0 >$M1 2>&0
++mkdir -p /var/run
++mkdir -p /var/log
++mkdir -p /var/lock
++mkdir -p /var/state
++touch /var/log/wtmp
++touch /var/log/lastlog
++ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
++
++/etc/init.d/sysctl
++
++ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
++
++# setup various runtime options using kernel parameters
++ARGS=`cat /proc/cmdline`
++ARGS="_ $ARGS _"
++
 +# XXX need a good way to set this flexibly...
-+echo 'PST8PDT,M3.2.0/2,M11.1.0/2' > /etc/TZ
++TZ='PST8PDT,M3.2.0/2,M11.1.0/2'
++echo $ARGS | grep ' TZ=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
++fi
++echo $TZ > /etc/TZ
++
++PRIVIP=10.99.11.1
++echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//'`
++fi
++grep eth1: /proc/net/dev >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  ifconfig eth1 $PRIVIP netmask 255.255.255.252 up
++fi
+ 
+-exec <$M0 >$M1 2>&0
++# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
++netup=0
++echo $ARGS | grep ' IP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//'`
++  MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//'`
++  GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//'`
++  MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//'`
++  dn "Setting IP $IP / $MASK via $GW ..."
++  ifconfig eth0 hw ether $MAC
++  ifconfig eth0 $IP netmask $MASK up
++  route add default gw $GW
++  netup=1
++else
++  # dhcp for address
++  dn "Trying to get DHCP lease ..."
++  udhcpc -b -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  maxrt=20
++  while [ $maxrt -gt 0 ]; do
++    sleep 1
++    ifconfig eth0 | grep 'inet addr:' >/dev/null 2>&1
++    if [ $? -eq 0 ]; then
++      netup=1
++      maxrt=0
++    else
++      echo -n "."
++      maxrt=$(expr $maxrt - 1)
++    fi
++  done
++fi
  
 -echo "- preinit -"
 -trap 'FAILSAFE=true' USR1
@@ -1017,34 +1093,6 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/preinit x86-uclibc-torvm
 -	
 -	killall hotplug2
 -	exec /sbin/init
-+mkdir -p /var/run
-+mkdir -p /var/log
-+mkdir -p /var/lock
-+mkdir -p /var/state
-+touch /var/log/wtmp
-+touch /var/log/lastlog
-+ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
-+
-+/etc/init.d/sysctl
-+
-+ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
-+
-+dn "Trying to get DHCP lease ... "
-+udhcpc -b -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
-+netup=0
-+maxrt=20
-+while [ $maxrt -gt 0 ]; do
-+  sleep 1
-+  ifconfig eth0 | grep 'inet addr:' >/dev/null 2>&1
-+  if [ $? -eq 0 ]; then
-+    netup=1
-+    maxrt=0
-+  else
-+    echo -n "."
-+    maxrt=$(expr $maxrt - 1)
-+  fi
-+done
-+
 +if [ $netup -eq 0 ]; then
 +  echo " FAILED."
 +  d "ERROR: Unable to get an IP address."
@@ -1059,9 +1107,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/preinit x86-uclibc-torvm
 +  d "Run /etc/init.d/tor status"
 +  d " for bootstrap status."
  fi
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/rc.common x86-uclibc-torvm/package/base-files/files/etc/rc.common
---- x86-uclibc-orig/package/base-files/files/etc/rc.common	2008-01-25 10:59:40.292163000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/rc.common	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/rc.common kamikaze-mod/package/base-files/files/etc/rc.common
+--- kamikaze-orig/package/base-files/files/etc/rc.common	2008-01-25 10:59:40.292163000 +0000
++++ kamikaze-mod/package/base-files/files/etc/rc.common	2008-07-25 11:32:02.094188683 +0000
 @@ -1,92 +1,4 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -1158,9 +1206,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/rc.common x86-uclibc-tor
 +# forcibly disable the usual init process
 +# all start/stop activity is controlled by the TorVM controller.
 +exit 0
-diff -Naur x86-uclibc-orig/package/base-files/files/etc/sysctl.conf x86-uclibc-torvm/package/base-files/files/etc/sysctl.conf
---- x86-uclibc-orig/package/base-files/files/etc/sysctl.conf	2007-10-24 18:44:07.273843000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/etc/sysctl.conf	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/etc/sysctl.conf kamikaze-mod/package/base-files/files/etc/sysctl.conf
+--- kamikaze-orig/package/base-files/files/etc/sysctl.conf	2007-10-24 18:44:07.273843000 +0000
++++ kamikaze-mod/package/base-files/files/etc/sysctl.conf	2008-07-25 11:32:02.094188683 +0000
 @@ -1,14 +1,10 @@
  kernel.panic=3
 -net.ipv4.conf.default.arp_ignore=1
@@ -1179,9 +1227,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/etc/sysctl.conf x86-uclibc-t
 -net.ipv6.conf.all.forwarding=1
 +net.ipv4.netfilter.ip_conntrack_udp_timeout=600
 +net.ipv4.netfilter.ip_conntrack_udp_timeout_stream=600
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/parse_spec.awk x86-uclibc-torvm/package/base-files/files/lib/config/parse_spec.awk
---- x86-uclibc-orig/package/base-files/files/lib/config/parse_spec.awk	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/parse_spec.awk	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/parse_spec.awk kamikaze-mod/package/base-files/files/lib/config/parse_spec.awk
+--- kamikaze-orig/package/base-files/files/lib/config/parse_spec.awk	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/parse_spec.awk	1970-01-01 00:00:00.000000000 +0000
 @@ -1,255 +0,0 @@
 -# AWK file for parsing uci specification files
 -#
@@ -1438,9 +1486,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/parse_spec.awk x8
 -		section=""
 -	}
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/specs/network.spec x86-uclibc-torvm/package/base-files/files/lib/config/specs/network.spec
---- x86-uclibc-orig/package/base-files/files/lib/config/specs/network.spec	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/specs/network.spec	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/specs/network.spec kamikaze-mod/package/base-files/files/lib/config/specs/network.spec
+--- kamikaze-orig/package/base-files/files/lib/config/specs/network.spec	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/specs/network.spec	1970-01-01 00:00:00.000000000 +0000
 @@ -1,7 +0,0 @@
 -interface[] {
 -	proto: string, required;
@@ -1449,9 +1497,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/specs/network.spe
 -	gateway: ip;
 -	dns: ip;
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/template.awk x86-uclibc-torvm/package/base-files/files/lib/config/template.awk
---- x86-uclibc-orig/package/base-files/files/lib/config/template.awk	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/template.awk	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/template.awk kamikaze-mod/package/base-files/files/lib/config/template.awk
+--- kamikaze-orig/package/base-files/files/lib/config/template.awk	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/template.awk	1970-01-01 00:00:00.000000000 +0000
 @@ -1,42 +0,0 @@
 -# Copyright (C) 2006 OpenWrt.org
 -
@@ -1495,9 +1543,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/template.awk x86-
 -	if_open = 0
 -	noprint = 0
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate.sh x86-uclibc-torvm/package/base-files/files/lib/config/validate.sh
---- x86-uclibc-orig/package/base-files/files/lib/config/validate.sh	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/validate.sh	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/validate.sh kamikaze-mod/package/base-files/files/lib/config/validate.sh
+--- kamikaze-orig/package/base-files/files/lib/config/validate.sh	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/validate.sh	1970-01-01 00:00:00.000000000 +0000
 @@ -1,74 +0,0 @@
 -# Shell script defining validating configuration macros
 -#
@@ -1573,9 +1621,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate.sh x86-u
 -
 -	return ${VALIDATE_RES:-0}
 -)}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate_config.awk x86-uclibc-torvm/package/base-files/files/lib/config/validate_config.awk
---- x86-uclibc-orig/package/base-files/files/lib/config/validate_config.awk	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/validate_config.awk	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/validate_config.awk kamikaze-mod/package/base-files/files/lib/config/validate_config.awk
+--- kamikaze-orig/package/base-files/files/lib/config/validate_config.awk	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/validate_config.awk	1970-01-01 00:00:00.000000000 +0000
 @@ -1,105 +0,0 @@
 -# AWK file for validating uci specification files
 -#
@@ -1682,9 +1730,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate_config.a
 -	return valid
 -}
 -
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate_spec.awk x86-uclibc-torvm/package/base-files/files/lib/config/validate_spec.awk
---- x86-uclibc-orig/package/base-files/files/lib/config/validate_spec.awk	2007-03-04 04:41:46.644094000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/config/validate_spec.awk	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/config/validate_spec.awk kamikaze-mod/package/base-files/files/lib/config/validate_spec.awk
+--- kamikaze-orig/package/base-files/files/lib/config/validate_spec.awk	2007-03-04 04:41:46.644094000 +0000
++++ kamikaze-mod/package/base-files/files/lib/config/validate_spec.awk	1970-01-01 00:00:00.000000000 +0000
 @@ -1,171 +0,0 @@
 -# AWK file for validating uci specification files
 -#
@@ -1857,9 +1905,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/config/validate_spec.awk
 -END {
 -	validate_config()
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/network/config.sh x86-uclibc-torvm/package/base-files/files/lib/network/config.sh
---- x86-uclibc-orig/package/base-files/files/lib/network/config.sh	2008-04-07 16:02:50.405821000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/network/config.sh	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/network/config.sh kamikaze-mod/package/base-files/files/lib/network/config.sh
+--- kamikaze-orig/package/base-files/files/lib/network/config.sh	2008-04-07 16:02:50.405821000 +0000
++++ kamikaze-mod/package/base-files/files/lib/network/config.sh	1970-01-01 00:00:00.000000000 +0000
 @@ -1,228 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2089,9 +2137,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/network/config.sh x86-uc
 -		done
 -	}
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/lib/upgrade/common.sh x86-uclibc-torvm/package/base-files/files/lib/upgrade/common.sh
---- x86-uclibc-orig/package/base-files/files/lib/upgrade/common.sh	2008-06-04 23:20:56.755507000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/lib/upgrade/common.sh	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/lib/upgrade/common.sh kamikaze-mod/package/base-files/files/lib/upgrade/common.sh
+--- kamikaze-orig/package/base-files/files/lib/upgrade/common.sh	2008-06-04 23:20:56.755507000 +0000
++++ kamikaze-mod/package/base-files/files/lib/upgrade/common.sh	1970-01-01 00:00:00.000000000 +0000
 @@ -1,151 +0,0 @@
 -#!/bin/sh
 -
@@ -2244,16 +2292,16 @@ diff -Naur x86-uclibc-orig/package/base-files/files/lib/upgrade/common.sh x86-uc
 -	}
 -	ask_bool 1 "Reboot" && reboot
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/rom/note x86-uclibc-torvm/package/base-files/files/rom/note
---- x86-uclibc-orig/package/base-files/files/rom/note	2005-07-17 22:52:59.000000000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/rom/note	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/rom/note kamikaze-mod/package/base-files/files/rom/note
+--- kamikaze-orig/package/base-files/files/rom/note	2005-07-17 22:52:59.000000000 +0000
++++ kamikaze-mod/package/base-files/files/rom/note	1970-01-01 00:00:00.000000000 +0000
 @@ -1,3 +0,0 @@
 -SQUASHFS USERS:
 -After firstboot has been run, / will be jffs2 and /rom will be squashfs
 -(* except when in failsafe)
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/hotplug-call x86-uclibc-torvm/package/base-files/files/sbin/hotplug-call
---- x86-uclibc-orig/package/base-files/files/sbin/hotplug-call	2007-06-15 16:07:09.574671000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/hotplug-call	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/hotplug-call kamikaze-mod/package/base-files/files/sbin/hotplug-call
+--- kamikaze-orig/package/base-files/files/sbin/hotplug-call	2007-06-15 16:07:09.574671000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/hotplug-call	1970-01-01 00:00:00.000000000 +0000
 @@ -1,28 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2283,9 +2331,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/hotplug-call x86-uclibc
 -		[ -f $script ] && . $script
 -	); done
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/ifdown x86-uclibc-torvm/package/base-files/files/sbin/ifdown
---- x86-uclibc-orig/package/base-files/files/sbin/ifdown	2008-02-03 06:48:15.292457000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/ifdown	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/ifdown kamikaze-mod/package/base-files/files/sbin/ifdown
+--- kamikaze-orig/package/base-files/files/sbin/ifdown	2008-02-03 06:48:15.292457000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/ifdown	1970-01-01 00:00:00.000000000 +0000
 @@ -1,66 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2353,9 +2401,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/ifdown x86-uclibc-torvm
 -config_get iftype "$cfg" type
 -[ "bridge" = "$iftype" ] && brctl delbr "$ifname" >/dev/null 2>/dev/null
 -
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/ifup x86-uclibc-torvm/package/base-files/files/sbin/ifup
---- x86-uclibc-orig/package/base-files/files/sbin/ifup	2006-10-24 23:59:08.851426000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/ifup	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/ifup kamikaze-mod/package/base-files/files/sbin/ifup
+--- kamikaze-orig/package/base-files/files/sbin/ifup	2006-10-24 23:59:08.851426000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/ifup	1970-01-01 00:00:00.000000000 +0000
 @@ -1,11 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2368,9 +2416,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/ifup x86-uclibc-torvm/p
 -for dev in $ifname; do
 -	setup_interface "$dev" "$1"
 -done
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/mount_root x86-uclibc-torvm/package/base-files/files/sbin/mount_root
---- x86-uclibc-orig/package/base-files/files/sbin/mount_root	2007-05-31 12:09:08.638373000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/mount_root	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/mount_root kamikaze-mod/package/base-files/files/sbin/mount_root
+--- kamikaze-orig/package/base-files/files/sbin/mount_root	2007-05-31 12:09:08.638373000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/mount_root	1970-01-01 00:00:00.000000000 +0000
 @@ -1,25 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2397,9 +2445,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/mount_root x86-uclibc-t
 -	mtd unlock rootfs
 -	mount -o remount,rw /dev/root /
 -}
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/sysupgrade x86-uclibc-torvm/package/base-files/files/sbin/sysupgrade
---- x86-uclibc-orig/package/base-files/files/sbin/sysupgrade	2007-08-21 18:23:57.703561000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/sysupgrade	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/sysupgrade kamikaze-mod/package/base-files/files/sbin/sysupgrade
+--- kamikaze-orig/package/base-files/files/sbin/sysupgrade	2007-08-21 18:23:57.703561000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/sysupgrade	1970-01-01 00:00:00.000000000 +0000
 @@ -1,92 +0,0 @@
 -#!/bin/sh
 -. /etc/functions.sh
@@ -2493,9 +2541,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/sysupgrade x86-uclibc-t
 -
 -v "Switching to ramdisk..."
 -run_ramfs '. /etc/functions.sh; include /lib/upgrade; do_upgrade'
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/usb-storage x86-uclibc-torvm/package/base-files/files/sbin/usb-storage
---- x86-uclibc-orig/package/base-files/files/sbin/usb-storage	2007-11-04 15:12:08.860897000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/usb-storage	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/usb-storage kamikaze-mod/package/base-files/files/sbin/usb-storage
+--- kamikaze-orig/package/base-files/files/sbin/usb-storage	2007-11-04 15:12:08.860897000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/usb-storage	1970-01-01 00:00:00.000000000 +0000
 @@ -1,28 +0,0 @@
 -#!/bin/sh
 -
@@ -2525,9 +2573,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/usb-storage x86-uclibc-
 -	sleep 1
 -done
 -
-diff -Naur x86-uclibc-orig/package/base-files/files/sbin/wifi x86-uclibc-torvm/package/base-files/files/sbin/wifi
---- x86-uclibc-orig/package/base-files/files/sbin/wifi	2008-02-03 06:48:15.292457000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/sbin/wifi	1970-01-01 00:00:00.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/sbin/wifi kamikaze-mod/package/base-files/files/sbin/wifi
+--- kamikaze-orig/package/base-files/files/sbin/wifi	2008-02-03 06:48:15.292457000 +0000
++++ kamikaze-mod/package/base-files/files/sbin/wifi	1970-01-01 00:00:00.000000000 +0000
 @@ -1,121 +0,0 @@
 -#!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -2650,9 +2698,9 @@ diff -Naur x86-uclibc-orig/package/base-files/files/sbin/wifi x86-uclibc-torvm/p
 -	detect) wifi_detect "$2";;
 -	*) wifi_updown "enable" "$2";;
 -esac
-diff -Naur x86-uclibc-orig/package/base-files/files/usr/share/udhcpc/default.script x86-uclibc-torvm/package/base-files/files/usr/share/udhcpc/default.script
---- x86-uclibc-orig/package/base-files/files/usr/share/udhcpc/default.script	2008-02-03 06:48:15.292457000 +0000
-+++ x86-uclibc-torvm/package/base-files/files/usr/share/udhcpc/default.script	2008-07-09 02:23:09.000000000 +0000
+diff -Naur kamikaze-orig/package/base-files/files/usr/share/udhcpc/default.script kamikaze-mod/package/base-files/files/usr/share/udhcpc/default.script
+--- kamikaze-orig/package/base-files/files/usr/share/udhcpc/default.script	2008-02-03 06:48:15.292457000 +0000
++++ kamikaze-mod/package/base-files/files/usr/share/udhcpc/default.script	2008-07-25 11:32:02.097534634 +0000
 @@ -1,33 +1,11 @@
  #!/bin/sh
  [ -z "$1" ] && echo "Error: should be run by udhcpc" && exit 1

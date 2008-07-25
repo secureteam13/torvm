@@ -36,7 +36,7 @@ prereq:
 	@if [ ! -f .build_prereqs_verified ]; then \
 		echo "Verifying build prerequisites ..." >&2; \
 		NOFOUND=""; \
-		REQS="gmake gcc g++ gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs"; \
+		REQS="gmake gcc g++ ccache gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs sha1sum"; \
 		for REQ in $$REQS; do \
 			which $$REQ >/dev/null 2>&1; \
 			if (( $$? != 0 )); then \
