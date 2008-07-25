@@ -109,7 +109,12 @@ buildvmiso: buildkern
 	fi
 
 buildw32src: buildkern
-	@echo "buildw32src does not yet create an ISO with build setup. XXX"
+	@cd build/win32; \
+	time su $(BUSER) -c "( $(MAKE) )"; \
+	if (( $$? != 0 )); then \
+		echo "ERROR: Unable to create win32 build ISO image." >&2; \
+		exit 1; \
+	fi
 
 package: buildw32src buildvmiso
 	@echo "package build target does not do anything with build products yet. XXX"

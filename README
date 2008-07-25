@@ -1,5 +1,6 @@
 Transparent Tor Proxy Virtual Machine
 
+
 See the doc/ directory for design and implementation details and the LICENSE
 file for rights and terms.
 
@@ -10,3 +11,17 @@ basic features are not yet avilable; edit the Makefile to adjust manually.
 Run 'make' to build the VM kernel image and Windows build ISO image. Once the
 Windows build is done a complete Tor virtual machine package should be zipped
 up ready for distribution.
+
+
+Some files of interest:
+
+./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
+> this is the Linux kernel and initramfs used in the VM.
+
+./build/iso/vm.iso
+> this is a bootable ISO using the kernel above.
+
+./build/win32/w32build.iso
+> this is the automated win32 build ISO for Qemu.  Once everything is built
+> the Qemu program and libraries will be placed in C:\Tor_VM
+

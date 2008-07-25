@@ -1,0 +1,455 @@
+diff -Naur qemu-0.9.1-orig/Makefile.target qemu-0.9.1-mod/Makefile.target
+--- qemu-0.9.1-orig/Makefile.target	2008-01-06 19:38:41.000000000 +0000
++++ qemu-0.9.1-mod/Makefile.target	2008-07-23 05:03:59.572327704 +0000
+@@ -237,7 +237,7 @@
+ LIBS+=-lz
+ endif
+ ifdef CONFIG_WIN32
+-LIBS+=-lwinmm -lws2_32 -liphlpapi
++LIBS+=-lwinmm -lws2_32 -liphlpapi -lpthreadGC2 -lpacket -lwpcap
+ endif
+ ifdef CONFIG_SOLARIS
+ LIBS+=-lsocket -lnsl -lresolv
+diff -Naur qemu-0.9.1-orig/configure qemu-0.9.1-mod/configure
+--- qemu-0.9.1-orig/configure	2008-01-06 19:38:42.000000000 +0000
++++ qemu-0.9.1-mod/configure	2008-07-22 01:29:15.000000000 +0000
+@@ -600,7 +600,7 @@
+ #undef main /* We don't want SDL to override our main() */
+ int main( void ) { return SDL_Init (SDL_INIT_VIDEO); }
+ EOF
+-        if $cc -o $TMPE ${OS_CFLAGS} `$sdl_config --cflags 2> /dev/null` $TMPC `$sdl_config --libs 2> /dev/null` 2> /tmp/qemu-$$-sdl-config.log ; then
++        if $cc -o $TMPE ${OS_CFLAGS} ${CFLAGS} `$sdl_config --cflags 2> /dev/null` $TMPC ${LDFLAGS} `$sdl_config --libs 2> /dev/null` 2> /tmp/qemu-$$-sdl-config.log ; then
+             _sdlversion=`$sdl_config --version | sed 's/[^0-9]//g'`
+             if test "$_sdlversion" -lt 121 ; then
+                 sdl_too_old=yes
+@@ -883,7 +883,10 @@
+ fi
+ if test "$slirp" = "yes" ; then
+   echo "CONFIG_SLIRP=yes" >> $config_mak
++  echo "CONFIG_PCAP=yes" >> $config_mak
++  echo "PCAP_LIBS=-lpthreadGC2 -lpacket -lwpcap" >> $config_mak
+   echo "#define CONFIG_SLIRP 1" >> $config_h
++  echo "#define CONFIG_PCAP 1" >> $config_h
+ fi
+ if test "$adlib" = "yes" ; then
+   echo "CONFIG_ADLIB=yes" >> $config_mak
+diff -Naur qemu-0.9.1-orig/dyngen-exec.h qemu-0.9.1-mod/dyngen-exec.h
+--- qemu-0.9.1-orig/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
++++ qemu-0.9.1-mod/dyngen-exec.h	2008-07-23 04:22:31.743310528 +0000
+@@ -32,6 +32,7 @@
+    host headers do not allow that. */
+ #include <stddef.h>
+ 
++#ifndef HAVE_INTSZ_TYPES
+ typedef unsigned char uint8_t;
+ typedef unsigned short uint16_t;
+ typedef unsigned int uint32_t;
+@@ -62,9 +63,6 @@
+ #endif
+ #endif
+ 
+-/* XXX: This may be wrong for 64-bit ILP32 hosts.  */
+-typedef void * host_reg_t;
+-
+ #define INT8_MIN		(-128)
+ #define INT16_MIN		(-32767-1)
+ #define INT32_MIN		(-2147483647-1)
+@@ -78,6 +76,11 @@
+ #define UINT32_MAX		(4294967295U)
+ #define UINT64_MAX		((uint64_t)(18446744073709551615))
+ 
++#endif /* HAVE_INTSZ_TYPES */
++
++/* XXX: This may be wrong for 64-bit ILP32 hosts.  */
++typedef void * host_reg_t;
++
+ #ifdef _BSD
+ typedef struct __sFILE FILE;
+ #else
+diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
+--- qemu-0.9.1-orig/vl.c	2008-01-06 19:38:42.000000000 +0000
++++ qemu-0.9.1-mod/vl.c	2008-07-22 06:44:51.077588952 +0000
+@@ -3858,6 +3858,326 @@
+ 
+ #endif /* CONFIG_SLIRP */
+ 
++/////////////////////////////////////////////////////////////////////////////
++#ifdef CONFIG_PCAP
++#define HAVE_U_INT8_T
++#define HAVE_U_INT16_T
++#define HAVE_U_INT32_T
++#define HAVE_U_INT64_T
++#include <pcap.h>
++#include <string.h>
++char pcap_devicename[64];
++
++#if defined(_WIN32)
++#include <winreg.h>
++#endif
++
++#include <pthread.h>
++
++static VLANClientState *pcap_vc;
++pcap_t* pcaphandle;
++static void pcap_receive(void *opaque, const uint8_t *buf, int size);
++char* eth_getname_bydesc(char* desc, char* name);
++char* eth_getname(int number, char* name);
++void eth_callback(u_char *user, struct pcap_pkthdr *phdr, u_char *pdata);
++void *pcap_send(void *threadid);
++int eth_open(char* name);
++
++#define ADAPTER_KEY "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
++#define NETWORK_CONNECTIONS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
++#define DEVICE_PREFIX "\\Device\\NPF_"
++
++static int get_net_device_guid(
++    char *name,
++    int name_size,
++    char *actual_name,
++    int actual_name_size)
++{
++    LONG status;
++    HKEY control_net_key;
++    DWORD len;
++    int i = 0;
++    int stop = 0;
++
++    status = RegOpenKeyEx(
++        HKEY_LOCAL_MACHINE,
++        NETWORK_CONNECTIONS_KEY,
++        0,
++        KEY_READ,
++        &control_net_key);
++
++    if (status != ERROR_SUCCESS) {
++        return -1;
++    }
++
++    while (!stop)
++    {
++        char enum_name[256];
++        char connection_string[256];
++        HKEY connection_key;
++        char name_data[256];
++        DWORD name_type;
++        const char name_string[] = "Name";
++
++        len = sizeof (enum_name);
++        status = RegEnumKeyEx(
++            control_net_key,
++            i,
++            enum_name,
++            &len,
++            NULL,
++            NULL,
++            NULL,
++            NULL);
++
++        if (status == ERROR_NO_MORE_ITEMS)
++            break;
++        else if (status != ERROR_SUCCESS) {
++            return -1;
++        }
++
++        snprintf(connection_string,
++             sizeof(connection_string),
++             "%s\\%s\\Connection",
++             NETWORK_CONNECTIONS_KEY, enum_name);
++
++        status = RegOpenKeyEx(
++            HKEY_LOCAL_MACHINE,
++            connection_string,
++            0,
++            KEY_READ,
++            &connection_key);
++
++        if (status == ERROR_SUCCESS) {
++            len = sizeof (name_data);
++            status = RegQueryValueEx(
++                connection_key,
++                name_string,
++                NULL,
++                &name_type,
++                name_data,
++                &len);
++
++            if (status != ERROR_SUCCESS || name_type != REG_SZ) {
++                    return -1;
++            }
++            else {
++                if (actual_name) {
++                    if (strcmp(name, name_data) != 0) {
++                        fprintf(stderr, "pcap: %s does not match requested %s (guid: %s)\n", name, name_data, enum_name);
++                        RegCloseKey (connection_key);
++                        ++i;
++                        continue;
++                    }
++                    else {
++                        snprintf(actual_name, actual_name_size, "%s%s", DEVICE_PREFIX, enum_name);
++                        fprintf(stderr, "pcap: matched requested %s to guid: %s\n", name_data, enum_name);
++                    }
++                }
++                stop = 1;
++            }
++
++            RegCloseKey (connection_key);
++        }
++        ++i;
++    }
++
++    RegCloseKey (control_net_key);
++
++    if (stop == 0)
++        return -1;
++
++    return 0;
++}
++
++static int net_pcap_init(VLANState *vlan)
++{
++    pcap_vc = qemu_new_vlan_client(vlan,pcap_receive,NULL,NULL);
++    snprintf(pcap_vc->info_str,sizeof(pcap_vc->info_str),"pcap redirector");
++    char dev_guid[256];
++    *dev_guid = 0;
++    if (get_net_device_guid (pcap_devicename, sizeof(pcap_devicename), dev_guid, sizeof(dev_guid))) {
++        fprintf(stderr, "qemu: could not set up pcap bridge to alias: %s\n", pcap_devicename);
++        exit(1);
++    }
++    eth_open(dev_guid);
++
++    pthread_attr_t attr;
++    pthread_t threads;
++    int rc;
++    rc=pthread_create (&threads,NULL,pcap_send,NULL);
++    pthread_attr_destroy(&attr);
++    return 0;
++}
++
++int wtf=0;
++unsigned char mymac[8];
++
++static void pcap_receive(void *opaque, const uint8_t *buf, int size)
++{
++    // XXX use wtf to drop the 1st packet.
++    //cheesy hack to not 'read' my own packets.  we gobble the 1st packet
++    if(wtf==0)
++    {
++	memset(mymac,0x0,8);
++	memcpy(mymac,(u_char*)buf+6,6);
++	wtf++;
++    }
++    else{
++        pcap_sendpacket((pcap_t*)pcaphandle, (u_char*)buf, size);
++    }
++}
++
++void *pcap_send(void *threadid)
++{
++    int sel_ret;
++    struct timeval timeout;
++    timeout.tv_sec = 0;
++    timeout.tv_usec = 200*1000;
++    int status;
++
++    while(pcaphandle)
++    {
++        fd_set setl;
++        FD_ZERO(&setl);
++        status = pcap_dispatch((pcap_t*)pcaphandle, 1, &eth_callback, NULL);
++    }
++}
++
++void eth_callback(u_char *user, struct pcap_pkthdr *phdr, u_char *pdata)
++{
++    if(phdr->len<1501)
++    {
++        // XXX omit recieving own packets.  need to improve this patch
++        if(memcmp(mymac,(u_char*)pdata+6,6)) {
++            qemu_send_packet(pcap_vc, pdata, phdr->len);
++        }
++    }
++}
++
++#define ETH_PROMISC 1
++#define PCAP_READ_TIMEOUT 15
++
++int eth_open(char* name)
++{
++    const int bufsz = (BUFSIZ < 1520) ? 1520 : BUFSIZ;
++    char errbuf[PCAP_ERRBUF_SIZE];
++    char temp[1024];
++    char* savname = name;
++    int num;
++    char* msg;
++
++    /* translate name of type "ethX" to real device name */
++    if ((strlen(name) == 4)
++        && (tolower(name[0]) == 'e')
++        && (tolower(name[1]) == 't')
++        && (tolower(name[2]) == 'h')
++        && isdigit(name[3])) {
++
++        num = atoi(&name[3]);
++        savname = eth_getname(num, temp);
++    }
++    if (savname == 0) /* didn't translate */
++        return -1;
++
++    /* attempt to connect device */
++    memset(errbuf, 0, sizeof(errbuf));
++    pcaphandle = (void*) pcap_open_live(savname, bufsz, ETH_PROMISC, PCAP_READ_TIMEOUT, errbuf);
++    if (!pcaphandle) { /* try non-promisc open device */
++        pcaphandle = (void*) pcap_open_live(savname, bufsz, 0, PCAP_READ_TIMEOUT, errbuf);
++        if (!pcaphandle) { /* cannot open device */
++            msg = "Eth: pcap_open_live error - %s\r\n";
++            fprintf (stderr, msg, errbuf);
++            exit (1);
++        }
++        msg = "Eth: opened non-promisc %s\r\n";
++        fprintf (stderr, msg, savname);
++    } else {
++        msg = "Eth: opened promisc %s\r\n";
++        fprintf (stderr, msg, savname);
++    }
++
++#if !defined(HAS_PCAP_SENDPACKET) && defined (xBSD) && !defined (__APPLE__)
++    /* Tell the kernel that the header is fully-formed when it gets it.
++    This is required in order to fake the src address. */
++    {
++        int one = 1;
++        ioctl(pcap_fileno(dev->pcaphandle), BIOCSHDRCMPLT, &one);
++    }
++#endif /* xBSD */
++#if defined (USE_READER_THREAD)
++    {
++        pthread_attr_t attr;
++
++        ethq_init (&dev->read_queue, 200); /* initialize FIFO queue */
++        pthread_mutex_init (&dev->lock, NULL);
++        pthread_attr_init(&attr);
++        pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
++        pthread_create (&dev->reader_thread, &attr, _pcap_send, (void *)dev);
++        pthread_attr_destroy(&attr);
++    }
++#else /* !defined (USE_READER_THREAD */
++#ifdef USE_SETNONBLOCK
++    /* set ethernet device non-blocking so pcap_dispatch() doesn't hang */
++    if (pcap_setnonblock (dev->pcaphandle, 1, errbuf) == -1) {
++        msg = "Eth: Failed to set non-blocking: %s\r\n";
++        printf (msg, errbuf);
++    }
++#endif
++#endif /* !defined (USE_READER_THREAD */
++    return 0;
++}
++
++#define ETH_MAX_DEVICE 10
++char* eth_getname_bydesc(char* desc, char* name)
++{
++    // ETH_LIST list[ETH_MAX_DEVICE];
++    struct slist {
++        int num;
++        char name[50];
++        char desc[50];
++    }list[10];
++    int count = 1;//eth_devices(ETH_MAX_DEVICE, list);
++    int i;
++    int j=strlen(desc);
++
++    for (i=0; i<count; i++) {
++        int found = 1;
++        int k = strlen(list[i].desc);
++
++        if (j != k) continue;
++        for (k=0; k<j; k++)
++            if (tolower(list[i].desc[k]) != tolower(desc[k]))
++        found = 0;
++        if (found == 0) continue;
++
++        /* found a case-insensitive description match */
++        strcpy(name, list[i].name);
++        return name;
++    }
++    /* not found */
++    return 0;
++}
++
++char* eth_getname(int number, char* name)
++{
++    //ETH_LIST list[ETH_MAX_DEVICE];
++    struct slist {
++        int num;
++        char name[50];
++        char desc[50];
++    }list[10];
++    int count =1;// eth_devices(ETH_MAX_DEVICE, list);
++
++    if (count < number) return 0;
++    strcpy(name, list[number].name);
++    return name;
++}
++#endif //CONFIG_PCAP
++//////////////////////////////////////////////////////////////////////////////
++
++/////////////////////////////////////////////////////////////////////////////
++
+ #if !defined(_WIN32)
+ 
+ typedef struct TAPState {
+@@ -4733,6 +5053,14 @@
+         ret = net_slirp_init(vlan);
+     } else
+ #endif
++#ifdef CONFIG_PCAP
++if (!strcmp(device, "pcap")) {
++       if (get_param_value(buf, sizeof(buf),"devicename",p)){
++               pstrcpy(pcap_devicename,sizeof(pcap_devicename),buf);
++       }
++ret = net_pcap_init(vlan);
++} else
++#endif
+ #ifdef _WIN32
+     if (!strcmp(device, "tap")) {
+         char ifname[64];
+@@ -7551,6 +7879,9 @@
+            "                connect the user mode network stack to VLAN 'n' and send\n"
+            "                hostname 'host' to DHCP clients\n"
+ #endif
++#ifdef CONFIG_PCAP
++              "-net pcap[,vlan=n],devicename=name\n"
++#endif
+ #ifdef _WIN32
+            "-net tap[,vlan=n],ifname=name\n"
+            "                connect the host TAP network interface to VLAN 'n'\n"
+@@ -7656,9 +7987,6 @@
+     QEMU_OPTION_pflash,
+     QEMU_OPTION_boot,
+     QEMU_OPTION_snapshot,
+-#ifdef TARGET_I386
+-    QEMU_OPTION_no_fd_bootchk,
+-#endif
+     QEMU_OPTION_m,
+     QEMU_OPTION_nographic,
+     QEMU_OPTION_portrait,
+@@ -7746,9 +8074,6 @@
+     { "pflash", HAS_ARG, QEMU_OPTION_pflash },
+     { "boot", HAS_ARG, QEMU_OPTION_boot },
+     { "snapshot", 0, QEMU_OPTION_snapshot },
+-#ifdef TARGET_I386
+-    { "no-fd-bootchk", 0, QEMU_OPTION_no_fd_bootchk },
+-#endif
+     { "m", HAS_ARG, QEMU_OPTION_m },
+     { "nographic", 0, QEMU_OPTION_nographic },
+     { "portrait", 0, QEMU_OPTION_portrait },
+@@ -8355,11 +8680,6 @@
+ 		drive_add("file=\"%s\"," FD_ALIAS, optarg,
+ 		          popt->index - QEMU_OPTION_fda);
+                 break;
+-#ifdef TARGET_I386
+-            case QEMU_OPTION_no_fd_bootchk:
+-                fd_bootchk = 0;
+-                break;
+-#endif
+             case QEMU_OPTION_no_code_copy:
+                 code_copy_enabled = 0;
+                 break;
