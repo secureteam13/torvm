@@ -125,6 +125,7 @@ ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $
 default all: downloads extract buildiso runinstall
 
 downloads: Makefile
+	@if [ ! -d $(WDLDIR) ]; then mkdir -p $(WDLDIR); fi
 	@if [ ! -e $(WDLDIR)/$(ZLIB_F) ]; then $(DLCMD) "$(ZLIB_URL)" $(ZLIB_SUM) "$(WDLDIR)/$(ZLIB_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(GZIP_F) ]; then $(DLCMD) "$(GZIP_URL)" $(GZIP_SUM) "$(WDLDIR)/$(GZIP_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(BZIP2_F) ]; then $(DLCMD) "$(BZIP2_URL)" $(BZIP2_SUM) "$(WDLDIR)/$(BZIP2_F)"; fi

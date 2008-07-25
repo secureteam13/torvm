@@ -110,6 +110,7 @@ buildvmiso: buildkern
 
 buildw32src: buildkern
 	@cd build/win32; \
+	chown -R $(BUSER):$(BGROUP) . ; \
 	time su $(BUSER) -c "( $(MAKE) )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: Unable to create win32 build ISO image." >&2; \
