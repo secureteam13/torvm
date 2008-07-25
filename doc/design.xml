@@ -29,7 +29,7 @@
     </affiliation>
    </author>
 
-   <pubdate>July 17, 2008</pubdate>
+   <pubdate>July 24, 2008</pubdate>
    <legalnotice>Copyright &copy; 2008 The Tor Project, Inc.</legalnotice>
  </articleinfo>
 
@@ -418,9 +418,6 @@ The following dependencies are required for building the Tor VM image and suppor
  kernel image with only the functions and linkage needed reduces the compiled bootable image size and helps reduce
  host OS resource usage.
       </para>
-      <para>
-<function>Reqs: gmake, gcc, g++, ncurses-dev, zlib-dev, gawk, bison, flex, unzip, bzip2, patch, perl, wget, gnutar, svn, autoconf, mkisofs, etc</function>
-      </para>
       </listitem>
 
     </itemizedlist>
@@ -432,50 +429,20 @@ The following dependencies are required for building the Tor VM image and suppor
 
       <listitem><command><trademark class="trade">Windows XP</trademark></command>
       <para>
-Windows XP must be upgraded to Service Pack 3 with the Dot Net Framework installed.
-<literallayout><function>xpsp3_5512.080413-2113_usa_x86fre_spcd.iso (545M)
-</function></literallayout>
+Windows XP is used to build the Qemu virtual machine with all necessary patches and libraries required for
+ a portable Tor VM implementation.  The build process creates a CDROM ISO image that can be used with a
+ Windows VM or host to automate the build environment preparation and Qemu compilation.
       </para>
       </listitem>
 
       <listitem><command><trademark class="trade">Windows Vista</trademark> /
           <trademark class="trade">Windows Server 2008</trademark></command>
       <para>
-Fortunately the feature rich DVD install media for these operating systems includes much of the Dot Net
- Framework and SDK prerequisites. Windows Server 2008 Core (GUI-less) is well suited for automated builds.
+Windows Server 2008 Core (GUI-less) is well suited for automated builds.  Either platform may be used to compile
+ the Windows Tor VM package.
       </para>
       </listitem>
       
-      <listitem><command><trademark class="trade">Visual C++ 9.0</trademark> /
-          <trademark class="trade">Visual Studio 2008 Express</trademark></command>
-      <para>
-(add libs user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib, correcting incorrect VC++ project imports from older versions, etc)
-<literallayout><function>VS2008ExpressENUX1397868.iso (895M)
-</function></literallayout>
-      </para>
-      </listitem>
-
-      <listitem><command><trademark class="trade">Microsoft Platform SDK 6.0</trademark></command>
-      <para>
-(edits to vcvars32.bat, overrides specific to DotNet Framework 2.x and 3.5, setup powershell shortcuts, etc)
-<literallayout><function>6.0.6001.18000.367-KRMSDK_EN.iso (1.3G)
-VS80sp1-KB926601-X86-ENU.exe (432M)
-</function></literallayout>
-      </para>
-      </listitem>
-
-      <listitem><command>MingW, MSYS and other build tools</command>
-      <para>
-<literallayout><function>MinGW-5.1.4.exe
-cmake-2.6.0-win32-x86.exe
-svn-1.4.6-setup.exe
-MSYS-1.0.11-2004.04.30-1.exe
-msysDTK-1.0.1.exe
-msys-autoconf-2.59.tar.bz2
-</function></literallayout>
-      </para>
-      </listitem>
-
     </itemizedlist>
    </sect3>
 
@@ -578,13 +545,6 @@ kamikaze-libevent-package.patch
     <title>WinPcap Patches</title>
     <itemizedlist>
 
-      <listitem><command>Adapter Naming and Filter / Mark Support</command>
-      <para>
-<literallayout><function>
-</function></literallayout>
-      </para>
-      </listitem>
-
       <listitem><command>Portable NDIS Layer [optional]</command>
       <para>
 <literallayout><function>
@@ -624,42 +584,24 @@ src/vidalia/vidalia.cpp
     </itemizedlist>
    </sect3>
 
-   <sect3>
-    <title>TorK Patches [optional]</title>
-    <itemizedlist>
-
-      <listitem><command>Start and Stop Control of VM</command>
-      <para>
-      </para>
-      </listitem>
-
-      <listitem><command>Direct and Blocked Port Setup [optional]</command>
-      <para>
-      </para>
-      </listitem>
-
-      <listitem><command>Control Port Listen Support [optional]</command>
-      <para>
-      </para>
-      </listitem>
-
-    </itemizedlist>
-   </sect3>
-
-
   </sect2>
 
 
 
   <sect2 id="vmos">
-   <title>Tor VM Guest Image</title>
+   <title>Tor VM Build</title>
    <para>
 <programlisting>
-# You will need aprox 2.1G of space for this build.
-# NOTE: you cannot move the build tree once it is generated; various GNU toolchain
-# programs have paths hardcoded once built and will not work if moved elsewhere.
+# IMPORTANT: You will need about 2G of space for a full build.
 #
-# XXX replace with subversion and snapshot build instructions
+svn export https://svn.torproject.org/svn/torvm/trunk/ torvm
+cd torvm
+make
+
+# NOTE: currently the win32 build process must be started manually by loading the
+# win32build.iso into a Windows VM or host. The build process will begin once the
+# disc is mounted. The Qemu VM executable and supporting libraries will be saved
+# to the C:\Tor_VM directory.
 </programlisting>
    </para>
   </sect2>
