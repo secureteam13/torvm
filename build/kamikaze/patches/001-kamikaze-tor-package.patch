@@ -117,7 +117,7 @@ diff -Naur kamikaze-orig/package/tor/Makefile kamikaze-mod/package/tor/Makefile
 diff -Naur kamikaze-orig/package/tor/files/tor.init kamikaze-mod/package/tor/files/tor.init
 --- kamikaze-orig/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
 +++ kamikaze-mod/package/tor/files/tor.init	2008-07-25 12:47:37.800604618 +0000
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,85 @@
 +#!/bin/sh 
 +
 +BIN=tor
@@ -139,6 +139,7 @@ diff -Naur kamikaze-orig/package/tor/files/tor.init kamikaze-mod/package/tor/fil
 +
 +if [ "$1" = "start" ]; then
 +	[ -f $DEFAULT ] && . $DEFAULT
++	if [ ! -f $CONF_F ]; then cp /etc/tor/torrc $CONF_F; fi
 +	[ -d $LOG_D ] || mkdir -p $LOG_D
 +	chown $RUN_USER:$RUN_GROUP $LOG_D
 +	[ -d $DATA_D ] || mkdir -p $DATA_D

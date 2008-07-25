@@ -4,6 +4,8 @@ export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 export ddir=/c/Tor_VM
 mkdir $ddir
 
+cp /bin/msys-z.dll $ddir/
+cp /bin/msys-1.0.dll $ddir/
 
 echo "Building pthreads-w32 ..."
 cd /usr/src
