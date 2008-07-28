@@ -1,11 +1,11 @@
 diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 --- kamikaze-orig/.config	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/.config	2008-07-15 20:24:00.714058130 +0000
-@@ -0,0 +1,1171 @@
++++ kamikaze-mod/.config	2008-07-28 15:26:33.246856047 +0000
+@@ -0,0 +1,1140 @@
 +#
 +# Automatically generated make config: don't edit
 +# OpenWrt version: Kamikaze (unknown)
-+# Mon Jul 14 21:25:39 2008
++# Mon Jul 28 08:26:06 2008
 +#
 +CONFIG_HAVE_DOT_CONFIG=y
 +# CONFIG_TARGET_ppc40x is not set
@@ -44,6 +44,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_TARGET_ppc44x_Default is not set
 +# CONFIG_TARGET_etrax_default is not set
 +# CONFIG_TARGET_etrax_vhdl_no_fb is not set
++# CONFIG_TARGET_iop32x_Default is not set
 +# CONFIG_TARGET_brcm_2_4_Broadcom is not set
 +# CONFIG_TARGET_brcm_2_4_BroadcomMimo is not set
 +# CONFIG_TARGET_brcm_2_4_Atheros is not set
@@ -55,20 +56,19 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_TARGET_brcm_2_4_WL700GE is not set
 +# CONFIG_TARGET_brcm_2_4_WLHDD is not set
 +# CONFIG_TARGET_brcm_2_4_WRT54G3G is not set
-+# CONFIG_TARGET_iop32x_Default is not set
++# CONFIG_TARGET_amazon_Default is not set
 +CONFIG_TARGET_x86_generic_Generic=y
 +# CONFIG_TARGET_x86_generic_Alix is not set
 +# CONFIG_TARGET_x86_generic_Pcengines is not set
 +# CONFIG_TARGET_x86_generic_Soekris is not set
-+# CONFIG_TARGET_amazon_Default is not set
 +# CONFIG_TARGET_orion_Default is not set
 +# CONFIG_TARGET_pxa_Default is not set
-+# CONFIG_TARGET_magicbox_Default is not set
 +# CONFIG_TARGET_ar7_Texas is not set
 +# CONFIG_TARGET_ar7_None is not set
-+# CONFIG_TARGET_rb532_Default is not set
-+# CONFIG_TARGET_olpc_Default is not set
++# CONFIG_TARGET_magicbox_Default is not set
 +# CONFIG_TARGET_avr32_Default is not set
++# CONFIG_TARGET_olpc_Default is not set
++# CONFIG_TARGET_rb532_Default is not set
 +# CONFIG_TARGET_uml_Default is not set
 +# CONFIG_TARGET_sibyte_Default is not set
 +# CONFIG_TARGET_ixp4xx_generic_Default is not set
@@ -126,12 +126,10 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_TARGET_ppc40x_Default is not set
 +CONFIG_HAS_SUBTARGETS=y
 +CONFIG_TARGET_BOARD="x86"
-+CONFIG_LINUX_2_6_25=y
++CONFIG_LINUX_2_6_26=y
 +CONFIG_LINUX_2_6=y
 +CONFIG_DISPLAY_SUPPORT=y
 +CONFIG_PCI_SUPPORT=y
-+CONFIG_USES_SQUASHFS=y
-+CONFIG_USES_JFFS2=y
 +CONFIG_USES_EXT2=y
 +CONFIG_i386=y
 +CONFIG_ARCH="i386"
@@ -185,7 +183,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_GDB is not set
 +CONFIG_LARGEFILE=y
 +CONFIG_SHADOW_PASSWORDS=y
-+CONFIG_TARGET_OPTIMIZATION="-O2 -pipe -march=i686"
++CONFIG_TARGET_OPTIMIZATION="-O2 -pipe -march=i586"
 +CONFIG_GCC_VERSION="4.1.2"
 +CONFIG_UCLIBC_VERSION="0.9.29"
 +# CONFIG_BUILDSYSTEM_SETTINGS is not set
@@ -214,7 +212,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_DEFAULT_udevtrigger=y
 +CONFIG_PACKAGE_base-files=y
 +# CONFIG_PACKAGE_br2684ctl is not set
-+CONFIG_PACKAGE_bridge=y
++# CONFIG_PACKAGE_bridge is not set
 +CONFIG_PACKAGE_busybox=y
 +
 +#
@@ -248,7 +246,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_BUSYBOX_CONFIG_FEATURE_PREFER_APPLETS=y
 +CONFIG_BUSYBOX_CONFIG_BUSYBOX_EXEC_PATH="/proc/self/exe"
 +CONFIG_BUSYBOX_CONFIG_FEATURE_SYSLOG=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_HAVE_RPC=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_HAVE_RPC is not set
 +
 +#
 +# Build Options
@@ -460,7 +458,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +# Console Utilities
 +#
-+# CONFIG_BUSYBOX_CONFIG_CHVT is not set
++CONFIG_BUSYBOX_CONFIG_CHVT=y
 +CONFIG_BUSYBOX_CONFIG_CLEAR=y
 +# CONFIG_BUSYBOX_CONFIG_DEALLOCVT is not set
 +# CONFIG_BUSYBOX_CONFIG_DUMPKMAP is not set
@@ -480,9 +478,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_BUSYBOX_CONFIG_MKTEMP=y
 +# CONFIG_BUSYBOX_CONFIG_PIPE_PROGRESS is not set
 +# CONFIG_BUSYBOX_CONFIG_RUN_PARTS is not set
-+CONFIG_BUSYBOX_CONFIG_START_STOP_DAEMON=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_START_STOP_DAEMON_FANCY is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_START_STOP_DAEMON_LONG_OPTIONS=y
++# CONFIG_BUSYBOX_CONFIG_START_STOP_DAEMON is not set
 +CONFIG_BUSYBOX_CONFIG_WHICH=y
 +
 +#
@@ -591,19 +587,10 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +# Linux Module Utilities
 +#
-+CONFIG_BUSYBOX_CONFIG_INSMOD=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_INSMOD_LOAD_MAP is not set
-+CONFIG_BUSYBOX_CONFIG_RMMOD=y
-+CONFIG_BUSYBOX_CONFIG_LSMOD=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_LSMOD_PRETTY_2_6_OUTPUT=y
-+CONFIG_BUSYBOX_CONFIG_MODPROBE=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_MODPROBE_MULTIPLE_OPTIONS is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_MODPROBE_FANCY_ALIAS is not set
-+
-+#
-+# Options common to multiple modutils
-+#
-+CONFIG_BUSYBOX_CONFIG_FEATURE_CHECK_TAINTED_MODULE=y
++# CONFIG_BUSYBOX_CONFIG_INSMOD is not set
++# CONFIG_BUSYBOX_CONFIG_RMMOD is not set
++# CONFIG_BUSYBOX_CONFIG_LSMOD is not set
++# CONFIG_BUSYBOX_CONFIG_MODPROBE is not set
 +
 +#
 +# Linux System Utilities
@@ -633,8 +620,8 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_BUSYBOX_CONFIG_MORE is not set
 +CONFIG_BUSYBOX_CONFIG_MOUNT=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_HELPERS is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_NFS=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_CIFS=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_NFS is not set
++# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_CIFS is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_FLAGS=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_FSTAB=y
 +CONFIG_BUSYBOX_CONFIG_PIVOT_ROOT=y
@@ -675,7 +662,9 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_LESS_REGEXP is not set
 +# CONFIG_BUSYBOX_CONFIG_HDPARM is not set
 +CONFIG_BUSYBOX_CONFIG_LOCK=y
-+# CONFIG_BUSYBOX_CONFIG_MAKEDEVS is not set
++CONFIG_BUSYBOX_CONFIG_MAKEDEVS=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_MAKEDEVS_LEAF is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_MAKEDEVS_TABLE=y
 +# CONFIG_BUSYBOX_CONFIG_MICROCOM is not set
 +# CONFIG_BUSYBOX_CONFIG_MOUNTPOINT is not set
 +# CONFIG_BUSYBOX_CONFIG_MT is not set
@@ -712,22 +701,11 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_BUSYBOX_CONFIG_FEATURE_IFCONFIG_BROADCAST_PLUS=y
 +# CONFIG_BUSYBOX_CONFIG_IFUPDOWN is not set
 +# CONFIG_BUSYBOX_CONFIG_INETD is not set
-+CONFIG_BUSYBOX_CONFIG_IP=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_IP_ADDRESS=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_IP_LINK is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_IP_ROUTE=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_IP_TUNNEL is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_IP_RULE is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_IP_SHORT_FORMS=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_IP_RARE_PROTOCOLS is not set
-+# CONFIG_BUSYBOX_CONFIG_IPADDR is not set
-+# CONFIG_BUSYBOX_CONFIG_IPROUTE is not set
++# CONFIG_BUSYBOX_CONFIG_IP is not set
 +# CONFIG_BUSYBOX_CONFIG_IPCALC is not set
 +# CONFIG_BUSYBOX_CONFIG_NAMEIF is not set
-+CONFIG_BUSYBOX_CONFIG_NC=y
-+CONFIG_BUSYBOX_CONFIG_NETMSG=y
-+# CONFIG_BUSYBOX_CONFIG_NC_SERVER is not set
-+# CONFIG_BUSYBOX_CONFIG_NC_EXTRA is not set
++# CONFIG_BUSYBOX_CONFIG_NC is not set
++# CONFIG_BUSYBOX_CONFIG_NETMSG is not set
 +CONFIG_BUSYBOX_CONFIG_NETSTAT=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_NETSTAT_WIDE=y
 +CONFIG_BUSYBOX_CONFIG_NSLOOKUP=y
@@ -868,7 +846,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_PACKAGE_libssp=y
 +# CONFIG_PACKAGE_libstdcpp is not set
 +# CONFIG_PACKAGE_mtd is not set
-+CONFIG_PACKAGE_qos-scripts=y
++# CONFIG_PACKAGE_qos-scripts is not set
 +# CONFIG_PACKAGE_uci is not set
 +# CONFIG_PACKAGE_uci-sh is not set
 +CONFIG_PACKAGE_uclibc=y
@@ -884,7 +862,6 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +# CONFIG_PACKAGE_libfuse is not set
 +# CONFIG_PACKAGE_libblkid is not set
-+CONFIG_PACKAGE_libevent=y
 +CONFIG_PACKAGE_libgmp=y
 +# CONFIG_PACKAGE_libiw is not set
 +# CONFIG_PACKAGE_libjson is not set
@@ -905,13 +882,13 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +CONFIG_DEFAULT_ppp=y
 +CONFIG_DEFAULT_ppp-mod-pppoe=y
-+CONFIG_PACKAGE_arptables=y
-+CONFIG_PACKAGE_ebtables=y
++# CONFIG_PACKAGE_arptables is not set
++# CONFIG_PACKAGE_ebtables is not set
 +# CONFIG_PACKAGE_genl is not set
 +# CONFIG_PACKAGE_hostapd is not set
 +# CONFIG_PACKAGE_hostapd-mini is not set
-+CONFIG_PACKAGE_ifenslave=y
-+CONFIG_PACKAGE_ip=y
++# CONFIG_PACKAGE_ifenslave is not set
++# CONFIG_PACKAGE_ip is not set
 +# CONFIG_PACKAGE_ipsec-tools is not set
 +# CONFIG_PACKAGE_ipset is not set
 +# CONFIG_PACKAGE_isakmpd is not set
@@ -919,7 +896,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_PACKAGE_keynote is not set
 +# CONFIG_PACKAGE_ppp is not set
 +# CONFIG_PACKAGE_pptp is not set
-+CONFIG_PACKAGE_tc=y
++# CONFIG_PACKAGE_tc is not set
 +CONFIG_PACKAGE_tor=y
 +# CONFIG_PACKAGE_wpa-supplicant is not set
 +
@@ -932,8 +909,6 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# Kernel modules
 +#
 +CONFIG_DEFAULT_kmod-ipt-nathelper=y
-+CONFIG_DEFAULT_kmod-natsemi=y
-+CONFIG_DEFAULT_kmod-ne2k-pci=y
 +
 +#
 +# Block Devices
@@ -1113,18 +1088,12 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_PACKAGE_kmod-hostap is not set
 +# CONFIG_PACKAGE_kmod-ieee80211 is not set
 +# CONFIG_PACKAGE_kmod-ieee80211-softmac is not set
-+# CONFIG_PACKAGE_kmod-mac80211 is not set
 +# CONFIG_PACKAGE_kmod-madwifi is not set
 +# CONFIG_PACKAGE_kmod-net-airo is not set
 +# CONFIG_PACKAGE_kmod-net-hermes is not set
 +# CONFIG_PACKAGE_kmod-net-ipw2100 is not set
 +# CONFIG_PACKAGE_kmod-net-ipw2200 is not set
 +# CONFIG_PACKAGE_kmod-net-prism54 is not set
-+# CONFIG_PACKAGE_kmod-rt2400-pci is not set
-+# CONFIG_PACKAGE_kmod-rt2500-pci is not set
-+# CONFIG_PACKAGE_kmod-rt2x00-lib is not set
-+# CONFIG_PACKAGE_kmod-rt2x00-pci is not set
-+# CONFIG_PACKAGE_kmod-rt61-pci is not set
 +
 +#
 +# Boot Loaders
@@ -1150,7 +1119,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_KEXEC_TOOLS_TARGET_NAME="i386"
 +# CONFIG_PACKAGE_losetup is not set
 +# CONFIG_PACKAGE_mount-utils is not set
-+CONFIG_PACKAGE_openssl-util=y
++# CONFIG_PACKAGE_openssl-util is not set
 +# CONFIG_PACKAGE_qc-usb-utils is not set
 +# CONFIG_PACKAGE_robocfg is not set
 +# CONFIG_PACKAGE_udev is not set

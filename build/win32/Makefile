@@ -111,6 +111,10 @@ WPCAP_F=WinPcap_4_1_beta4.exe
 WPCAP_URL=http://www.winpcap.org/install/bin/WinPcap_4_1_beta4.exe
 WPCAP_SUM=25a56a70f9f285bc029220393f01177da5b02bb6
 
+WPCAPRT_F=WinPcap-4.1-files.tar.gz
+WPCAPRT_URL=http://peertech.org/files/WinPcap-4.1-files.tar.gz
+WPCAPRT_SUM=57d2eab8b1afcfdf65101849cfe4e4110ee3f121
+
 WPD_F=WpdPack_4_1_beta4.zip
 WPD_URL=http://www.winpcap.org/install/bin/WpdPack_4_1_beta4.zip
 WPD_SUM=fa5255dc1a36ff47999d5b60aeadcf8ff9fb44cd
@@ -120,7 +124,7 @@ QEMU_URL=http://bellard.org/qemu/qemu-0.9.1.tar.gz
 QEMU_SUM=630ea20b5989f0df00128de7f7be661c573ed041
 
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(SDL_F) $(WPCAP_F) $(WPD_F) $(QEMU_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(SDL_F) $(WPCAP_F) $(WPCAPRT_F) $(WPD_F) $(QEMU_F)
 
 default all: downloads extract buildiso runinstall
 
@@ -150,6 +154,7 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(PTHREADS_F) ]; then $(DLCMD) "$(PTHREADS_URL)" $(PTHREADS_SUM) "$(WDLDIR)/$(PTHREADS_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SDL_F) ]; then $(DLCMD) "$(SDL_URL)" $(SDL_SUM) "$(WDLDIR)/$(SDL_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WPCAP_F) ]; then $(DLCMD) "$(WPCAP_URL)" $(WPCAP_SUM) "$(WDLDIR)/$(WPCAP_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(WPCAPRT_F) ]; then $(DLCMD) "$(WPCAPRT_URL)" $(WPCAPRT_SUM) "$(WDLDIR)/$(WPCAPRT_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WPD_F) ]; then $(DLCMD) "$(WPD_URL)" $(WPD_SUM) "$(WDLDIR)/$(WPD_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
 
@@ -182,6 +187,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	unzip $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	cp $(addprefix $(WDLDIR)/, $(ALLFILES)) $(ISODIR)/dl/; \
 	unzip $(WDLDIR)/$(WPD_F); tar cf $(ISODIR)/dl/src/WpdPack_4_1_beta4.tar WpdPack; gzip -9 $(ISODIR)/dl/src/WpdPack_4_1_beta4.tar; rm -rf WpdPack; \
+	mv $(ISODIR)/dl/$(WPCAPRT_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \

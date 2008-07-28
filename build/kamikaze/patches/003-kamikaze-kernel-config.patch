@@ -1,6 +1,6 @@
 diff -Naur kamikaze-orig/target/linux/x86/Makefile kamikaze-mod/target/linux/x86/Makefile
 --- kamikaze-orig/target/linux/x86/Makefile	2008-07-05 16:52:15.517231000 +0000
-+++ kamikaze-mod/target/linux/x86/Makefile	2008-07-15 20:17:20.367431436 +0000
++++ kamikaze-mod/target/linux/x86/Makefile	2008-07-28 15:01:39.810755425 +0000
 @@ -9,13 +9,14 @@
  ARCH=i386
  BOARD:=x86
@@ -21,7 +21,7 @@ diff -Naur kamikaze-orig/target/linux/x86/Makefile kamikaze-mod/target/linux/x86
  
 diff -Naur kamikaze-orig/target/linux/x86/config-2.6.26 kamikaze-mod/target/linux/x86/config-2.6.26
 --- kamikaze-orig/target/linux/x86/config-2.6.26	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/target/linux/x86/config-2.6.26	2008-07-15 20:17:43.454095858 +0000
++++ kamikaze-mod/target/linux/x86/config-2.6.26	2008-07-28 15:03:34.743660695 +0000
 @@ -0,0 +1,711 @@
 +CONFIG_LOCALVERSION="-torvm"
 +CONFIG_LOG_BUF_SHIFT=17
@@ -688,8 +688,8 @@ diff -Naur kamikaze-orig/target/linux/x86/config-2.6.26 kamikaze-mod/target/linu
 +# CONFIG_CONNECTOR is not set
 +# CONFIG_CRYPTO_CRYPTD is not set
 +# CONFIG_CRAMFS is not set
-+# CONFIG_M586MMX is not set
-+# CONFIG_M586TSC is not set
++CONFIG_M586MMX=y
++CONFIG_M586TSC=y
 +# CONFIG_MFD_SM501 is not set
 +# CONFIG_PARPORT is not set
 +# CONFIG_QUOTA is not set

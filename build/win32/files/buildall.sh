@@ -39,6 +39,10 @@ make install
 cp /usr/bin/SDL.dll $ddir/
 
 
+echo "Extracting WinPcap runtime files ..."
+cd /usr/src
+tar zxvf WinPcap-4.1-files.tar.gz
+
 echo "Extracting WinPcap developer files ..."
 cd /usr/src
 tar zxvf WpdPack_4_1_beta4.tar.gz
@@ -92,6 +96,7 @@ cp pc-bios/bios.bin $ddir/
 cp pc-bios/vgabios.bin $ddir/
 cp pc-bios/vgabios-cirrus.bin $ddir/
 cp /d/add/* $ddir/
+cp /usr/src/WinPcap-4.1-files/* $ddir/
 
 echo "DONE."
 exit 0
