@@ -182,7 +182,7 @@ diff -Naur kamikaze-orig/package/tor/files/tor.init kamikaze-mod/package/tor/fil
 +	  clear;echo
 +	  date
 +	  echo
-+	  echo "TorVM IP Address: $MYIP"
++	  echo "Tor VM local network IP address: $MYIP"
 +	  echo
 +	  # check if we are fully bootstrapped yet
 +	  grep 'Bootstrapped 100' /var/log/tor/notices.log >/dev/null 2>&1
