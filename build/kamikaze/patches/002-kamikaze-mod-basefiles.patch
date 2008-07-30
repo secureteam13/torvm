@@ -970,8 +970,8 @@ diff -Naur kamikaze-orig/package/base-files/files/etc/ipkg.conf kamikaze-mod/pac
 -dest ram /tmp
 diff -Naur kamikaze-orig/package/base-files/files/etc/preinit kamikaze-mod/package/base-files/files/etc/preinit
 --- kamikaze-orig/package/base-files/files/etc/preinit	2008-04-23 16:20:46.084166000 +0000
-+++ kamikaze-mod/package/base-files/files/etc/preinit	2008-07-30 07:52:33.818966786 +0000
-@@ -1,92 +1,159 @@
++++ kamikaze-mod/package/base-files/files/etc/preinit	2008-07-30 08:27:12.020008826 +0000
+@@ -1,92 +1,163 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008  The Tor Project, Inc.
@@ -1138,9 +1138,11 @@ diff -Naur kamikaze-orig/package/base-files/files/etc/preinit kamikaze-mod/packa
 +  MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//'`
 +  GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//'`
 +  MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//'`
 +  dn "Setting IP $IP / $MASK via $GW ..."
 +  ifconfig eth0 hw ether $MAC
 +  ifconfig eth0 $IP netmask $MASK up
++  ifconfig eth0 mtu $MTU
 +  route add default gw $GW
 +  netup=1
 +else
@@ -1159,6 +1161,8 @@ diff -Naur kamikaze-orig/package/base-files/files/etc/preinit kamikaze-mod/packa
 +      maxrt=$(expr $maxrt - 1)
 +    fi
 +  done
++  # XXX MRP enforce MTU under 1500 to work around winpcap issue until resolved
++  ifconfig eth0 mtu 1482
 +fi
  
 -echo "- preinit -"
