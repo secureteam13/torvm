@@ -30,7 +30,10 @@
    </author>
 
    <pubdate>July 24, 2008</pubdate>
-   <legalnotice>Copyright &copy; 2008 The Tor Project, Inc.</legalnotice>
+   <copyright>
+     <year>2008</year>
+     <holder>The Tor Project, Inc.</holder>
+   </copyright>
  </articleinfo>
 
 
@@ -802,9 +805,9 @@ Many protections built into Tor to protect against various types of attacks agai
 
 
 <sect1>
-  <title>Copyright and Legal Notice</title>
+  <title>Legal Notice</title>
   <para>
-Copyright &copy; 2008 The Tor Project, Inc. You may distribute or modify this document according to the terms of the <ulink url="http://www.gnu.org/licenses/fdl-1.2.txt">GNU Free Documentation License Version 1.2 or later</ulink>.
+You may distribute or modify this document according to the terms of the <ulink url="http://www.gnu.org/licenses/fdl-1.2.txt">GNU Free Documentation License Version 1.2 or later</ulink>.
   </para>
   <para>
 "<trademark class="trade">Tor</trademark> is a trademark of The Tor Project, Inc."
