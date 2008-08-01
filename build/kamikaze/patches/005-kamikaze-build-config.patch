@@ -1,11 +1,11 @@
 diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 --- kamikaze-orig/.config	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/.config	2008-07-28 15:26:33.246856047 +0000
++++ kamikaze-mod/.config	2008-08-02 01:06:19.018823102 +0000
 @@ -0,0 +1,1140 @@
 +#
 +# Automatically generated make config: don't edit
 +# OpenWrt version: Kamikaze (unknown)
-+# Mon Jul 28 08:26:06 2008
++# Fri Aug  1 17:44:11 2008
 +#
 +CONFIG_HAVE_DOT_CONFIG=y
 +# CONFIG_TARGET_ppc40x is not set
@@ -162,10 +162,10 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_TOOLCHAINOPTS=y
 +# CONFIG_EXTRA_TARGET_ARCH is not set
 +# CONFIG_BINUTILS_VERSION_2_16_1 is not set
-+CONFIG_BINUTILS_VERSION_2_17=y
-+# CONFIG_BINUTILS_VERSION_2_18 is not set
++# CONFIG_BINUTILS_VERSION_2_17 is not set
++CONFIG_BINUTILS_VERSION_2_18=y
 +CONFIG_EXTRA_BINUTILS_CONFIG_OPTIONS=""
-+CONFIG_BINUTILS_VERSION="2.17"
++CONFIG_BINUTILS_VERSION="2.18"
 +# CONFIG_GCC_VERSION_3_4_6 is not set
 +CONFIG_GCC_VERSION_4_1_2=y
 +# CONFIG_GCC_VERSION_4_2_0 is not set
@@ -174,7 +174,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_GCC_VERSION_4_2_3 is not set
 +# CONFIG_GCC_VERSION_4_2_4 is not set
 +CONFIG_EXTRA_GCC_CONFIG_OPTIONS=""
-+CONFIG_INSTALL_LIBSTDCPP=y
++# CONFIG_INSTALL_LIBSTDCPP is not set
 +# CONFIG_INSTALL_LIBGCJ is not set
 +# CONFIG_UCLIBC_VERSION_SNAPSHOT is not set
 +# CONFIG_UCLIBC_VERSION_0_9_28 is not set
@@ -199,17 +199,17 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# Base system
 +#
 +CONFIG_DEFAULT_base-files=y
-+CONFIG_DEFAULT_libgcc=y
++# CONFIG_DEFAULT_libgcc is not set
 +CONFIG_DEFAULT_uclibc=y
-+CONFIG_DEFAULT_bridge=y
++# CONFIG_DEFAULT_bridge is not set
 +CONFIG_DEFAULT_busybox=y
-+CONFIG_DEFAULT_dnsmasq=y
-+CONFIG_DEFAULT_dropbear=y
-+CONFIG_DEFAULT_hotplug2=y
++# CONFIG_DEFAULT_dnsmasq is not set
++# CONFIG_DEFAULT_dropbear is not set
++# CONFIG_DEFAULT_hotplug2 is not set
 +CONFIG_DEFAULT_iptables=y
-+CONFIG_DEFAULT_mtd=y
-+CONFIG_DEFAULT_uci=y
-+CONFIG_DEFAULT_udevtrigger=y
++# CONFIG_DEFAULT_mtd is not set
++# CONFIG_DEFAULT_uci is not set
++# CONFIG_DEFAULT_udevtrigger is not set
 +CONFIG_PACKAGE_base-files=y
 +# CONFIG_PACKAGE_br2684ctl is not set
 +# CONFIG_PACKAGE_bridge is not set
@@ -843,8 +843,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +# CONFIG_PACKAGE_ldd is not set
 +CONFIG_PACKAGE_libgcc=y
 +CONFIG_PACKAGE_libpthread=y
-+CONFIG_PACKAGE_libssp=y
-+# CONFIG_PACKAGE_libstdcpp is not set
++# CONFIG_PACKAGE_libssp is not set
 +# CONFIG_PACKAGE_mtd is not set
 +# CONFIG_PACKAGE_qos-scripts is not set
 +# CONFIG_PACKAGE_uci is not set
@@ -862,15 +861,16 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +# CONFIG_PACKAGE_libfuse is not set
 +# CONFIG_PACKAGE_libblkid is not set
-+CONFIG_PACKAGE_libgmp=y
++CONFIG_PACKAGE_libevent=y
++# CONFIG_PACKAGE_libgmp is not set
 +# CONFIG_PACKAGE_libiw is not set
 +# CONFIG_PACKAGE_libjson is not set
 +# CONFIG_PACKAGE_libltdl is not set
 +# CONFIG_PACKAGE_liblua is not set
-+CONFIG_PACKAGE_libncurses=y
-+CONFIG_PACKAGE_libnl=y
++# CONFIG_PACKAGE_libncurses is not set
++# CONFIG_PACKAGE_libnl is not set
 +CONFIG_PACKAGE_libopenssl=y
-+CONFIG_PACKAGE_libpcap=y
++# CONFIG_PACKAGE_libpcap is not set
 +# CONFIG_PACKAGE_libuci is not set
 +# CONFIG_PACKAGE_libuci-lua is not set
 +# CONFIG_PACKAGE_libuuid is not set
@@ -1021,9 +1021,9 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +#
 +# CONFIG_PACKAGE_kmod-atm is not set
 +# CONFIG_PACKAGE_kmod-ax25 is not set
-+CONFIG_PACKAGE_kmod-bonding=y
++# CONFIG_PACKAGE_kmod-bonding is not set
 +# CONFIG_PACKAGE_kmod-capi is not set
-+CONFIG_PACKAGE_kmod-gre=y
++# CONFIG_PACKAGE_kmod-gre is not set
 +# CONFIG_PACKAGE_kmod-ip6-tunnel is not set
 +# CONFIG_PACKAGE_kmod-ipip is not set
 +# CONFIG_PACKAGE_kmod-ipsec is not set
