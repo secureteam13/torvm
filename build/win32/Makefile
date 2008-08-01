@@ -191,7 +191,8 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \
-	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/;
+	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
+	touch $(ISODIR)/VMDEVISO.TXT
 
 buildiso: extract
 	@if [ -f w32build.iso ]; then \

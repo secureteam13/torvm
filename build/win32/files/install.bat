@@ -1,4 +1,11 @@
-set ISODRV=D:\
+@echo off
+for %%d in (d,e,f,g,h) do IF EXIST %%d:\VMDEVISO.TXT (
+  set ISODRV=%%d:\
+  GOTO GOTDRV
+)
+GOTO FAILED
+
+:GOTDRV
 set DDRV=C:\
 set DDIR=MinGW
 set MDIR=msys
@@ -46,8 +53,14 @@ set WD=C:\msys\1.0\bin\
 set PATH=%WD%;%PATH%
 
 %WD%bash %BUILDER%
-EXIT
+GOTO DONE
 
 :NOINSTALL
 ECHO "Found existing install directories.  Delete any previous install targets and try again."
-EXIT
+GOTO DONE
+
+:FAILED
+ECHO "Unable to locate a functional installer CDROM with win32 build image."
+GOTO DONE
+
+:DONE
