@@ -36,7 +36,7 @@ prereq:
 	@if [ ! -f .build_prereqs_verified ]; then \
 		echo "Verifying build prerequisites ..." >&2; \
 		NOFOUND=""; \
-		REQS="gmake gcc g++ ccache gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs sha1sum"; \
+		REQS="make gcc g++ ccache gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs sha1sum"; \
 		for REQ in $$REQS; do \
 			which $$REQ >/dev/null 2>&1; \
 			if (( $$? != 0 )); then \
@@ -94,7 +94,7 @@ buildtree: import
 
 buildkern: buildtree
 	@cd build/kamikaze/$(TGTNAME); \
-	time su $(BUSER) -c "( $(MAKE) V=99 oldconfig && gmake V=99 world )"; \
+	time su $(BUSER) -c "( $(MAKE) V=99 oldconfig && $(MAKE) V=99 world )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: OpenWRT kernel build failed.  Check log for details." >&2; \
 		exit 1; \
