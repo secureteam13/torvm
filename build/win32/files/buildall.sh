@@ -95,7 +95,7 @@ cp i386-softmmu/qemu.exe $ddir/
 cp pc-bios/bios.bin $ddir/
 cp pc-bios/vgabios.bin $ddir/
 cp pc-bios/vgabios-cirrus.bin $ddir/
-cp /d/add/* $ddir/
+cp /usr/src/add/* $ddir/
 cp /usr/src/WinPcap-4.1-files/* $ddir/
 
 echo "DONE."

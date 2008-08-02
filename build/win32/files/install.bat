@@ -1,5 +1,5 @@
 @echo off
-for %%d in (d,e,f,g,h) do IF EXIST %%d:\VMDEVISO.TXT (
+for %%d in (d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) do IF EXIST %%d:\VMDEVISO.TXT (
   set ISODRV=%%d:\
   GOTO GOTDRV
 )
@@ -43,9 +43,14 @@ copy fstab %DDRV%%MDIR%\%MVER%\etc\
 cd /d %DDRV%
 cd %MDIR%\%MVER%\
 md src
+cd src
+md add
 cd /d %ISODRV%
 cd dl\src
 copy *.* %DDRV%%MDIR%\%MVER%\src\
+cd /d %ISODRV%
+cd add
+copy *.* %DDRV%%MDIR%\%MVER%\src\add\
 cd %MDIR%\%MVER%
 set PATH=%DDRV%%MDIR%\%MVER%\bin;%DDRV%%MDIR%\%MVER%;%PATH%
 set BUILDER=/usr/src/buildall.sh
@@ -53,6 +58,7 @@ set WD=C:\msys\1.0\bin\
 set PATH=%WD%;%PATH%
 
 %WD%bash %BUILDER%
+ECHO "Build completed successfully."
 GOTO DONE
 
 :NOINSTALL
