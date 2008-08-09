@@ -155,7 +155,7 @@ diff -Naur kamikaze-orig/.config kamikaze-mod/.config
 +CONFIG_AUTOREBUILD=y
 +CONFIG_BUILD_SUFFIX=""
 +# CONFIG_TAR_VERBOSITY is not set
-+CONFIG_CCACHE=y
++# CONFIG_CCACHE is not set
 +CONFIG_EXTERNAL_KERNEL_TREE=""
 +# CONFIG_BUILD_DEVELOPER_SYSTEM is not set
 +# CONFIG_NATIVE_TOOLCHAIN is not set
