@@ -1,19 +1,32 @@
-Transparent Tor Proxy Virtual Machine
+
+                    Transparent Tor Proxy Virtual Machine
 
 
 See the doc/ directory for design and implementation details and the LICENSE
 file for rights and terms.
 
 To build you will need a *nix environment and a Windows XP or later operating
-system for Qemu and libraries. Various build configuration options and other
+system for Qemu and libraries.  Various build configuration options and other
 basic features are not yet avilable; edit the Makefile to adjust manually.
 
-Run 'make' to build the VM kernel image and Windows build ISO image. Once the
+
+NOTE: Two subversion repositories are accessed via SSL with keys that may need
+to be accepted manually.  To confirm that you have authenticated the keys used
+issue the following commands and approve the keys if needed:
+
+    svn info https://svn.torproject.org/svn/torvm/trunk
+    # Fingerprint: 55:62:fe:1b:60:f9:35:fa:50:44:dd:33:ea:54:77:26:e4:da:5f:72
+
+    svn info https://svn.openwrt.org/openwrt/trunk/
+    # Fingerprint: a1:0a:d8:2d:af:4e:67:92:18:a0:27:b6:9f:2b:e1:12:08:28:a0:b1
+
+
+Run 'make' to build the VM kernel image and Windows build ISO image.  Once the
 Windows build is done a complete Tor virtual machine package should be zipped
-up ready for distribution.
+up ready for distribution in the C:\Tor_VM folder.
 
 
-Some files of interest:
+Some files and paths of interest:
 
 ./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
 > this is the Linux kernel and initramfs used in the VM.
@@ -24,4 +37,16 @@ Some files of interest:
 ./build/win32/w32build.iso
 > this is the automated win32 build ISO for Qemu.  Once everything is built
 > the Qemu program and libraries will be placed in C:\Tor_VM
+
+./build/kamikaze/patches/
+> this directory contains the patch set applied to the kamikaze distribution
+> for Tor VM customizations.
+
+./build/win32/files/
+> this directory contains the scripts and files used in the Windows build and
+> packaged Qemu Tor_VM folder.
+
+./build/win32/patches/
+> this directory contains the patches applied to Qemu for bridged ethernet
+> support via WinPCAP.
 
