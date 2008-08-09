@@ -14,15 +14,15 @@ diff -Naur kamikaze-orig/package/tor/Makefile kamikaze-mod/package/tor/Makefile
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+#PKG_VERSION:=0.2.0.28-rc
-+PKG_VERSION:=0.2.1.2-alpha
++#PKG_VERSION:=0.2.0.30
++PKG_VERSION:=0.2.1.4-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+#PKG_MD5SUM:=d65dd5c9e1f82912aa0c736c5daec22d
-+PKG_MD5SUM:=122778603272fd3e53f6c2e7b6be4a81
++#PKG_MD5SUM:=d37b582ee35b4f69564b0635a449b5f6
++PKG_MD5SUM:=15f35f29102064ac6ff8fe1414f75aa5
 +
 +include $(INCLUDE_DIR)/package.mk
 +
