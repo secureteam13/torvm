@@ -1,6 +1,6 @@
 diff -Naur kamikaze-orig/package/tor/Makefile kamikaze-mod/package/tor/Makefile
 --- kamikaze-orig/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/package/tor/Makefile	2008-07-28 15:06:37.736975605 +0000
++++ kamikaze-mod/package/tor/Makefile	2008-08-09 21:54:19.244183045 +0000
 @@ -0,0 +1,113 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -117,7 +117,7 @@ diff -Naur kamikaze-orig/package/tor/Makefile kamikaze-mod/package/tor/Makefile
 +$(eval $(call BuildPackage,tor))
 diff -Naur kamikaze-orig/package/tor/files/tor.init kamikaze-mod/package/tor/files/tor.init
 --- kamikaze-orig/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/package/tor/files/tor.init	2008-07-28 15:11:02.520282463 +0000
++++ kamikaze-mod/package/tor/files/tor.init	2008-08-09 21:54:19.244183045 +0000
 @@ -0,0 +1,86 @@
 +#!/bin/sh 
 +
@@ -207,7 +207,7 @@ diff -Naur kamikaze-orig/package/tor/files/tor.init kamikaze-mod/package/tor/fil
 +exit 0
 diff -Naur kamikaze-orig/package/tor/files/torrc kamikaze-mod/package/tor/files/torrc
 --- kamikaze-orig/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/package/tor/files/torrc	2008-07-28 15:11:35.430279671 +0000
++++ kamikaze-mod/package/tor/files/torrc	2008-08-09 21:54:19.244183045 +0000
 @@ -0,0 +1,20 @@
 +# Configuration for Tor VM
 +RunAsDaemon 1
@@ -229,63 +229,3 @@ diff -Naur kamikaze-orig/package/tor/files/torrc kamikaze-mod/package/tor/files/
 +
 +# Misc. options
 +AutomapHostsOnResolve 1
-diff -Naur kamikaze-orig/package/tor/patches/001-correct-configure.patch kamikaze-mod/package/tor/patches/001-correct-configure.patch
---- kamikaze-orig/package/tor/patches/001-correct-configure.patch	1970-01-01 00:00:00.000000000 +0000
-+++ kamikaze-mod/package/tor/patches/001-correct-configure.patch	2008-07-28 15:05:28.366988701 +0000
-@@ -0,0 +1,56 @@
-+diff -Naur tor-0.2.1.2-alpha-orig/configure tor-0.2.1.2-alpha-mod/configure
-+--- tor-0.2.1.2-alpha-orig/configure	2008-06-20 06:27:43.000000000 +0000
-++++ tor-0.2.1.2-alpha-mod/configure	2008-07-09 02:41:33.378944558 +0000
-+@@ -8115,7 +8115,7 @@
-+ 
-+ 
-+ 
-+-for ac_header in stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netintet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h
-++for ac_header in stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netinet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h
-+ do
-+ as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-+ if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
-+@@ -8474,6 +8474,9 @@
-+ #ifdef HAVE_SYS_SOCKET_H
-+ #include <sys/socket.h>
-+ #endif
-++#ifdef HAVE_NETINET_IN_H
-++#include <netinet/in.h>
-++#endif
-+ 
-+ #include <$ac_header>
-+ _ACEOF
-+diff -Naur tor-0.2.1.2-alpha-orig/configure.in tor-0.2.1.2-alpha-mod/configure.in
-+--- tor-0.2.1.2-alpha-orig/configure.in	2008-06-20 06:26:59.000000000 +0000
-++++ tor-0.2.1.2-alpha-mod/configure.in	2008-07-09 02:41:45.215604782 +0000
-+@@ -315,7 +315,7 @@
-+ 
-+ dnl These headers are not essential
-+ 
-+-AC_CHECK_HEADERS(stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netintet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h)
-++AC_CHECK_HEADERS(stdint.h sys/types.h inttypes.h sys/param.h sys/wait.h limits.h sys/limits.h netinet/in.h arpa/inet.h machine/limits.h syslog.h sys/time.h sys/resource.h inttypes.h utime.h sys/utime.h sys/mman.h netinet/in.h netinet/in6.h malloc.h sys/syslimits.h malloc/malloc.h)
-+ 
-+ TOR_CHECK_PROTOTYPE(malloc_good_size, HAVE_MALLOC_GOOD_SIZE_PROTOTYPE,
-+ [#ifdef HAVE_MALLOC_H
-+@@ -349,6 +349,9 @@
-+ #endif
-+ #ifdef HAVE_SYS_SOCKET_H
-+ #include <sys/socket.h>
-++#endif
-++#ifdef HAVE_NETINET_IN_H
-++#include <netinet/in.h>
-+ #endif])
-+ 
-+ if test x$transparent = xtrue ; then
-+diff -Naur tor-0.2.1.2-alpha-orig/orconfig.h.in tor-0.2.1.2-alpha-mod/orconfig.h.in
-+--- tor-0.2.1.2-alpha-orig/orconfig.h.in	2008-06-20 06:28:31.000000000 +0000
-++++ tor-0.2.1.2-alpha-mod/orconfig.h.in	2008-07-09 02:41:19.685608073 +0000
-+@@ -153,7 +153,7 @@
-+ /* Define to 1 if you have the <netinet/in.h> header file. */
-+ #undef HAVE_NETINET_IN_H
-+ 
-+-/* Define to 1 if you have the <netintet/in.h> header file. */
-++/* Define to 1 if you have the <netinet/in.h> header file. */
-+ #undef HAVE_NETINTET_IN_H
-+ 
-+ /* Define to 1 if you have the <net/if.h> header file. */
