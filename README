@@ -26,6 +26,16 @@ Windows build is done a complete Tor virtual machine package should be zipped
 up ready for distribution in the C:\Tor_VM folder.
 
 
+If you have trouble with the build process downloading the various sources
+from mirrors and upstream repositories a current copy of all the kamikaze and
+win32 archives is available as: http://peertech.org/files/torvmdlcache.tar
+
+The extracted dl and wdl directories can be used in the build by passing their
+location to the make command:
+
+    make DLDIR=./dl WDLDIR=./wdl all
+
+
 Some files and paths of interest:
 
 ./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
