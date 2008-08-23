@@ -5,12 +5,10 @@ SHELL=/bin/bash
 export SHELL
 DLCMD=scripts/download.sh
 
-ifeq (,$(WDLDIR))
-	WDLDIR=dl
-endif
 ifeq (,$(ISODIR))
 	ISODIR=iso
 endif
+override ISODIR:=$(realpath $(ISODIR))
 
 # various utilities are downloaded and packaged into an ISO image
 # with an autorun.inf that launches a build of all the win32 parts.
@@ -178,7 +176,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \
-	cp patches/qemu-winpcap-0.9.1.patch $(ISODIR)/dl/src; \
+	cp patches/* $(ISODIR)/dl/src; \
 	unzip $(WDLDIR)/$(ZLIB_F) -d $(ISODIR)/ bin/zlib1.dll; \
 	unzip $(WDLDIR)/$(GZIP_F) -d $(ISODIR)/ bin/gzip.exe; \
 	unzip $(WDLDIR)/$(BZIP2_F) -d $(ISODIR)/ bin/bzip2.exe bin/bzip2.dll; \

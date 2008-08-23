@@ -1,0 +1,62 @@
+diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
+--- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
++++ mod-qemu-0.9.1/vl.c	2008-08-23 01:58:11.042129035 +0000
+@@ -7582,6 +7582,7 @@
+            "Linux boot specific:\n"
+            "-kernel bzImage use 'bzImage' as kernel image\n"
+            "-append cmdline use 'cmdline' as kernel command line\n"
++           "-appendstdin    read from stdin for kernel command line\n"
+            "-initrd file    use 'file' as initial ram disk\n"
+            "\n"
+            "Debug/Expert options:\n"
+@@ -7719,6 +7720,7 @@
+     QEMU_OPTION_old_param,
+     QEMU_OPTION_clock,
+     QEMU_OPTION_startdate,
++    QEMU_OPTION_appendstdin,
+ };
+ 
+ typedef struct QEMUOption {
+@@ -7827,6 +7829,7 @@
+ #endif
+     { "clock", HAS_ARG, QEMU_OPTION_clock },
+     { "startdate", HAS_ARG, QEMU_OPTION_startdate },
++    { "appendstdin", 0, QEMU_OPTION_appendstdin },
+     { NULL },
+ };
+ 
+@@ -7869,6 +7872,24 @@
+     }
+ }
+ 
++#define MAX_KERNEL_CMDLN 32768
++static char * read_stdin(void)
++{
++    int bufsz = MAX_KERNEL_CMDLN;
++    char * parms = NULL;
++    int cnt;
++
++    parms = qemu_mallocz(sizeof(MAX_KERNEL_CMDLN));
++    if (!parms)
++        return NULL;
++    cnt = read(0, parms, bufsz-1);
++    /* probably not necessary due to mallocz, but just to be safe... */
++    parms[cnt] = 0;
++
++    /* don't know when this can be free'd; let process exit sort it out */
++    return parms;
++}
++
+ /* XXX: currently we cannot use simultaneously different CPUs */
+ static void register_machines(void)
+ {
+@@ -8316,6 +8337,9 @@
+             case QEMU_OPTION_append:
+                 kernel_cmdline = optarg;
+                 break;
++            case QEMU_OPTION_appendstdin:
++                kernel_cmdline = read_stdin();
++                break;
+             case QEMU_OPTION_cdrom:
+ 		drive_add("file=\"%s\"," CDROM_ALIAS, optarg);
+                 break;
