@@ -18,25 +18,42 @@ ifeq (,$(TGTNAME))
 	TGTNAME=x86-uclibc-vm
 endif
 ifeq (,$(DLDIR))
-	DLDIR=../common/dl
+	DLDIR=./build/kamikaze/common/dl
 endif
+ifeq (,$(WDLDIR))
+	WDLDIR=./build/win32/dl
+endif
+override DLDIR:=$(realpath $(DLDIR))
+override WDLDIR:=$(realpath $(WDLDIR))
 
-# current OpenWRT version we're building against
+# OpenWRT version for build
 override CVER:=11833
 
 export BUSER
 export BGROUP
 export TGTNAME
 export DLDIR
+export WDLDIR
 
 default all: prereq import buildtree buildkern buildvmiso buildw32src package
 
 #XXX move this into configure
-prereq:
+prereq: Makefile
+	# check DL paths always, since these are more volatile than build user and tools
+	@if [ ! -d $(DLDIR) ]; then \
+		echo "Error: invalid DLDIR path given."; \
+		echo "directory \"$(DLDIR)\" does not exist."; \
+		exit 1; \
+	fi;
+	@if [ ! -d $(WDLDIR) ]; then \
+		echo "Error: invalid WDLDIR path given."; \
+		echo "directory \"$(WDLDIR)\" does not exist."; \
+		exit 1; \
+	fi;
 	@if [ ! -f .build_prereqs_verified ]; then \
 		echo "Verifying build prerequisites ..." >&2; \
 		NOFOUND=""; \
-		REQS="make gcc g++ ccache gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs sha1sum"; \
+		REQS="make gcc g++ gawk bison flex unzip bzip2 patch perl wget tar svn autoconf mkisofs sha1sum"; \
 		for REQ in $$REQS; do \
 			which $$REQ >/dev/null 2>&1; \
 			if (( $$? != 0 )); then \
@@ -62,7 +79,7 @@ prereq:
 		touch .build_prereqs_verified; \
 	fi
 
-import: Makefile prereq
+import: prereq
 	@if [ ! -d import/kamikaze ]; then \
 		echo "Checking out OpenWRT subversion tree revision $(CVER) ..." >&2; \
 		cd import; \
@@ -108,10 +125,11 @@ buildvmiso: buildkern
 		exit 1; \
 	fi
 
-buildw32src: buildkern
+buildw32src:
 	@cd build/win32; \
 	chown -R $(BUSER):$(BGROUP) . ; \
-	time su $(BUSER) -c "( $(MAKE) )"; \
+	echo "WDLDIR=$(WDLDIR)"; \
+	time su $(BUSER) -c "( echo WDLDIR=$(WDLDIR) && $(MAKE) WDLDIR=$(WDLDIR) )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: Unable to create win32 build ISO image." >&2; \
 		exit 1; \
