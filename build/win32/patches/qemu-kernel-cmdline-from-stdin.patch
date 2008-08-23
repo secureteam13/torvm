@@ -1,6 +1,6 @@
 diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 --- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-08-23 01:58:11.042129035 +0000
++++ mod-qemu-0.9.1/vl.c	2008-08-23 05:07:36.576478509 +0000
 @@ -7582,6 +7582,7 @@
             "Linux boot specific:\n"
             "-kernel bzImage use 'bzImage' as kernel image\n"
@@ -25,7 +25,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      { NULL },
  };
  
-@@ -7869,6 +7872,24 @@
+@@ -7869,6 +7872,29 @@
      }
  }
  
@@ -40,9 +40,14 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +    if (!parms)
 +        return NULL;
 +    cnt = read(0, parms, bufsz-1);
-+    /* probably not necessary due to mallocz, but just to be safe... */
-+    parms[cnt] = 0;
-+
++    if (cnt > 0) {
++        /* probably not necessary due to mallocz, but just to be safe... */
++        parms[cnt] = 0;
++    }
++    else {
++        qemu_free(parms);
++        parms = NULL;
++    }
 +    /* don't know when this can be free'd; let process exit sort it out */
 +    return parms;
 +}
@@ -50,12 +55,16 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  /* XXX: currently we cannot use simultaneously different CPUs */
  static void register_machines(void)
  {
-@@ -8316,6 +8337,9 @@
+@@ -8316,6 +8342,13 @@
              case QEMU_OPTION_append:
                  kernel_cmdline = optarg;
                  break;
 +            case QEMU_OPTION_appendstdin:
 +                kernel_cmdline = read_stdin();
++                if (kernel_cmdline == NULL) {
++                    fprintf (stderr, "Warning: appendstdin requested but nothing read from stdin.");
++                    kernel_cmdline = "";
++                }
 +                break;
              case QEMU_OPTION_cdrom:
  		drive_add("file=\"%s\"," CDROM_ALIAS, optarg);
