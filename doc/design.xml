@@ -29,7 +29,7 @@
     </affiliation>
    </author>
 
-   <pubdate>July 24, 2008</pubdate>
+   <pubdate>August 24, 2008</pubdate>
    <copyright>
      <year>2008</year>
      <holder>The Tor Project, Inc.</holder>
@@ -185,7 +185,7 @@ Attacks which leverage an application or operating system flaw to gain full remo
       </para>
       <para>
 There are useful methods to reduce this risk, including privilege restrictions on applications and even
- isolation of the client OS in another virtual machine (a dual VM model). Such mitigation techniques are
+ isolation of the client OS in another virtual machine (a dual or multiple VM model). Such mitigation techniques are
  outside the scope of this implementation.
       </para>
       </listitem>
@@ -203,6 +203,13 @@ The ability to switch between anonymous and direct access to such services requi
  which is too complicated and restrictive to apply to the entire spectrum
  of applications and protocols that may be used over a transparent Tor proxy implementation. For this reason a
  "toggle" capability is explicitly not included in the design goals for this implementation.
+      </para>
+      <para>
+The use of multiple virtual machines to launch applications from a known and consistent state can help achieve isolation
+ between instances of the applications and preserve unlinkability. For example, if a flash and java enabled browser is
+ always launched from a clean initial VM state it does not matter if file system cookies or data are saved; these changes
+ will be lost once the application VM exits. This approach to application isolation fits nicely with the transparent
+ Tor VM model but is outside the scope of the current implementation.
       </para>
       </listitem>
 
@@ -357,7 +364,7 @@ All operating systems that are able to run Tor should be able to route traffic i
      <title>User Interface Requirements</title>
       <orderedlist>
 
-      <listitem><command>Native GUI Controller (Vidalia, TorK)</command>
+      <listitem><command>Native GUI Controller (Vidalia)</command>
       <para>
 Vidalia is an existing feature rich and well known controller for Tor on Windows
  and other operating systems that would provide much of the interface desired. This requires that an
@@ -367,22 +374,6 @@ Vidalia is an existing feature rich and well known controller for Tor on Windows
 A hashed control password generated randomly at start is used by Vidalia to authenticate to Tor.  This is passed to the
  VM kernel but never stored on disk. This would allow control port access without connection behavior changes with the
  limitation that any Vidalia restart requires a restart of the VM as well.
-      </para>
-      <para>
-Another possibility is to treat the host OS as a
- <ulink url="http://en.wikipedia.org/wiki/Demilitarized_zone_(computing)">demarcation zone</ulink> and reverse the usual
- method of connection to the control port. In this configuration, the Tor VM application would launch Vidalia with a
- listening socket on the private point-to-point address. A hashed control password is used
- by Vidalia to authenticate to Tor once the connection is established.
-      </para>
-      <para>
-Other platforms like TorK on KDE could use the same connection strategy as well.
-      </para>
-      </listitem>
-
-      <listitem><command>Console UI</command>
-      <para>
-A VGA console Tor controller using the Unix domain socket control interface would be useful.
       </para>
       </listitem>
 
@@ -402,6 +393,17 @@ A VGA console Tor controller using the Unix domain socket control interface woul
 A solution that satisfies these requirements can be implemented using a variety of GNU/Linux and Win32
  software. The open source licenses associated with these tools ensure that adequate scrutiny of the
  code base supporting a Tor virtual machine is possible for those who choose to evaluate it.
+  </para>
+  <para>
+Some of the implementation details listed below may no longer be needed if the multiple VM model is used for isolating
+ user applications.  For example, the ability selective block or allow ports for specific applications on the host using
+ the Vidalia controller would no longer be needed if all Tor VM applications run inside their own VM and route through
+ Tor transparently.
+  </para>
+  <para>
+In addition to simplified controller behavior, a multiple VM model could alleviate the need to isolate the host TCP/IP stack
+ and the network interface configuration required to implement such isolation. This would be most useful in a situation where
+ administrator rights are not available.
   </para>
 
   <sect2 id="buildenv">
@@ -501,9 +503,9 @@ A number of patches are necessary for the implementation of Tor VM using the too
       </para>
       </listitem>
 
-      <listitem><command>Kqemu Accelerator [optional]</command>
+      <listitem><command>Kernel Command Line via STDIN</command>
       <para>
-<literallayout><function>
+<literallayout><function>qemu-kernel-cmdline-from-stdin.patch
 </function></literallayout>
       </para>
       </listitem>
@@ -569,18 +571,6 @@ kamikaze-libevent-package.patch
 
       <listitem><command>Direct (non-Tor) and Blocked Port Setup</command>
       <para>
-      </para>
-      </listitem>
-
-      <listitem><command>Control Port Listen Support [optional]</command>
-      <para>
-<literallayout><function>src/torcontrol/torcontrol.h,.cpp
-src/torcontrol/controlconnection.h,.cpp
-src/torcontrol/listensocket.h,.cpp
-src/torcontrol/controlsocket.h,.cpp
-src/vidalia/config/torcontrol.h,.cpp
-src/vidalia/vidalia.cpp
-</function></literallayout>
       </para>
       </listitem>
 
@@ -680,16 +670,11 @@ Persistent Routes:
 </function></literallayout>
        </para>
        <para>
-Example commands to configure Tap32 interface for point-to-point link:
-<literallayout><function>set HOSTIP=10.1.1.2
-set VMIP=10.1.1.1
-set VMMAC=00-11-22-33-44-55
-netsh interface ip set address name="tap32" source=static addr=%HOSTIP% mask=255.255.255.252
-netsh interface ip set address name="tap32" gateway=%VMIP% gwmetric=1
-netsh interface ip set dns name="tap32" source=static addr=4.2.2.2 register=both
-arp -s %VMIP% %VMMAC%
-
-</function></literallayout>
+The torvm.exe application launcher manages the network configuration of the host OS and passes configuration information to
+ to the Qemu and Vidalia processes at launch. This allows for clean restoration of network interface configuration after VM
+ exit and provides a method for both Vidalia and Tor to communicate by supplying the control port password to each. In a
+ multiple VM model the additional application VM's would be launched by this process and passed the requisite network
+ information for transparent proxy through the Tor VM via SLIRP interface(s) between Qemu instances.
        </para>
       </listitem>
 
@@ -731,18 +716,11 @@ Many protections built into Tor to protect against various types of attacks agai
 
       <listitem><command>Virtual IDE Hard Disk</command>
       <para>
-<literallayout><function>
-</function></literallayout>
+A virtual disk image is provided with the Qemu build that contains an empty XFS file system.  This file system is mounted
+ at boot and used to store persistent Tor configuration and data, in addition to other system state, like /dev/random seed.
       </para>
       </listitem>
 
-      <listitem><command>Union Mount Write Filesystem</command>
-      <para>
-<literallayout><function>
-</function></literallayout>
-      </para>
-      </listitem>
-   
     </itemizedlist>
    </sect3>
 
@@ -766,21 +744,6 @@ Many protections built into Tor to protect against various types of attacks agai
 
     </itemizedlist>
    </sect3>
-
-   <sect3>
-    <title>Read-Only Storage</title>
-    <itemizedlist>
-
-      <listitem><command>Bootstrap, Keys, and Digests on ISO Image</command>
-      <para>
-<literallayout><function>
-</function></literallayout>
-      </para>
-      </listitem>
-
-    </itemizedlist>
-   </sect3>
-
 
   </sect2>
 
