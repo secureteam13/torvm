@@ -86,6 +86,7 @@ import: prereq
 		svn co -r $(CVER) https://svn.openwrt.org/openwrt/trunk/ kamikaze ; \
 		if (( $$? != 0 )); then \
 			echo "ERROR: Unable to download a copy of the OpenWRT subversion tree." >&2; \
+			rm -rf kamikaze; \
 			exit 1; \
 		fi; \
 	fi
@@ -96,12 +97,19 @@ buildtree: import
 		cd build/kamikaze; \
 		svn export ../../import/kamikaze $(TGTNAME); \
 		if (( $$? != 0 )); then \
-			 echo "ERROR: Unable to export working copy of local OpenWRT tree." >&2; \
-			 exit 1; \
+			echo "ERROR: Unable to export working copy of local OpenWRT tree." >&2; \
+			rm -rf $(TGTNAME); \
+			exit 1; \
 		fi; \
 		cd $(TGTNAME); \
 		for PFILE in $$(ls ../patches/); do \
 			patch -p1 < ../patches/$$PFILE; \
+			if (( $$? != 0 )); then \
+				echo "ERROR: Unable to apply patch $$PFILE." >&2; \
+				cd ..; \
+				rm -rf $(TGTNAME); \
+				exit 1; \
+			fi; \
 		done; \
 		if [ -d $(DLDIR) ]; then \
 			ln -s $(DLDIR) ./dl; \
@@ -125,11 +133,10 @@ buildvmiso: buildkern
 		exit 1; \
 	fi
 
-buildw32src:
+buildw32src: buildkern
 	@cd build/win32; \
 	chown -R $(BUSER):$(BGROUP) . ; \
-	echo "WDLDIR=$(WDLDIR)"; \
-	time su $(BUSER) -c "( echo WDLDIR=$(WDLDIR) && $(MAKE) WDLDIR=$(WDLDIR) )"; \
+	time su $(BUSER) -c "( $(MAKE) WDLDIR=$(WDLDIR) )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: Unable to create win32 build ISO image." >&2; \
 		exit 1; \

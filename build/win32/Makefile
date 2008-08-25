@@ -7,8 +7,9 @@ DLCMD=scripts/download.sh
 
 ifeq (,$(ISODIR))
 	ISODIR=iso
+else
+	override ISODIR:=$(realpath $(ISODIR))
 endif
-override ISODIR:=$(realpath $(ISODIR))
 
 # various utilities are downloaded and packaged into an ISO image
 # with an autorun.inf that launches a build of all the win32 parts.
