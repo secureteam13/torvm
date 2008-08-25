@@ -4,8 +4,8 @@ export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 export ddir=/c/Tor_VM
 mkdir $ddir
 
-cp /bin/msys-z.dll $ddir/
-cp /bin/msys-1.0.dll $ddir/
+cp /usr/bin/msys-z.dll $ddir/
+cp /usr/bin/msys-1.0.dll $ddir/
 
 echo "Building pthreads-w32 ..."
 cd /usr/src
@@ -96,7 +96,10 @@ cp pc-bios/bios.bin $ddir/
 cp pc-bios/vgabios.bin $ddir/
 cp pc-bios/vgabios-cirrus.bin $ddir/
 cp /usr/src/add/* $ddir/
-cp /usr/src/WinPcap-4.1-files/* $ddir/
+
+# still need to handle WinPcap installation; perhaps include link to 4.1 installer exe
+# or wget it at runtime if not present.
+# cp /usr/src/WinPcap-4.1-files/* $ddir/
 
 echo "DONE."
 exit 0
