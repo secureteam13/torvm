@@ -7,7 +7,7 @@ export bindir="${ddir}/bin"
 export confdir="${ddir}/config"
 export statedir="${ddir}/state"
 
-foreach dir in $ddir $libdir $bindir $confdir $statedir; do
+for dir in $ddir $libdir $bindir $confdir $statedir; do
   if [ ! -d $dir ]; then
     mkdir $dir
   fi
@@ -149,7 +149,7 @@ echo "build -cef" >> dobuild.bat
 echo "exit 0" >> dobuild.bat
 cmd.exe /k dobuild.bat
 if (( $? != 0 )); then
-  echo "ERROR: openvpn tap-win32 build failed." >&2
+  echo "ERROR: openvpn tap-win32 driver build failed." >&2
   exit 1
 fi
 
@@ -159,7 +159,15 @@ cd /usr/src
 tar zxvf WpcapSrc_4_1_beta4.tar.gz
 cd WpcapSrc_4_1_beta4
 patch -p1 < ../winpcap-tor-device-mods.patch 2>/dev/null
-echo "KILL ME";sleep 3600
+cd packetNtx
+echo "call $DDKENV $DDKDIR fre WXP" > dobuild.bat
+echo "./CompileDriver" >> dobuild.bat
+echo "exit 0" >> dobuild.bat
+cmd.exe /k dobuild.bat
+if (( $? != 0 )); then
+  echo "ERROR: WinPcap NPF.sys driver build failed." >&2
+  exit 1
+fi
 
 
 echo "Building qemu ..."
