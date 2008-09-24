@@ -171,13 +171,13 @@ BPATH="${MSYSROOT}${TAPDIR}"
 echo "call $DDKENV $DDKDIR wxp f" > dobuild.bat
 echo "cd \"$BPATH\"" >> dobuild.bat
 echo "build -cef" >> dobuild.bat
-echo "exit 0" >> dobuild.bat
+echo "exit" >> dobuild.bat
 cmd.exe /k dobuild.bat
-if (( $? != 0 )); then
+TAPDRVN=tortap91
+if [ ! -f i386/${TAPDRVN}.sys ]; then
   echo "ERROR: openvpn tap-win32 driver build failed." >&2
   exit 1
 fi
-TAPDRVN=tortap91
 cp i386/${TAPDRVN}.sys $libdir/
 cp i386/OemWin2k.inf $libdir/${TAPDRVN}.inf
 
@@ -194,9 +194,9 @@ BPATH="${MSYSROOT}${PCAPDIR}"
 echo "call $DDKENV $DDKDIR w2k f" > dobuild.bat
 echo "cd \"$BPATH\"" >> dobuild.bat
 echo "./CompileDriver" >> dobuild.bat
-echo "exit 0" >> dobuild.bat
+echo "exit" >> dobuild.bat
 cmd.exe /k dobuild.bat
-if (( $? != 0 )); then
+if [ ! -f driver/bin/2k/i386/npf.sys ]; then
   echo "ERROR: WinPcap NPF.sys driver build failed." >&2
   exit 1
 fi
@@ -252,6 +252,7 @@ cp pc-bios/vgabios-cirrus.bin $bindir/
 
 # last but not least, include the virtual disk and other parts
 cp /usr/src/add/* $libdir/
+cp /usr/src/add/hdd.img $statedir/
 
 echo "DONE."
 exit 0

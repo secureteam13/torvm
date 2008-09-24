@@ -127,6 +127,14 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/SOURCES.in mod-openvpn-2.1_rc10/tap-w
  
  # Produce the same symbolic information for both free & checked builds.
  # This will allow us to perform full source-level debugging on both
+diff -Naur orig-openvpn-2.1_rc10/tap-win32/common.h mod-openvpn-2.1_rc10/tap-win32/common.h
+--- orig-openvpn-2.1_rc10/tap-win32/common.h	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/common.h	2008-09-24 05:05:38.596128150 +0000
+@@ -90,3 +90,4 @@
+ //=========================================================
+ 
+ #define TAP_COMPONENT_ID TAP_ID
++#define PRODUCT_TAP_DEVICE_DESCRIPTION "Tor VM TAP-Win32 Network Device Driver"
 diff -Naur orig-openvpn-2.1_rc10/tap-win32/resource.rc mod-openvpn-2.1_rc10/tap-win32/resource.rc
 --- orig-openvpn-2.1_rc10/tap-win32/resource.rc	2008-08-10 18:35:25.000000000 +0000
 +++ mod-openvpn-2.1_rc10/tap-win32/resource.rc	2008-09-24 03:00:42.600211095 +0000
