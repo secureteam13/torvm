@@ -86,6 +86,14 @@ MSYSZLIB_F=zlib-1.2.3-MSYS-1.0.11-1.tar.bz2
 MSYSZLIB_URL=http://downloads.sourceforge.net/mingw/zlib-1.2.3-MSYS-1.0.11-1.tar.bz2?modtime=1206455079&big_mirror=1
 MSYSZLIB_SUM=dff1a110b165d7ba4d7804b1c2f4a023823eec90
 
+MSYSCRYPT_F=crypt-1.1-1-MSYS-1.0.11-1.tar.bz2
+MSYSCRYPT_URL=http://downloads.sourceforge.net/mingw/crypt-1.1-1-MSYS-1.0.11-1.tar.bz2?modtime=1206481779&big_mirror=1
+MSYSCRYPT_SUM=072e9a158d41e73aa5a766df016494dab74085e4
+
+M4_F=m4-1.4.7-MSYS.tar.bz2
+M4_URL=http://prdownloads.sourceforge.net/mingw/m4-1.4.7-MSYS.tar.bz2?download
+M4_SUM=a00ed987824456946777d92f600612f344211dcc
+
 SSL_F=openssl-0.9.8g-1-MSYS-1.0.11-2-dll098.tar.gz
 SSL_URL=http://downloads.sourceforge.net/mingw/openssl-0.9.8g-1-MSYS-1.0.11-2-dll098.tar.gz?modtime=1206734099&big_mirror=1
 SSL_SUM=eba5f37fdec2982727556a3dbb5ea6fd04296b76
@@ -118,21 +126,9 @@ SDL_F=SDL-1.2.13.tar.gz
 SDL_URL=http://www.libsdl.org/release/SDL-1.2.13.tar.gz
 SDL_SUM=51fcaa3e1d5c01fd813ea08688780f86b19cf539
 
-WPCAP_F=WinPcap_4_1_beta4.exe
-WPCAP_URL=http://www.winpcap.org/install/bin/WinPcap_4_1_beta4.exe
-WPCAP_SUM=25a56a70f9f285bc029220393f01177da5b02bb6
-
-WPCAPRT_F=WinPcap-4.1-files.tar.gz
-WPCAPRT_URL=http://peertech.org/files/WinPcap-4.1-files.tar.gz
-WPCAPRT_SUM=57d2eab8b1afcfdf65101849cfe4e4110ee3f121
-
 WPCAPSRC_F=WpcapSrc_4_1_beta4.zip
 WPCAPSRC_URL=http://www.winpcap.org/install/bin/WpcapSrc_4_1_beta4.zip
 WPCAPSRC_SUM=1450c4d293a38c25ec8cd8a9be30e04858df36d9
-
-WPD_F=WpdPack_4_1_beta4.zip
-WPD_URL=http://www.winpcap.org/install/bin/WpdPack_4_1_beta4.zip
-WPD_SUM=fa5255dc1a36ff47999d5b60aeadcf8ff9fb44cd
 
 QEMU_F=qemu-0.9.1.tar.gz
 QEMU_URL=http://bellard.org/qemu/qemu-0.9.1.tar.gz
@@ -146,7 +142,7 @@ WINDDK_F=1830_usa_ddk.iso
 WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
 WINDDK_SUM=0d2154d88a5ee252cc908630c77863bb42777387
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(SDL_F) $(WPCAP_F) $(WPCAPRT_F) $(WPCAPSRC_F) $(WPD_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
 
 default all: downloads extract buildiso runinstall
 
@@ -170,6 +166,8 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(LIBTOOL_F) ]; then $(DLCMD) "$(LIBTOOL_URL)" $(LIBTOOL_SUM) "$(WDLDIR)/$(LIBTOOL_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(MINIRES_F) ]; then $(DLCMD) "$(MINIRES_URL)" $(MINIRES_SUM) "$(WDLDIR)/$(MINIRES_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(MSYSZLIB_F) ]; then $(DLCMD) "$(MSYSZLIB_URL)" $(MSYSZLIB_SUM) "$(WDLDIR)/$(MSYSZLIB_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(MSYSCRYPT_F) ]; then $(DLCMD) "$(MSYSCRYPT_URL)" $(MSYSCRYPT_SUM) "$(WDLDIR)/$(MSYSCRYPT_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(M4_F) ]; then $(DLCMD) "$(M4_URL)" $(M4_SUM) "$(WDLDIR)/$(M4_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SSL_F) ]; then $(DLCMD) "$(SSL_URL)" $(SSL_SUM) "$(WDLDIR)/$(SSL_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SSH_F) ]; then $(DLCMD) "$(SSH_URL)" $(SSH_SUM) "$(WDLDIR)/$(SSH_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(ZLIBSRC_F) ]; then $(DLCMD) "$(ZLIBSRC_URL)" $(ZLIBSRC_SUM) "$(WDLDIR)/$(ZLIBSRC_F)"; fi
@@ -178,10 +176,7 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(AMAKE_F) ]; then $(DLCMD) "$(AMAKE_URL)" $(AMAKE_SUM) "$(WDLDIR)/$(AMAKE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PERL_F) ]; then $(DLCMD) "$(PERL_URL)" $(PERL_SUM) "$(WDLDIR)/$(PERL_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SDL_F) ]; then $(DLCMD) "$(SDL_URL)" $(SDL_SUM) "$(WDLDIR)/$(SDL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WPCAP_F) ]; then $(DLCMD) "$(WPCAP_URL)" $(WPCAP_SUM) "$(WDLDIR)/$(WPCAP_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WPCAPRT_F) ]; then $(DLCMD) "$(WPCAPRT_URL)" $(WPCAPRT_SUM) "$(WDLDIR)/$(WPCAPRT_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WPD_F) ]; then $(DLCMD) "$(WPD_URL)" $(WPD_SUM) "$(WDLDIR)/$(WPD_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
 
@@ -213,9 +208,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	tar jxf $(WDLDIR)/$(MSYS_F) bin/msys-1.0.dll bin/mount.exe bin/ps.exe; mv bin/* $(ISODIR)/bin/;rmdir bin; \
 	unzip $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	cp $(addprefix $(WDLDIR)/, $(ALLFILES)) $(ISODIR)/dl/; \
-	unzip $(WDLDIR)/$(WPD_F); tar cf $(ISODIR)/dl/src/WpdPack_4_1_beta4.tar WpdPack; gzip -9 $(ISODIR)/dl/src/WpdPack_4_1_beta4.tar; rm -rf WpdPack; \
 	unzip $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_4_1_beta4; tar cf $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar WpcapSrc_4_1_beta4; gzip -9 $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar; rm -rf WpcapSrc_4_1_beta4; \
-	mv $(ISODIR)/dl/$(WPCAPRT_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \

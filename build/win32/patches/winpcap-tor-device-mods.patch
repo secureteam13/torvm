@@ -195,3 +195,24 @@ diff -Naur orig-winpcap/version.h mod-winpcap/version.h
 +#define WINPCAP_BUILD_DESCRIPTION 		"Modified WinPcap Driver for Tor Qemu VM"
  #define WINPCAP_PRIVATE_BUILD			""
  #define WINPCAP_LIBPCAP_VERSION			"1.0 - branch"
+diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
+--- orig-winpcap/wpcap/PRJ/GNUmakefile	2008-05-20 17:30:46.000000000 +0000
++++ mod-winpcap/wpcap/PRJ/GNUmakefile	2008-09-24 03:30:16.696908481 +0000
+@@ -23,15 +23,14 @@
+ CFLAGS = -I ../libpcap -I ../libpcap/bpf -I ../libpcap/lbl \
+ 	-I ../libpcap/Win32/Include -I../libpcap/Win32/Include/ipv6kit \
+ 	-I ../../common -I ../Win32-Extensions \
+-	-I ../../../Airpcap_DevPack/include \
+ 	-DLIBPCAP_EXPORTS -DYY_NEVER_INTERACTIVE -Dyylval=pcap_lval \
+ 	-DHAVE_STRERROR -DNEED_ADDRINFO_H -DINET6 -DWIN32 \
+ 	-DSIZEOF_CHAR=1 -DSIZEOF_SHORT=2 -DSIZEOF_INT=4 -DSIZEOF_LONG_LONG=8 -DWPCAP -D'_U_=' \
+ 	-DHAVE_SNPRINTF -DHAVE_VSNPRINTF \
+ 	-DSIZEOF_LONG_LONG=8 \
+-	-DHAVE_REMOTE -DHAVE_AIRPCAP_API \
++	-DHAVE_REMOTE \
+ 	-mno-cygwin -shared ${OPTFLAGS}
+-LDFLAGS = -Wl,--out-implib,../lib/libwpcap.a
++LDFLAGS = -Wl,--out-implib,libwpcap.a
+ LIBS = -L ../../${PACKET_DIR}/DLL/Project -lPacket -lws2_32
+ OBJS = ../libpcap/bpf/net/bpf_filter.o \
+ 	../libpcap/bpf_dump.o \

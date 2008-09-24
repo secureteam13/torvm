@@ -1,18 +1,149 @@
+diff -Naur orig-openvpn-2.1_rc10/config-win32.h.in mod-openvpn-2.1_rc10/config-win32.h.in
+--- orig-openvpn-2.1_rc10/config-win32.h.in	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/config-win32.h.in	2008-09-24 02:04:01.653884827 +0000
+@@ -35,7 +35,6 @@
+ 
+ #include <windows.h>
+ #include <winsock2.h>
+-#include "autodefs/defs.h"
+ 
+ #define sleep(x) Sleep((x)*1000)
+ 
 diff -Naur orig-openvpn-2.1_rc10/configure.ac mod-openvpn-2.1_rc10/configure.ac
 --- orig-openvpn-2.1_rc10/configure.ac	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/configure.ac	2008-09-22 20:37:09.741152353 +0000
-@@ -865,6 +865,8 @@
- 	openvpn.spec
- 	config-win32.h
- 	images/Makefile
-+	tap-win32/SOURCES
-+	tap-win32/i386/OemWin2k.inf
- 	service-win32/Makefile
- 	install-win32/Makefile
- 	install-win32/settings
++++ mod-openvpn-2.1_rc10/configure.ac	2008-09-24 01:09:44.574210076 +0000
+@@ -838,9 +838,9 @@
+ TAP_ID="PRODUCT_TAP_ID"
+ TAP_WIN32_MIN_MAJOR="PRODUCT_TAP_WIN32_MIN_MAJOR"
+ TAP_WIN32_MIN_MINOR="PRODUCT_TAP_WIN32_MIN_MINOR"
+-AC_DEFINE_UNQUOTED(TAP_ID, "${TAP_ID}", [The TAP-Win32 id defined in tap-win32/SOURCES])
+-AC_DEFINE_UNQUOTED(TAP_WIN32_MIN_MAJOR, ${TAP_WIN32_MIN_MAJOR}, [The TAP-Win32 version number is defined in tap-win32/SOURCES])
+-AC_DEFINE_UNQUOTED(TAP_WIN32_MIN_MINOR, ${TAP_WIN32_MIN_MINOR}, [The TAP-Win32 version number is defined in tap-win32/SOURCES])
++AC_DEFINE_UNQUOTED(TAP_ID, "${TAP_ID}", [The TAP-Win32 device ID])
++AC_DEFINE_UNQUOTED(TAP_WIN32_MIN_MAJOR, "${TAP_WIN32_MIN_MAJOR}", [The TAP-Win32 major version number])
++AC_DEFINE_UNQUOTED(TAP_WIN32_MIN_MINOR, "${TAP_WIN32_MIN_MINOR}", [The TAP-Win32 minor version number])
+ AC_SUBST(TAP_ID)
+ AC_SUBST(TAP_WIN32_MIN_MAJOR)
+ AC_SUBST(TAP_WIN32_MIN_MINOR)
+diff -Naur orig-openvpn-2.1_rc10/install-win32/maketap mod-openvpn-2.1_rc10/install-win32/maketap
+--- orig-openvpn-2.1_rc10/install-win32/maketap	2008-08-10 18:35:23.000000000 +0000
++++ mod-openvpn-2.1_rc10/install-win32/maketap	2008-09-24 01:20:25.104878926 +0000
+@@ -4,22 +4,27 @@
+ # Requires the Windows DDK
+ 
+ # get version.nsi definitions
+-. autodefs/defs.sh
++#. autodefs/defs.sh
+ 
+-if [ -d "/c/WINDDK/$DDKVER" ] ; then
++if [ -d "$DDKDIR" ] ; then
+ 
+ # common declarations for all DDK build targets
+ . install-win32/ddk-common
+ 
+ # configure tap driver sources
+-MACRO="perl install-win32/macro.pl autodefs/defs.in"
++MACRO="perl install-win32/macro.pl install-win32/settings.in"
+ IFDEF="perl install-win32/ifdef.pl"
+-rm -rf tap-win32/amd64
++if [ -d tap-win32/amd64 ]; then
++  rm -rf tap-win32/amd64
++fi
+ mkdir tap-win32/amd64
+ $MACRO <tap-win32/SOURCES.in >tap-win32/SOURCES
+ $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF >tap-win32/i386/OemWin2k.inf
+ $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF -DAMD64 >tap-win32/amd64/OemWin2k.inf
+ 
++# all we need is the inf files, build the driver ourselves...
++exit 0
++
+ if [ -n "$PRODUCT_TAP_DEBUG" ] ; then
+     w2ktarget="w2k c"
+     amdtarget="chk $x64_tag WNET"
+@@ -96,5 +101,5 @@
+ fi
+ 
+ else
+-    echo Not building TAP driver -- DDK version $DDKVER NOT FOUND
++    echo Not building TAP driver -- DDK NOT FOUND AT \"$DDKDIR\"
+ fi
+diff -Naur orig-openvpn-2.1_rc10/install-win32/settings.in mod-openvpn-2.1_rc10/install-win32/settings.in
+--- orig-openvpn-2.1_rc10/install-win32/settings.in	2008-08-10 18:35:23.000000000 +0000
++++ mod-openvpn-2.1_rc10/install-win32/settings.in	2008-09-24 01:12:19.574403029 +0000
+@@ -38,11 +38,11 @@
+ 
+ # TAP Adapter parameters.  Note that PRODUCT_TAP_ID is
+ # defined in version.m4.
+-!define PRODUCT_TAP_DEVICE_DESCRIPTION  "TAP-Win32 Adapter V9"
+-!define PRODUCT_TAP_PROVIDER            "TAP-Win32 Provider V9"
++!define PRODUCT_TAP_DEVICE_DESCRIPTION  "Tor VM TAP-Win32 Adapter V9"
++!define PRODUCT_TAP_PROVIDER            "Tor VM TAP-Win32 Provider V9"
+ !define PRODUCT_TAP_MAJOR_VER           9
+ !define PRODUCT_TAP_MINOR_VER           4
+-!define PRODUCT_TAP_RELDATE             "01/22/2008"
++!define PRODUCT_TAP_RELDATE             "09/23/2008"
+ 
+ ; visible=0x81  hidden=0x89
+ !define PRODUCT_TAP_CHARACTERISTICS     0x81
+@@ -52,16 +52,16 @@
+ 
+ # DDK Version.
+ # DDK distribution is assumed to be in C:\WINDDK\${DDKVER}
+-!define DDKVER	     6001.17121
+-!define DDKVER_MAJOR 6001
++;!define DDKVER	     6001.17121
++;!define DDKVER_MAJOR 6001
+ 
+ # Code Signing.
+ # If undefined, don't sign any files.
+-!define SIGNTOOL        "../signtool"
+-!define PRODUCT_SIGN_CN "openvpn"
++;!define SIGNTOOL        "../signtool"
++;!define PRODUCT_SIGN_CN "openvpn"
+ 
+ # -j parameter passed to make
+-!define MAKE_JOBS 2
++;!define MAKE_JOBS 2
+ 
+ # output directory for built binaries
+ # and other generated files
+diff -Naur orig-openvpn-2.1_rc10/tap-win32/SOURCES.in mod-openvpn-2.1_rc10/tap-win32/SOURCES.in
+--- orig-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-09-24 03:05:43.833514551 +0000
+@@ -4,7 +4,7 @@
+ MAJORCOMP=ntos
+ MINORCOMP=ndis
+ 
+-TARGETNAME=@@PRODUCT_TAP_ID@@
++TARGETNAME=tortap91
+ TARGETTYPE=DRIVER
+ TARGETPATH=.
+ TARGETLIBS=$(DDK_LIB_PATH)\ndis.lib $(DDK_LIB_PATH)\ntstrsafe.lib
+@@ -16,6 +16,7 @@
+ C_DEFINES=
+ C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MAJOR_VERSION=@@PRODUCT_TAP_MAJOR_VER@@
+ C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MINOR_VERSION=@@PRODUCT_TAP_MINOR_VER@@
++C_DEFINES=$(C_DEFINES) -DDDKVER_MAJOR=3790
+ 
+ # Produce the same symbolic information for both free & checked builds.
+ # This will allow us to perform full source-level debugging on both
+diff -Naur orig-openvpn-2.1_rc10/tap-win32/resource.rc mod-openvpn-2.1_rc10/tap-win32/resource.rc
+--- orig-openvpn-2.1_rc10/tap-win32/resource.rc	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/resource.rc	2008-09-24 03:00:42.600211095 +0000
+@@ -34,8 +34,8 @@
+ */
+ 
+ #define VER_COMPANYNAME_STR         "The OpenVPN Project"
+-#define VER_FILEDESCRIPTION_STR     "TAP-Win32 Virtual Network Driver"
+-#define VER_ORIGINALFILENAME_STR    TAP_COMPONENT_ID ".sys"
++#define VER_FILEDESCRIPTION_STR     "Tor VM TAP-Win32 Network Driver"
++#define VER_ORIGINALFILENAME_STR    "tortap91.sys"
+ #define VER_LEGALCOPYRIGHT_YEARS    "2003-2006"
+ #define VER_LEGALCOPYRIGHT_STR      "Telethra, Inc."
+ 
 diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c
 --- orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-09-22 20:37:30.144483854 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-09-24 02:56:19.103779332 +0000
 @@ -39,7 +39,6 @@
  // TAP_IOCTL_CONFIG_TUN ioctl.
  //======================================================
@@ -21,14 +152,31 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-wi
  #ifndef DDKVER_MAJOR
  #error DDKVER_MAJOR must be defined as the major number of the DDK Version
  #endif
+@@ -52,7 +51,7 @@
+ #define NTSTRSAFE_LIB
+ 
+ // Debug info output
+-#define ALSO_DBGPRINT           1
++#define ALSO_DBGPRINT           0
+ #define DEBUGP_AT_DISPATCH      0
+ 
+ //========================================================
 diff -Naur orig-openvpn-2.1_rc10/version.m4 mod-openvpn-2.1_rc10/version.m4
 --- orig-openvpn-2.1_rc10/version.m4	2008-09-10 06:55:52.000000000 +0000
-+++ mod-openvpn-2.1_rc10/version.m4	2008-09-22 20:35:28.208245859 +0000
-@@ -1,6 +1,6 @@
- dnl define the OpenVPN version
++++ mod-openvpn-2.1_rc10/version.m4	2008-09-24 01:08:38.192342317 +0000
+@@ -1,6 +1,11 @@
+-dnl define the OpenVPN version
++define(PRODUCT_NAME,[TorTap32])
  define(PRODUCT_VERSION,[2.1_rc10])
- dnl define the TAP version
+-dnl define the TAP version
 -define(PRODUCT_TAP_ID,[tap0901])
 +define(PRODUCT_TAP_ID,[tortap91])
  define(PRODUCT_TAP_WIN32_MIN_MAJOR,[9])
- define(PRODUCT_TAP_WIN32_MIN_MINOR,[1])
+-define(PRODUCT_TAP_WIN32_MIN_MINOR,[1])
++define(PRODUCT_TAP_WIN32_MIN_MINOR,[4])
++define(PRODUCT_TAP_MAJOR_VER,[9])
++define(PRODUCT_TAP_MINOR_VER,[4])
++define(PRODUCT_TAP_RELDATE,[09/22/2008])
++define(PRODUCT_TAP_DEVICE_DESCRIPTION,[Tor TAP-Win32 Adapter V9 for Qemu])
++define(PRODUCT_TAP_PROVIDER,[Tor TAP-Win32 Provider V9])
++define(PRODUCT_TAP_CHARACTERISTICS,[0x81])
