@@ -55,7 +55,7 @@ cd /d %DDRV%
 cd %MDIR%\%MVER%
 set PATH=%DDRV%%MDIR%\%MVER%\bin;%DDRV%%MDIR%\%MVER%;%PATH%
 set BUILDER=/usr/src/buildall.sh
-set MSYSROOT=C:\msys\1.0\bin\
+set MSYSROOT=C:\\msys\\1.0
 md etc\profile.d
 ECHO export MSYSROOT="%MSYSROOT%" > etc\profile.d\defpaths.sh
 set WD=C:\msys\1.0\bin\
