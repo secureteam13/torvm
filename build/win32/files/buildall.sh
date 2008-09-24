@@ -168,8 +168,7 @@ install-win32/maketap
 cd tap-win32
 TAPDIR=`pwd | sed 's/^.usr//' | sed 's/\//\\\/g'`
 BPATH="${MSYSROOT}${TAPDIR}"
-#echo "call \"$DDKENV\" \"$DDKDIR\" fre wxp" > dobuild.bat
-echo "call \"$DDKENV\" \"$DDKDIR\" wxp f" > dobuild.bat
+echo "call $DDKENV $DDKDIR wxp f" > dobuild.bat
 echo "cd \"$BPATH\"" >> dobuild.bat
 echo "build -cef" >> dobuild.bat
 echo "exit 0" >> dobuild.bat
@@ -192,8 +191,7 @@ patch -p1 < ../winpcap-tor-device-mods.patch 2>/dev/null
 cd packetNtx
 PCAPDIR=`pwd | sed 's/^.usr//' | sed 's/\//\\\/g'`
 BPATH="${MSYSROOT}${PCAPDIR}"
-#echo "call $DDKENV $DDKDIR fre w2k" > dobuild.bat
-echo "call \"$DDKENV\" \"$DDKDIR\" w2k f" > dobuild.bat
+echo "call $DDKENV $DDKDIR w2k f" > dobuild.bat
 echo "cd \"$BPATH\"" >> dobuild.bat
 echo "./CompileDriver" >> dobuild.bat
 echo "exit 0" >> dobuild.bat
