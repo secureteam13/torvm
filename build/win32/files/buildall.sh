@@ -9,7 +9,7 @@ export statedir="${ddir}/state"
 
 if [[ "$1" != "dobuild" ]]; then
   cd /usr/src
-  /usr/src/buildall.sh dobuild | tee build.log
+  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
 else
 
 export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
