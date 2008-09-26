@@ -193,7 +193,7 @@ PCAPDIR=`pwd | sed 's/^.usr//' | sed 's/\//\\\/g'`
 BPATH="${MSYSROOT}${PCAPDIR}"
 echo "call $DDKENV $DDKDIR w2k f" > dobuild.bat
 echo "cd \"$BPATH\"" >> dobuild.bat
-echo "./CompileDriver" >> dobuild.bat
+echo "call CompileDriver" >> dobuild.bat
 echo "exit" >> dobuild.bat
 cmd.exe /k dobuild.bat
 if [ ! -f driver/bin/2k/i386/npf.sys ]; then

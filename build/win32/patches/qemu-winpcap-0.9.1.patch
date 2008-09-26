@@ -1,6 +1,6 @@
-diff -Naur qemu-0.9.1-orig/Makefile.target qemu-0.9.1-mod/Makefile.target
---- qemu-0.9.1-orig/Makefile.target	2008-01-06 19:38:41.000000000 +0000
-+++ qemu-0.9.1-mod/Makefile.target	2008-07-23 05:03:59.572327704 +0000
+diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
+--- orig-qemu-0.9.1/Makefile.target	2008-01-06 19:38:41.000000000 +0000
++++ mod-qemu-0.9.1/Makefile.target	2008-09-26 07:33:17.304380744 +0000
 @@ -237,7 +237,7 @@
  LIBS+=-lz
  endif
@@ -10,9 +10,9 @@ diff -Naur qemu-0.9.1-orig/Makefile.target qemu-0.9.1-mod/Makefile.target
  endif
  ifdef CONFIG_SOLARIS
  LIBS+=-lsocket -lnsl -lresolv
-diff -Naur qemu-0.9.1-orig/configure qemu-0.9.1-mod/configure
---- qemu-0.9.1-orig/configure	2008-01-06 19:38:42.000000000 +0000
-+++ qemu-0.9.1-mod/configure	2008-07-22 01:29:15.000000000 +0000
+diff -Naur orig-qemu-0.9.1/configure mod-qemu-0.9.1/configure
+--- orig-qemu-0.9.1/configure	2008-01-06 19:38:42.000000000 +0000
++++ mod-qemu-0.9.1/configure	2008-09-26 07:33:17.468355816 +0000
 @@ -600,7 +600,7 @@
  #undef main /* We don't want SDL to override our main() */
  int main( void ) { return SDL_Init (SDL_INIT_VIDEO); }
@@ -33,9 +33,9 @@ diff -Naur qemu-0.9.1-orig/configure qemu-0.9.1-mod/configure
  fi
  if test "$adlib" = "yes" ; then
    echo "CONFIG_ADLIB=yes" >> $config_mak
-diff -Naur qemu-0.9.1-orig/dyngen-exec.h qemu-0.9.1-mod/dyngen-exec.h
---- qemu-0.9.1-orig/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
-+++ qemu-0.9.1-mod/dyngen-exec.h	2008-07-23 04:22:31.743310528 +0000
+diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
+--- orig-qemu-0.9.1/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
++++ mod-qemu-0.9.1/dyngen-exec.h	2008-09-26 07:33:18.468203816 +0000
 @@ -32,6 +32,7 @@
     host headers do not allow that. */
  #include <stddef.h>
@@ -66,10 +66,10 @@ diff -Naur qemu-0.9.1-orig/dyngen-exec.h qemu-0.9.1-mod/dyngen-exec.h
  #ifdef _BSD
  typedef struct __sFILE FILE;
  #else
-diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
---- qemu-0.9.1-orig/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ qemu-0.9.1-mod/vl.c	2008-07-22 06:44:51.077588952 +0000
-@@ -3858,6 +3858,326 @@
+diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
+--- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
++++ mod-qemu-0.9.1/vl.c	2008-09-26 07:42:09.476478288 +0000
+@@ -3858,6 +3858,317 @@
  
  #endif /* CONFIG_SLIRP */
  
@@ -100,7 +100,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
 +
 +#define ADAPTER_KEY "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 +#define NETWORK_CONNECTIONS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-+#define DEVICE_PREFIX "\\Device\\NPF_"
++#define DEVICE_PREFIX "\\Device\\TORNPF_"
 +
 +static int get_net_device_guid(
 +    char *name,
@@ -225,22 +225,9 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
 +    return 0;
 +}
 +
-+int wtf=0;
-+unsigned char mymac[8];
-+
 +static void pcap_receive(void *opaque, const uint8_t *buf, int size)
 +{
-+    // XXX use wtf to drop the 1st packet.
-+    //cheesy hack to not 'read' my own packets.  we gobble the 1st packet
-+    if(wtf==0)
-+    {
-+	memset(mymac,0x0,8);
-+	memcpy(mymac,(u_char*)buf+6,6);
-+	wtf++;
-+    }
-+    else{
-+        pcap_sendpacket((pcap_t*)pcaphandle, (u_char*)buf, size);
-+    }
++    pcap_sendpacket((pcap_t*)pcaphandle, (u_char*)buf, size);
 +}
 +
 +void *pcap_send(void *threadid)
@@ -263,14 +250,10 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
 +{
 +    if(phdr->len<1501)
 +    {
-+        // XXX omit recieving own packets.  need to improve this patch
-+        if(memcmp(mymac,(u_char*)pdata+6,6)) {
-+            qemu_send_packet(pcap_vc, pdata, phdr->len);
-+        }
++        qemu_send_packet(pcap_vc, pdata, phdr->len);
 +    }
 +}
 +
-+#define ETH_PROMISC 1
 +#define PCAP_READ_TIMEOUT 15
 +
 +int eth_open(char* name)
@@ -297,9 +280,17 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
 +
 +    /* attempt to connect device */
 +    memset(errbuf, 0, sizeof(errbuf));
-+    pcaphandle = (void*) pcap_open_live(savname, bufsz, ETH_PROMISC, PCAP_READ_TIMEOUT, errbuf);
++    pcaphandle = (void*) pcap_open_live(savname,
++                                        bufsz,
++                                        PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL,
++                                        PCAP_READ_TIMEOUT,
++                                        errbuf);
 +    if (!pcaphandle) { /* try non-promisc open device */
-+        pcaphandle = (void*) pcap_open_live(savname, bufsz, 0, PCAP_READ_TIMEOUT, errbuf);
++        pcaphandle = (void*) pcap_open_live(savname,
++                                            bufsz,
++                                            PCAP_OPENFLAG_NOCAPTURE_LOCAL,
++                                            PCAP_READ_TIMEOUT,
++                                            errbuf);
 +        if (!pcaphandle) { /* cannot open device */
 +            msg = "Eth: pcap_open_live error - %s\r\n";
 +            fprintf (stderr, msg, errbuf);
@@ -396,7 +387,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
  #if !defined(_WIN32)
  
  typedef struct TAPState {
-@@ -4733,6 +5053,14 @@
+@@ -4733,6 +5044,14 @@
          ret = net_slirp_init(vlan);
      } else
  #endif
@@ -411,7 +402,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
  #ifdef _WIN32
      if (!strcmp(device, "tap")) {
          char ifname[64];
-@@ -7551,6 +7879,9 @@
+@@ -7551,6 +7870,9 @@
             "                connect the user mode network stack to VLAN 'n' and send\n"
             "                hostname 'host' to DHCP clients\n"
  #endif
@@ -421,7 +412,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
  #ifdef _WIN32
             "-net tap[,vlan=n],ifname=name\n"
             "                connect the host TAP network interface to VLAN 'n'\n"
-@@ -7656,9 +7987,6 @@
+@@ -7656,9 +7978,6 @@
      QEMU_OPTION_pflash,
      QEMU_OPTION_boot,
      QEMU_OPTION_snapshot,
@@ -431,7 +422,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
      QEMU_OPTION_m,
      QEMU_OPTION_nographic,
      QEMU_OPTION_portrait,
-@@ -7746,9 +8074,6 @@
+@@ -7746,9 +8065,6 @@
      { "pflash", HAS_ARG, QEMU_OPTION_pflash },
      { "boot", HAS_ARG, QEMU_OPTION_boot },
      { "snapshot", 0, QEMU_OPTION_snapshot },
@@ -441,7 +432,7 @@ diff -Naur qemu-0.9.1-orig/vl.c qemu-0.9.1-mod/vl.c
      { "m", HAS_ARG, QEMU_OPTION_m },
      { "nographic", 0, QEMU_OPTION_nographic },
      { "portrait", 0, QEMU_OPTION_portrait },
-@@ -8355,11 +8680,6 @@
+@@ -8355,11 +8671,6 @@
  		drive_add("file=\"%s\"," FD_ALIAS, optarg,
  		          popt->index - QEMU_OPTION_fda);
                  break;
