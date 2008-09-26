@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>A Tor Virtual Machine Design and Implementation</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.1" /></head><body><div class="article" lang="en" xml:lang="en"><div class="titlepage"><div><div><h1 class="title"><a id="torvmdesign"></a>A Tor Virtual Machine Design and Implementation</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Martin</span> <span class="surname">Peck</span></h3><div class="affiliation"><div class="address"><p><code class="email">&lt;<a href="mailto:coderman at gmail dot com">coderman at gmail dot com</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Kyle</span> <span class="surname">Williams</span></h3><div class="affiliation"><div class="address"><p><code class="email">&lt;<a href="mailto:kyle.kwilliams [at] gmail [dot] com">kyle.kwilliams [at] gmail [dot] com</a>&gt;</code></p></div></div></div></div><div><p class="copyright">Copyright © 2008 The Tor Project, Inc.</p></div><div><p class="pubdate">August 24, 2008</p></div></div><hr /></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2465250">1. Introduction</a></span></dt><dd><dl><dt><span class="sect2"><a href="#transoverview">1.1. Transparent Proxy Overview</a></span></dt><dt><span class="sect2"><a href="#vmoverview">1.2. Virtual Machine Benefits</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2456291">2. Tor VM Design</a></span></dt><dd><dl><dt><span class="sect2"><a href="#threatmodel">2.1. Threat Model</a></span></dt><dt><span class="sect2"><a href="#designreqs">2.2. Design Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2455574">3. Tor VM Implementation</a></span></dt><dd><dl><dt><span class="sect2"><a href="#buildenv">3.1. Build Environment</a></span></dt><dt><span class="sect2"><a href="#vmimpl">3.2. Virtual Machine Software</a></span></dt><dt><span class="sect2"><a href="#patches">3.3. Tor VM Patchset</a></span></dt><dt><span class="sect2"><a href="#vmos">3.4. Tor VM Build</a></span></dt><dt><span class="sect2"><a href="#netcfg">3.5. Network and Routing Configuration</a></span></dt><dt><span class="sect2"><a href="#torcfg">3.6. Tor Configuration</a></span></dt><dt><span class="sect2"><a href="#storage">3.7. Persistent Storage</a></span></dt><dt><span class="sect2"><a href="#ui">3.8. User Interface</a></span></dt><dt><span class="sect2"><a href="#bundle">3.9. Portable VM Runtime</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2469799">4. Legal Notice</a></span></dt></dl></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2465250"></a>1. Introduction</h2></div></div></div><p>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>A Tor Virtual Machine Design and Implementation</title><meta name="generator" content="DocBook XSL Stylesheets V1.68.1" /></head><body><div class="article" lang="en" xml:lang="en"><div class="titlepage"><div><div><h1 class="title"><a id="torvmdesign"></a>A Tor Virtual Machine Design and Implementation</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Martin</span> <span class="surname">Peck</span></h3><div class="affiliation"><div class="address"><p><code class="email">&lt;<a href="mailto:coderman at gmail dot com">coderman at gmail dot com</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Kyle</span> <span class="surname">Williams</span></h3><div class="affiliation"><div class="address"><p><code class="email">&lt;<a href="mailto:kyle.kwilliams at gmail dot com">kyle.kwilliams at gmail dot com</a>&gt;</code></p></div></div></div></div><div><p class="copyright">Copyright © 2008 The Tor Project, Inc.</p></div><div><p class="pubdate">September 24, 2008</p></div></div><hr /></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2465250">1. Introduction</a></span></dt><dd><dl><dt><span class="sect2"><a href="#transoverview">1.1. Transparent Proxy Overview</a></span></dt><dt><span class="sect2"><a href="#vmoverview">1.2. Virtual Machine Benefits</a></span></dt><dt><span class="sect2"><a href="#multivm">1.3. Application Isolation Virtual Machines</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2456318">2. Tor VM Design</a></span></dt><dd><dl><dt><span class="sect2"><a href="#threatmodel">2.1. Threat Model</a></span></dt><dt><span class="sect2"><a href="#designreqs">2.2. Design Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2455640">3. Tor VM Implementation</a></span></dt><dd><dl><dt><span class="sect2"><a href="#buildenv">3.1. Build Environment</a></span></dt><dt><span class="sect2"><a href="#vmimpl">3.2. Virtual Machine Software</a></span></dt><dt><span class="sect2"><a href="#patches">3.3. Tor VM Patchset</a></span></dt><dt><span class="sect2"><a href="#vmos">3.4. Tor VM Build</a></span></dt><dt><span class="sect2"><a href="#torcfg">3.5. Tor Configuration</a></span></dt><dt><span class="sect2"><a href="#storage">3.6. Persistent Storage</a></span></dt><dt><span class="sect2"><a href="#vmint">3.7. Host Virtual Machine Integration</a></span></dt><dt><span class="sect2"><a href="#netcfg">3.8. Network Configuration</a></span></dt><dt><span class="sect2"><a href="#ui">3.9. User Interface</a></span></dt></dl></dd><dt><span class="sect1"><a href="#id2470003">4. Legal Notice</a></span></dt></dl></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2465250"></a>1. Introduction</h2></div></div></div><p>
 This document describes a transparent <span class="trademark">Tor</span>™ proxy design and implementation for
  <span class="trademark">Windows</span>® and other operating
- systems using a virtual machine. An overview of the transparent proxy approach is provided
+ systems using a virtual machine platform. An overview of the transparent proxy approach is provided
  in addition to design goals and implementation detail.
   </p><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="transoverview"></a>1.1. Transparent Proxy Overview</h3></div></div></div><p>
 A <a href="http://wiki.noreply.org/noreply/TheOnionRouter/TransparentProxy" target="_top">transparent Tor proxy</a>
@@ -27,23 +27,27 @@ A virtual machine environment can further improve the security position by provi
 Separate network stacks also simplify the implementation of a transparent proxy approach by using existing
  networking facilities to route traffic to the virtual machine as a default gateway instead of using more
  complicated traffic classification and redirection within the host network stack. This is important in a
- Windows environment where capabilities like Linux netfilter or BSD packet filter do not exist.
+ Windows environment where capabilities like <span class="trademark">Linux</span>®
+ netfilter or <span class="trademark">BSD</span>® packet filter do not exist.
   </p><p>
 For Windows platforms offloading the TCP session intensive Tor process to a Linux guest with
  <a href="http://monkey.org/~provos/libevent/" target="_top">edge triggered IO</a> can significantly improve
  the performance of Tor and eliminate 
  <a href="http://wiki.noreply.org/noreply/TheOnionRouter/WindowsBufferProblems" target="_top">socket buffer problems</a>.
+  </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="multivm"></a>1.3. Application Isolation Virtual Machines</h3></div></div></div><p>
+
   </p></div><div class="literallayout"><p><br />
-</p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2456291"></a>2. Tor VM Design</h2></div></div></div><p>
+</p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2456318"></a>2. Tor VM Design</h2></div></div></div><p>
 The transparent Tor proxy virtual machine must provide a usable and secure interface to the Tor
  network. A number of design criteria are necessary to achieve this goal.
   </p><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="threatmodel"></a>2.1. Threat Model</h3></div></div></div><p>
 A number of threats are expected when using the Tor network for anonymous exit into the Internet.
  Many of these threats can be mitigated with a robust Tor implementation while other risks cannot
  be discouraged without significant effort and constrained usage.
-   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456320"></a>Attacker Intent</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Identify User Endpoint</strong></span><p>
-The goal of an attacker within this threat model is to obtain the Tor user origin IP address.
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456342"></a>Attacker Capabilities and Methods</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Proxy Bypass</strong></span><p>
+   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456347"></a>Attacker Intent</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Identify User Endpoint</strong></span><p>
+The goal of an attacker within this threat model is to obtain the Tor user origin IP address or fingerprint a specific
+ Tor user.
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456370"></a>Attacker Capabilities and Methods</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Proxy Bypass</strong></span><p>
 If the attacker can inject some kind of content to invoke a client request that bypasses application proxy
  settings they can achieve their goal of determining user endpoint. Social engineering attacks which entice
  a user to make a request that may bypass proxy settings are also included in this class of techniques.
@@ -63,18 +67,27 @@ The attacker may observe distinguishing characteristics of Tor user traffic to p
  individual they can
  <a href="https://torbutton.torproject.org/dev/design/#fingerprinting" target="_top">track individual activity</a>
  and likely achieve their goal of identifying user endpoint.
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456426"></a>Indefensible Attacks</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Tor Attacks</strong></span><p>
+      </p></li><li><span><strong class="command">Linking Attacks</strong></span><p>
+The attacker may use files or application state stored on disk to link separate user instances of Tor use with
+ each other. This is a useful method of reducing the anonymity set of the target.
+      </p></li><li><span><strong class="command">Fingerprinting Attacks</strong></span><p>
+
+      </p></li><li><span><strong class="command">Full Remote Code Execution Attacks</strong></span><p>
+
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456496"></a>Indefensible Attacks</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Tor Attacks</strong></span><p>
 Attacks which Tor cannot defend against, like a global passive adversary, are obviously outside the scope
  of even the most robust Tor implementation.
-      </p></li><li><span><strong class="command">Remote Exploit and Arbitrary Execution Attacks</strong></span><p>
+      </p></li><li><span><strong class="command">Some Remote Exploit and Arbitrary Execution Attacks</strong></span><p>
 Attacks which leverage an application or operating system flaw to gain full remote code execution on the
- user system are not defensible. This highlights the need for secure hosts when relying on Tor
- for anonymity. An untrusted host cannot provide a trusted Tor instance, regardless of how robust the
+ host system are not defensible. This highlights the need for secure hosts when relying on Tor
+ for anonymity.
+ An untrusted host cannot provide a trusted Tor instance, regardless of how robust the
  implementation may be otherwise.
       </p><p>
-There are useful methods to reduce this risk, including privilege restrictions on applications and even
- isolation of the client OS in another virtual machine (a dual or multiple VM model). Such mitigation techniques are
- outside the scope of this implementation.
+The multiple virtual machine model provides defense in depth against these types of attacks and may constrain the
+ scope of any compromise to the single virtual machine instance affected by the exploit. It is possible
+ (though hard to quantify how difficult) to escalate from a compromised guest VM to secondary exploit of the host
+ OS, rendering all protections ineffective.
       </p></li><li><span><strong class="command">Correlation Attacks</strong></span><p>
 If a Tor user interacts with the same site or service when using Tor and not using Tor it is likely
  trivial for an attacker to correlate the anonymous activity with the original user, and thus achieve their
@@ -86,13 +99,7 @@ The ability to switch between anonymous and direct access to such services requi
  which is too complicated and restrictive to apply to the entire spectrum
  of applications and protocols that may be used over a transparent Tor proxy implementation. For this reason a
  "toggle" capability is explicitly not included in the design goals for this implementation.
-      </p><p>
-The use of multiple virtual machines to launch applications from a known and consistent state can help achieve isolation
- between instances of the applications and preserve unlinkability. For example, if a flash and java enabled browser is
- always launched from a clean initial VM state it does not matter if file system cookies or data are saved; these changes
- will be lost once the application VM exits. This approach to application isolation fits nicely with the transparent
- Tor VM model but is outside the scope of the current implementation.
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456523"></a>Attacks Difficult to Defend Against Transparently</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Partitioning Attacks</strong></span><p>
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2456581"></a>Attacks Difficult to Defend Against Transparently</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Partitioning Attacks</strong></span><p>
 As mentioned above, there is a fundamental trade off between the transparent approach and a constrained single
  application use of Tor with strong state isolation and communication normalization. Scrubbing every byte and filtering
  every potentially misused component of an application protocol is the only way to ensure that partitioning attacks
@@ -107,11 +114,7 @@ For situations where a user needs additional applications or protocols they are 
  addresses using trivial effort.
       </p><p>
 In a Windows environment (and even other operating systems) there are simply too many vectors for proxy bypass
- and DNS side channels to trust most application specific proxy configurations. (Ex: 
- <a href="https://www.janusvm.com/goldy/side-channels/frames/" target="_top">[0]</a> 
- <a href="https://www.janusvm.com/goldy/pdf/" target="_top">[1]</a>
- <a href="https://www.janusvm.com/goldy/HTTP.asx" target="_top">[2]</a>
-)
+ and DNS side channels to trust most application specific proxy configurations.
       </p><p>
 The implications of this trade off and its practical impact on various types of Tor users needs further study.
  Defending against these types of attacks is outside the scope of this implementation, however, it would be
@@ -155,6 +158,11 @@ To support the widest range of client uses a bridged network adapter is required
       </p></li><li><span><strong class="command">Low Host OS Overhead</strong></span><p>
 A VM platform that provides low host memory and CPU consumption improves the usability and stability of Tor VM
  in addition to making it suitable for a wider range of older or less powerful hardware users may have.
+ This is particularly important for graphical applications and other media intensive virtual machine instances.
+      </p></li><li><span><strong class="command">VM Isolation and Integrity Protections</strong></span><p>
+The ability to run multiple VM instances for application runtime isolation and defense in depth against unknown
+ application or guest operating system vulnerabilities is required. Kernel level VM acceleration is potentially
+ useful, however, the expanded attack surface presented by such acceleration layers should be considered carefully.
       </p></li></ol></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="hosttransreqs"></a>Host Transport Requirements</h4></div></div></div><div class="orderedlist"><ol type="1"><li><span><strong class="command">IP Routing Through Tor VM</strong></span><p>
 All operating systems that are able to run Tor should be able to route traffic in the manner required for
  transparent proxy through the virtual machine. Using the combined bridge and tap adapter configuration
@@ -169,34 +177,33 @@ A hashed control password generated randomly at start is used by Vidalia to auth
  VM kernel but never stored on disk. This would allow control port access without connection behavior changes with the
  limitation that any Vidalia restart requires a restart of the VM as well.
       </p></li></ol></div></div></div><div class="literallayout"><p><br />
-</p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2455574"></a>3. Tor VM Implementation</h2></div></div></div><p>
+</p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2455640"></a>3. Tor VM Implementation</h2></div></div></div><p>
 A solution that satisfies these requirements can be implemented using a variety of GNU/Linux and Win32
  software. The open source licenses associated with these tools ensure that adequate scrutiny of the
  code base supporting a Tor virtual machine is possible for those who choose to evaluate it.
-  </p><p>
-Some of the implementation details listed below may no longer be needed if the multiple VM model is used for isolating
- user applications.  For example, the ability selective block or allow ports for specific applications on the host using
- the Vidalia controller would no longer be needed if all Tor VM applications run inside their own VM and route through
- Tor transparently.
-  </p><p>
-In addition to simplified controller behavior, a multiple VM model could alleviate the need to isolate the host TCP/IP stack
- and the network interface configuration required to implement such isolation. This would be most useful in a situation where
- administrator rights are not available.
   </p><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="buildenv"></a>3.1. Build Environment</h3></div></div></div><p>
 The following dependencies are required for building the Tor VM image and supporting VM tools.
-   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455620"></a>Linux Build Environment</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">OpenWRT on Linux</strong></span><p>
+   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455668"></a>Linux Build Environment</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">OpenWRT Distribution</strong></span><p>
 <a href="http://openwrt.org/" target="_top">OpenWRT</a> provides a full cross compile toolchain and
  Linux image build tools including the initramfs with all the usual system and networking tools. Creating a minimal
  kernel image with only the functions and linkage needed reduces the compiled bootable image size and helps reduce
  host OS resource usage.
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455652"></a>Windows Platform and Build Tools</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command"><span class="trademark">Windows XP</span>™</strong></span><p>
+      </p><p>
+The full toolchain build is configured by default for broad build platform support.  Debian based Linux systems are
+ the best supported build platforms on i386, x86-64, UltraSparc, and PowerPC architectures for the OpenWRT kernel builds.
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455706"></a>Windows Platform and Build Tools</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command"><span class="trademark">Windows XP</span>™</strong></span><p>
 Windows XP is used to build the Qemu virtual machine with all necessary patches and libraries required for
  a portable Tor VM implementation.  The build process creates a CDROM ISO image that can be used with a
  Windows VM or host to automate the build environment preparation and Qemu compilation.
-      </p></li><li><span><strong class="command"><span class="trademark">Windows Vista</span>™ /
+      </p></li><li><span><strong class="command"><span class="trademark">Windows Vista</span>™ and
           <span class="trademark">Windows Server 2008</span>™</strong></span><p>
 Windows Server 2008 Core (GUI-less) is well suited for automated builds.  Either platform may be used to compile
  the Windows Tor VM package.
+      </p></li><li><span><strong class="command">Microsoft Windows Driver Development Kit</strong></span><p>
+The Windows DDK distribution is required for building the TAP-Win32 and WinPcap kernel drivers.
+      </p></li><li><span><strong class="command">MingW and MSYS</strong></span><p>
+The Minimalist GNU for Windows packages are used to build Qemu and supporting software.  The source packages and build
+ scripts are packaged together with an autorun batch file for automated builds.
       </p></li></ul></div></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="vmimpl"></a>3.2. Virtual Machine Software</h3></div></div></div><p>
 Two virtual machine implementations were considered and tested: 
  <a href="http://www.colinux.org/" target="_top">coLinux</a> and
@@ -221,13 +228,13 @@ A number of patches are necessary for the implementation of Tor VM using the too
  modifications are provided as a series of small patches (patch set) for greater transparency into the modifications
  applied with the intent of adoption by upstream maintainers for these projects where appropriate. This will help
  reduce the maintenance required for up to date builds of the Tor VM implementation.
-      </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455788"></a>Qemu Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">WinPcap Bridge Support</strong></span><p>
+      </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469338"></a>Qemu Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">WinPcap Bridge Support</strong></span><p>
 </p><div class="literallayout"><p><code class="function">qemu-winpcap-0.9.1.patch<br />
 </code></p></div><p>
       </p></li><li><span><strong class="command">Kernel Command Line via STDIN</strong></span><p>
 </p><div class="literallayout"><p><code class="function">qemu-kernel-cmdline-from-stdin.patch<br />
 </code></p></div><p>
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2455842"></a>OpenWRT Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Superfluous Code Reduction</strong></span><p>
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469393"></a>OpenWRT Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Superfluous Code Reduction</strong></span><p>
 </p><div class="literallayout"><p><code class="function">kamikaze-mod-basefiles.patch<br />
 kamikaze-mod-kernel-config.patch<br />
 kamikaze-build-config.patch<br />
@@ -239,10 +246,13 @@ kamikaze-libevent-package.patch<br />
       </p></li><li><span><strong class="command">Boot and Runtime Modifications</strong></span><p>
 </p><div class="literallayout"><p><code class="function">build/iso/<br />
 </code></p></div><p>
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469390"></a>WinPcap Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Portable NDIS Layer [optional]</strong></span><p>
-</p><div class="literallayout"><p><code class="function"><br />
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469473"></a>WinPcap Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Portable Driver Layer</strong></span><p>
+</p><div class="literallayout"><p><code class="function">winpcap-tor-device-mods.patch<br />
 </code></p></div><p>
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469422"></a>Vidalia Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Start and Stop Control of VM</strong></span><p>
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469505"></a>OpenVPN TAP-Win32 Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">TAP-Win32 Network Device Driver</strong></span><p>
+</p><div class="literallayout"><p><code class="function">openvpn-tor-tap-win32-driver.patch<br />
+</code></p></div><p>
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469537"></a>Vidalia Patches</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Start and Stop Control of VM</strong></span><p>
       </p></li><li><span><strong class="command">Direct (non-Tor) and Blocked Port Setup</strong></span><p>
       </p></li></ul></div></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="vmos"></a>3.4. Tor VM Build</h3></div></div></div><p>
 </p><pre class="programlisting">
@@ -250,74 +260,9 @@ kamikaze-libevent-package.patch<br />
 #
 svn export https://svn.torproject.org/svn/torvm/trunk/ torvm
 cd torvm
-make
-
-# NOTE: currently the win32 build process must be started manually by loading the
-# win32build.iso into a Windows VM or host. The build process will begin once the
-# disc is mounted. The Qemu VM executable and supporting libraries will be saved
-# to the C:\Tor_VM directory.
+echo View the README file in this directory for detailed build instructions
 </pre><p>
-   </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="netcfg"></a>3.5. Network and Routing Configuration</h3></div></div></div><p>
-A robust transparent Tor proxy implementation requires careful configuration of the routing and filtering
- of traffic on both the host and guest OS instances. Unfortunately Windows does not support
- <a href="http://rfc.net/rfc3021.html" target="_top">/31 style point-to-point</a> links so a two host address
- /30 subnet is used.
-   </p><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Linux Traffic Redirection</strong></span><p>
-The following rules are suggested as a best effort transparent proxy configuration:
-</p><div class="literallayout"><p><code class="function">  # forcibly filter some traffic which should never go over Tor:<br />
-  # no SMTP<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 25 -j DROP<br />
-  # no TCP DNS<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 53 -j DROP<br />
-  # no NetBIOS<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 137 -j DROP<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 138 -j DROP<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp --dport 139 -j DROP<br />
-  # trans proxy TCP and DNS<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p tcp -j REDIRECT --to 9095<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -p udp --dport 53 -j REDIRECT --to 9093<br />
-  # drop everything else ...<br />
-  iptables -t nat -A PREROUTING -s ! $MYIP -j DROP<br />
-<br />
-</code></p></div><p>
-       </p></li><li><span><strong class="command">Windows Network Interface Configuration</strong></span><p>
-To eliminate the combined local and remote attacks against transparent proxy
- configurations it is essential that the Windows host disable all network interfaces
- except the loopback interface and the Tap32 adapter for routing to Tor VM.
-       </p><p>
-The Tap32 device must also be configured as point-to-point to ensure that all traffic to non local
- destinations is routed through the virtual machine.
-       </p><p>
-Example network configuration with Tor VM IP 10.1.1.1 and host Tap32 IP 10.1.1.2:
-</p><div class="literallayout"><p><code class="function"> C:\&gt;route print<br />
-===========================================================================<br />
-Interface List<br />
-0x1 ........................... MS TCP Loopback interface<br />
-0x60002 ...00 ff 07 dc 01 20 ...... TAP-Win32 Adapter V8<br />
-===========================================================================<br />
-===========================================================================<br />
-Active Routes:<br />
-Network Destination        Netmask          Gateway       Interface  Metric<br />
-          0.0.0.0          0.0.0.0         10.1.1.1        10.1.1.2       1<br />
-         10.1.1.0  255.255.255.252         10.1.1.2        10.1.1.2       20<br />
-         10.1.1.2  255.255.255.255        127.0.0.1       127.0.0.1       20<br />
-   10.255.255.255  255.255.255.255         10.1.1.2        10.1.1.2       20<br />
-        127.0.0.0        255.0.0.0        127.0.0.1       127.0.0.1       1<br />
-        224.0.0.0        240.0.0.0         10.1.1.2        10.1.1.2       20<br />
-  255.255.255.255  255.255.255.255         10.1.1.2        10.1.1.2       1<br />
-Default Gateway:          10.1.1.1<br />
-===========================================================================<br />
-Persistent Routes:<br />
-  None<br />
-<br />
-</code></p></div><p>
-       </p><p>
-The torvm.exe application launcher manages the network configuration of the host OS and passes configuration information to
- to the Qemu and Vidalia processes at launch. This allows for clean restoration of network interface configuration after VM
- exit and provides a method for both Vidalia and Tor to communicate by supplying the control port password to each. In a
- multiple VM model the additional application VM's would be launched by this process and passed the requisite network
- information for transparent proxy through the Tor VM via SLIRP interface(s) between Qemu instances.
-       </p></li></ul></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="torcfg"></a>3.6. Tor Configuration</h3></div></div></div><p>
+   </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="torcfg"></a>3.5. Tor Configuration</h3></div></div></div><p>
 Torrc config file: (User, Group, PidFile, DataDirectory, Log all set according to host disk configuration and not listed here.)
    </p><div class="literallayout"><p><code class="function">RunAsDaemon 1<br />
 TransListenAddress 0.0.0.0<br />
@@ -326,28 +271,72 @@ DNSListenAddress 0.0.0.0<br />
 DNSPort 9093<br />
 <br />
 </code></p></div><p>
-   </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="storage"></a>3.7. Persistent Storage</h3></div></div></div><p>
+   </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="storage"></a>3.6. Persistent Storage</h3></div></div></div><p>
 Many protections built into Tor to protect against various types of attacks against Tor client anonymity rely
  on a persistent data storage facility of some kind that preserves cached network status, saved keys and configuration, and
  other critical capabilities. There are a number of ways to configure the virtual disk storage for the VM based
  on the role of the node in the network and the environment where it resides.
-   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469691"></a>Virtual Block Device</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Virtual IDE Hard Disk</strong></span><p>
+   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469644"></a>Virtual Block Device</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Virtual IDE Hard Disk</strong></span><p>
 A virtual disk image is provided with the Qemu build that contains an empty XFS file system.  This file system is mounted
  at boot and used to store persistent Tor configuration and data, in addition to other system state, like /dev/random seed.
-      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469715"></a>Loop-AES Privacy Extensions</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">GNU Privacy Guard Passphrase Authentication</strong></span><p>
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469668"></a>Loop-AES Privacy Extensions</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">GNU Privacy Guard Passphrase Authentication</strong></span><p>
 </p><div class="literallayout"><p><code class="function"><br />
 </code></p></div><p>
       </p></li><li><span><strong class="command">Loop-AES Disk Key Generation, Storage, and Authorization</strong></span><p>
 </p><div class="literallayout"><p><code class="function"><br />
 </code></p></div><p>
-      </p></li></ul></div></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="ui"></a>3.8. User Interface</h3></div></div></div><p>
-   </p></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="bundle"></a>3.9. Portable VM Runtime</h3></div></div></div><p>
-   </p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2469799"></a>4. Legal Notice</h2></div></div></div><p>
+      </p></li></ul></div></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="vmint"></a>3.7. Host Virtual Machine Integration</h3></div></div></div><p>
+Usability is a critical part of any Tor implementation. Providing a responsive and intuitive interface for the
+ Tor implementation and the applications routing through it is a particularly difficult problem in the context of
+ the threats detailed above.
+   </p><p>
+Any effective methods of improving usability should be considered.
+   </p><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469746"></a>Virtual Machine and Application Management</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Tor VM Process Launcher</strong></span><p>
+A portable Tor VM implementation requires a number of driver and network configuration tasks integrated into a
+ application to manage the TAP-Win32 and WinPcap device driver installation and removal, as well as virtual machine
+ instance configuration, activation, and monitoring.  A parent process to manage these details is provided as a native
+ win32 application without external library or installation requirements.
+      </p></li><li><span><strong class="command">Run As Service</strong></span><p>
+The ability to run a persistent instance of a Tor VM as a service on the host would also be useful.
+      </p></li><li><span><strong class="command">KQemu Accelerator</strong></span><p>
+Kernel level virtual machine acceleration is particularly useful for running graphical applications with SVGA
+ displays and high color depth. The KQemu accelerator can provide a useful performance increase for these graphical
+ applications.
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469810"></a>Application Window Based Multi-VM Model</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">MingW X Display</strong></span><p>
+
+      </p></li><li><span><strong class="command">Lightweight X Application VMs</strong></span><p>
+
+      </p></li></ul></div></div><div class="sect3" lang="en" xml:lang="en"><div class="titlepage"><div><div><h4 class="title"><a id="id2469851"></a>Windows Application Isolation VM</h4></div></div></div><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Read-Only Guest OS Images</strong></span><p>
+
+      </p></li><li><span><strong class="command">Wine Win32 API Implementation</strong></span><p>
+
+      </p></li><li><span><strong class="command">Minimal Windows Guest VM</strong></span><p>
+
+      </p></li></ul></div></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="netcfg"></a>3.8. Network Configuration</h3></div></div></div><p>
+A robust transparent Tor proxy implementation requires careful configuration of the routing and filtering
+ of traffic on both the host and guest OS instances. Unfortunately Windows does not support
+ <a href="http://rfc.net/rfc3021.html" target="_top">/31 style point-to-point</a> links so a two host address
+ /30 subnet is used.
+   </p><div class="itemizedlist"><ul type="disc"><li><span><strong class="command">Bridged Adapter Endpoint Pivot</strong></span><p>
+
+       </p></li><li><span><strong class="command">Win32 Tap Adapter</strong></span><p>
+
+       </p></li><li><span><strong class="command">Inter-VM Host Only VLANs</strong></span><p>
+
+       </p></li><li><span><strong class="command">Linux Traffic Redirection</strong></span><p>
+
+       </p></li></ul></div></div><div class="sect2" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="ui"></a>3.9. User Interface</h3></div></div></div><p>
+
+   </p></div></div><div class="sect1" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2470003"></a>4. Legal Notice</h2></div></div></div><p>
 You may distribute or modify this document according to the terms of the <a href="http://www.gnu.org/licenses/fdl-1.2.txt" target="_top">GNU Free Documentation License Version 1.2 or later</a>.
+  </p><p>
+"<span class="trademark">BSD</span>® is a registered trademark of UUnet Technologies, Inc."
+  </p><p>
+"<span class="trademark">Linux</span>® is the registered trademark of Linus Torvalds in the U.S. and other countries."
   </p><p>
 "<span class="trademark">Tor</span>™ is a trademark of The Tor Project, Inc."
   </p><p>
-"<span class="trademark">Windows</span>® is a registered trademark of Microsoft Corporation in the United States and other countries."
-  </p><p>
 "<span class="trademark">VMware</span>® is a registered trademark of VMware, Inc. in the United States and other jurisdictions."
+  </p><p>
+"<span class="trademark">Windows</span>® is a registered trademark of Microsoft Corporation in the United States and other countries."
   </p></div></div></body></html>
