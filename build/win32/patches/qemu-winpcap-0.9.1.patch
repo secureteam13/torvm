@@ -68,8 +68,8 @@ diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
  #else
 diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 --- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-09-26 07:42:09.476478288 +0000
-@@ -3858,6 +3858,317 @@
++++ mod-qemu-0.9.1/vl.c	2008-09-26 09:30:19.241883984 +0000
+@@ -3858,6 +3858,320 @@
  
  #endif /* CONFIG_SLIRP */
  
@@ -94,7 +94,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +static void pcap_receive(void *opaque, const uint8_t *buf, int size);
 +char* eth_getname_bydesc(char* desc, char* name);
 +char* eth_getname(int number, char* name);
-+void eth_callback(u_char *user, struct pcap_pkthdr *phdr, u_char *pdata);
++void eth_callback(u_char *user, const struct pcap_pkthdr *phdr, const u_char *pdata);
 +void *pcap_send(void *threadid);
 +int eth_open(char* name);
 +
@@ -232,7 +232,6 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +
 +void *pcap_send(void *threadid)
 +{
-+    int sel_ret;
 +    struct timeval timeout;
 +    timeout.tv_sec = 0;
 +    timeout.tv_usec = 200*1000;
@@ -244,9 +243,10 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +        FD_ZERO(&setl);
 +        status = pcap_dispatch((pcap_t*)pcaphandle, 1, &eth_callback, NULL);
 +    }
++    return NULL;
 +}
 +
-+void eth_callback(u_char *user, struct pcap_pkthdr *phdr, u_char *pdata)
++void eth_callback(u_char *user, const struct pcap_pkthdr *phdr, const u_char *pdata)
 +{
 +    if(phdr->len<1501)
 +    {
@@ -254,6 +254,9 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +    }
 +}
 +
++/* bad winpcap api only sets these when remote-pcap is enabled. */
++#define PCAP_OPENFLAG_PROMISCUOUS 1
++#define PCAP_OPENFLAG_NOCAPTURE_LOCAL 8
 +#define PCAP_READ_TIMEOUT 15
 +
 +int eth_open(char* name)
@@ -387,7 +390,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #if !defined(_WIN32)
  
  typedef struct TAPState {
-@@ -4733,6 +5044,14 @@
+@@ -4733,6 +5047,14 @@
          ret = net_slirp_init(vlan);
      } else
  #endif
@@ -402,7 +405,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
      if (!strcmp(device, "tap")) {
          char ifname[64];
-@@ -7551,6 +7870,9 @@
+@@ -7551,6 +7873,9 @@
             "                connect the user mode network stack to VLAN 'n' and send\n"
             "                hostname 'host' to DHCP clients\n"
  #endif
@@ -412,7 +415,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
             "-net tap[,vlan=n],ifname=name\n"
             "                connect the host TAP network interface to VLAN 'n'\n"
-@@ -7656,9 +7978,6 @@
+@@ -7656,9 +7981,6 @@
      QEMU_OPTION_pflash,
      QEMU_OPTION_boot,
      QEMU_OPTION_snapshot,
@@ -422,7 +425,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      QEMU_OPTION_m,
      QEMU_OPTION_nographic,
      QEMU_OPTION_portrait,
-@@ -7746,9 +8065,6 @@
+@@ -7746,9 +8068,6 @@
      { "pflash", HAS_ARG, QEMU_OPTION_pflash },
      { "boot", HAS_ARG, QEMU_OPTION_boot },
      { "snapshot", 0, QEMU_OPTION_snapshot },
@@ -432,7 +435,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      { "m", HAS_ARG, QEMU_OPTION_m },
      { "nographic", 0, QEMU_OPTION_nographic },
      { "portrait", 0, QEMU_OPTION_portrait },
-@@ -8355,11 +8671,6 @@
+@@ -8355,11 +8674,6 @@
  		drive_add("file=\"%s\"," FD_ALIAS, optarg,
  		          popt->index - QEMU_OPTION_fda);
                  break;
