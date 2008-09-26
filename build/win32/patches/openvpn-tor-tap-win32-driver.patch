@@ -201,7 +201,7 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_
     ErrorControl = 1
     LoadOrderGroup = NDIS
 -   ServiceBinary = %12%\@@PRODUCT_TAP_ID@@.sys
-+   ServiceBinary = %01%\tortap91.sys
++   ServiceBinary = %12%\tortap91.sys
  
  ;-----------------------------------------------------------------
  ;                                File Installation
@@ -232,7 +232,7 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_
 -[@@PRODUCT_TAP_ID@@.files]
 -;   TapPanel.cpl,,,6   ; COPYFLG_NOSKIP | COPYFLG_NOVERSIONCHECK
 -;   cipsrvr.exe,,,6     ; COPYFLG_NOSKIP | COPYFLG_NOVERSIONCHECK
-+   tortap91.driver = 01
++   tortap91.driver = 12
  
 -[@@PRODUCT_TAP_ID@@.driver]
 -   @@PRODUCT_TAP_ID@@.sys,,,6     ; COPYFLG_NOSKIP | COPYFLG_NOVERSIONCHECK
