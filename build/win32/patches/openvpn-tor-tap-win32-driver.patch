@@ -10,6 +10,72 @@ diff -Naur orig-openvpn-2.1_rc10/configure.ac mod-openvpn-2.1_rc10/configure.ac
  	service-win32/Makefile
  	install-win32/Makefile
  	install-win32/settings
+diff -Naur orig-openvpn-2.1_rc10/install-win32/maketap mod-openvpn-2.1_rc10/install-win32/maketap
+--- orig-openvpn-2.1_rc10/install-win32/maketap	2008-08-10 18:35:23.000000000 +0000
++++ mod-openvpn-2.1_rc10/install-win32/maketap	2008-09-26 08:53:30.634643320 +0000
+@@ -4,22 +4,27 @@
+ # Requires the Windows DDK
+ 
+ # get version.nsi definitions
+-. autodefs/defs.sh
++#. autodefs/defs.sh
+ 
+-if [ -d "/c/WINDDK/$DDKVER" ] ; then
++if [ -d $DDKDIR ] ; then
+ 
+ # common declarations for all DDK build targets
+ . install-win32/ddk-common
+ 
+ # configure tap driver sources
+-MACRO="perl install-win32/macro.pl autodefs/defs.in"
++MACRO="perl install-win32/macro.pl install-win32/settings"
+ IFDEF="perl install-win32/ifdef.pl"
+-rm -rf tap-win32/amd64
++if [ -d tap-win32/amd64 ]; then
++  rm -rf tap-win32/amd64
++fi
+ mkdir tap-win32/amd64
+ $MACRO <tap-win32/SOURCES.in >tap-win32/SOURCES
+ $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF >tap-win32/i386/OemWin2k.inf
+ $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF -DAMD64 >tap-win32/amd64/OemWin2k.inf
+ 
++# we don't use this script for building
++exit 0
++
+ if [ -n "$PRODUCT_TAP_DEBUG" ] ; then
+     w2ktarget="w2k c"
+     amdtarget="chk $x64_tag WNET"
+@@ -96,5 +101,5 @@
+ fi
+ 
+ else
+-    echo Not building TAP driver -- DDK version $DDKVER NOT FOUND
++    echo Not building TAP driver -- DDK installation at \"$DDKDIR\" NOT FOUND
+ fi
+diff -Naur orig-openvpn-2.1_rc10/tap-win32/SOURCES.in mod-openvpn-2.1_rc10/tap-win32/SOURCES.in
+--- orig-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-09-26 08:57:16.360327800 +0000
+@@ -4,7 +4,7 @@
+ MAJORCOMP=ntos
+ MINORCOMP=ndis
+ 
+-TARGETNAME=@@PRODUCT_TAP_ID@@
++TARGETNAME=tortap91
+ TARGETTYPE=DRIVER
+ TARGETPATH=.
+ TARGETLIBS=$(DDK_LIB_PATH)\ndis.lib $(DDK_LIB_PATH)\ntstrsafe.lib
+@@ -14,8 +14,9 @@
+ # TAP_WIN32_MIN_x values defined in
+ # config-win32.h
+ C_DEFINES=
+-C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MAJOR_VERSION=@@PRODUCT_TAP_MAJOR_VER@@
+-C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MINOR_VERSION=@@PRODUCT_TAP_MINOR_VER@@
++C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MAJOR_VERSION=9
++C_DEFINES=$(C_DEFINES) -DTAP_DRIVER_MINOR_VERSION=1
++C_DEFINES=$(C_DEFINES) -DDDKVER_MAJOR=3790
+ 
+ # Produce the same symbolic information for both free & checked builds.
+ # This will allow us to perform full source-level debugging on both
 diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in
 --- orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in	2008-08-10 18:35:25.000000000 +0000
 +++ mod-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in	2008-09-26 08:05:21.851805064 +0000
@@ -157,7 +223,7 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_
  ;                                      End
 diff -Naur orig-openvpn-2.1_rc10/tap-win32/resource.rc mod-openvpn-2.1_rc10/tap-win32/resource.rc
 --- orig-openvpn-2.1_rc10/tap-win32/resource.rc	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/resource.rc	2008-09-26 07:44:36.540121216 +0000
++++ mod-openvpn-2.1_rc10/tap-win32/resource.rc	2008-09-26 08:53:59.067320896 +0000
 @@ -33,11 +33,11 @@
  				VFT2_DRV_COMM
  */
