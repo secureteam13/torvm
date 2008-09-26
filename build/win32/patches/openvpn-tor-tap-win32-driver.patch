@@ -1,3 +1,23 @@
+diff -Naur orig-openvpn-2.1_rc10/config-win32.h.in mod-openvpn-2.1_rc10/config-win32.h.in
+--- orig-openvpn-2.1_rc10/config-win32.h.in	2008-08-10 18:35:25.000000000 +0000
++++ mod-openvpn-2.1_rc10/config-win32.h.in	2008-09-26 09:09:34.498113800 +0000
+@@ -35,7 +35,6 @@
+ 
+ #include <windows.h>
+ #include <winsock2.h>
+-#include "autodefs/defs.h"
+ 
+ #define sleep(x) Sleep((x)*1000)
+ 
+@@ -219,7 +218,7 @@
+ #define PACKAGE @PACKAGE@
+ 
+ /* Define to the address where bug reports for this package should be sent. */
+-//#define PACKAGE_BUGREPORT "openvpn-users@lists.sourceforge.net"
++#define PACKAGE_BUGREPORT "https://bugs.torproject.org/flyspray/"
+ 
+ /* Define to the full name of this package. */
+ #define PACKAGE_NAME @PACKAGE_NAME@
 diff -Naur orig-openvpn-2.1_rc10/configure.ac mod-openvpn-2.1_rc10/configure.ac
 --- orig-openvpn-2.1_rc10/configure.ac	2008-08-10 18:35:25.000000000 +0000
 +++ mod-openvpn-2.1_rc10/configure.ac	2008-09-26 08:44:00.800271312 +0000
@@ -241,8 +261,8 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/resource.rc mod-openvpn-2.1_rc10/tap-
  #define VER_PRODUCTNAME_STR         VER_FILEDESCRIPTION_STR
 diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c
 --- orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-09-23 09:48:10.733010600 +0000
-@@ -39,7 +39,6 @@
++++ mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-09-26 09:12:24.573258448 +0000
+@@ -39,10 +39,10 @@
  // TAP_IOCTL_CONFIG_TUN ioctl.
  //======================================================
  
@@ -250,6 +270,10 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-wi
  #ifndef DDKVER_MAJOR
  #error DDKVER_MAJOR must be defined as the major number of the DDK Version
  #endif
++#define PRODUCT_TAP_DEVICE_DESCRIPTION "Tor VM TAP-Win32 Device Driver"
+ 
+ #define NDIS_MINIPORT_DRIVER
+ #define BINARY_COMPATIBLE 0
 diff -Naur orig-openvpn-2.1_rc10/version.m4 mod-openvpn-2.1_rc10/version.m4
 --- orig-openvpn-2.1_rc10/version.m4	2008-09-10 06:55:52.000000000 +0000
 +++ mod-openvpn-2.1_rc10/version.m4	2008-09-23 10:11:57.426120280 +0000
