@@ -188,9 +188,6 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mkdir -p $(ISODIR)/dl/src; \
 	mkdir $(ISODIR)/bin; \
 	mkdir $(ISODIR)/add; \
-	if [ -e ../iso/vm.iso ]; then \
-		cp ../iso/vm.iso $(ISODIR)/add; \
-	fi; \
 	if [ -e ../iso/vm-isosrc/kernels/boot ]; then \
 		cp ../iso/vm-isosrc/kernels/boot $(ISODIR)/add/vmlinuz; \
 	fi; \
