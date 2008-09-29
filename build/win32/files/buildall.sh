@@ -249,6 +249,17 @@ cp pc-bios/bios.bin $bindir/
 cp pc-bios/vgabios.bin $bindir/
 cp pc-bios/vgabios-cirrus.bin $bindir/
 
+echo "Building torvm-w32 controller ..."
+cd /usr/src
+tar zxvf torvm-w32.tgz
+cd torvm-w32
+make
+if (( $? != 0 )); then
+  echo "ERROR: torvm-w32 build failed." >&2
+  exit 1
+fi
+cp torvm.exe $ddir/
+
 
 # last but not least, include the virtual disk and other parts
 cp /usr/src/add/* $libdir/

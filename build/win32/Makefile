@@ -211,6 +211,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(OVPN_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
+	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
 	touch $(ISODIR)/VMDEVISO.TXT
 
 buildiso: extract
