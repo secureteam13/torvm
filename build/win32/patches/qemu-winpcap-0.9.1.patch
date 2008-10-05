@@ -1,12 +1,12 @@
 diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
 --- orig-qemu-0.9.1/Makefile.target	2008-01-06 19:38:41.000000000 +0000
-+++ mod-qemu-0.9.1/Makefile.target	2008-09-26 07:33:17.304380744 +0000
++++ mod-qemu-0.9.1/Makefile.target	2008-10-05 03:18:14.491593496 +0000
 @@ -237,7 +237,7 @@
  LIBS+=-lz
  endif
  ifdef CONFIG_WIN32
 -LIBS+=-lwinmm -lws2_32 -liphlpapi
-+LIBS+=-lwinmm -lws2_32 -liphlpapi -lpthreadGC2 -lpacket -lwpcap
++LIBS+=-lwinmm -lws2_32 -liphlpapi -lpthreadGC2 -ltorpkt -ltorpcap
  endif
  ifdef CONFIG_SOLARIS
  LIBS+=-lsocket -lnsl -lresolv
@@ -68,8 +68,8 @@ diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
  #else
 diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 --- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-09-26 09:30:19.241883984 +0000
-@@ -3858,6 +3858,320 @@
++++ mod-qemu-0.9.1/vl.c	2008-10-05 03:16:48.525662304 +0000
+@@ -3858,6 +3858,249 @@
  
  #endif /* CONFIG_SLIRP */
  
@@ -92,8 +92,6 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +static VLANClientState *pcap_vc;
 +pcap_t* pcaphandle;
 +static void pcap_receive(void *opaque, const uint8_t *buf, int size);
-+char* eth_getname_bydesc(char* desc, char* name);
-+char* eth_getname(int number, char* name);
 +void eth_callback(u_char *user, const struct pcap_pkthdr *phdr, const u_char *pdata);
 +void *pcap_send(void *threadid);
 +int eth_open(char* name);
@@ -186,7 +184,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +                    }
 +                    else {
 +                        snprintf(actual_name, actual_name_size, "%s%s", DEVICE_PREFIX, enum_name);
-+                        fprintf(stderr, "pcap: matched requested %s to guid: %s\n", name_data, enum_name);
++                        fprintf(stderr, "pcap: matched requested %s to guid: %s\n\tpcap open devname: %s", name_data, enum_name, actual_name);
 +                    }
 +                }
 +                stop = 1;
@@ -215,6 +213,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +        fprintf(stderr, "qemu: could not set up pcap bridge to alias: %s\n", pcap_devicename);
 +        exit(1);
 +    }
++    /* either this works or we exit. don't bother with retval */
 +    eth_open(dev_guid);
 +
 +    pthread_attr_t attr;
@@ -261,59 +260,35 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +
 +int eth_open(char* name)
 +{
-+    const int bufsz = (BUFSIZ < 1520) ? 1520 : BUFSIZ;
++    const int bufsz = 1520;
 +    char errbuf[PCAP_ERRBUF_SIZE];
-+    char temp[1024];
-+    char* savname = name;
-+    int num;
 +    char* msg;
-+
-+    /* translate name of type "ethX" to real device name */
-+    if ((strlen(name) == 4)
-+        && (tolower(name[0]) == 'e')
-+        && (tolower(name[1]) == 't')
-+        && (tolower(name[2]) == 'h')
-+        && isdigit(name[3])) {
-+
-+        num = atoi(&name[3]);
-+        savname = eth_getname(num, temp);
-+    }
-+    if (savname == 0) /* didn't translate */
-+        return -1;
 +
 +    /* attempt to connect device */
 +    memset(errbuf, 0, sizeof(errbuf));
-+    pcaphandle = (void*) pcap_open_live(savname,
++    pcaphandle = (void*) pcap_open_live(name,
 +                                        bufsz,
 +                                        PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL,
 +                                        PCAP_READ_TIMEOUT,
 +                                        errbuf);
 +    if (!pcaphandle) { /* try non-promisc open device */
-+        pcaphandle = (void*) pcap_open_live(savname,
++        pcaphandle = (void*) pcap_open_live(name,
 +                                            bufsz,
 +                                            PCAP_OPENFLAG_NOCAPTURE_LOCAL,
 +                                            PCAP_READ_TIMEOUT,
 +                                            errbuf);
 +        if (!pcaphandle) { /* cannot open device */
-+            msg = "Eth: pcap_open_live error - %s\r\n";
-+            fprintf (stderr, msg, errbuf);
++            msg = "Eth: pcap_open_live error for device %s - %s\r\n";
++            fprintf (stderr, msg, name, errbuf);
 +            exit (1);
 +        }
 +        msg = "Eth: opened non-promisc %s\r\n";
-+        fprintf (stderr, msg, savname);
++        fprintf (stderr, msg, name);
 +    } else {
 +        msg = "Eth: opened promisc %s\r\n";
-+        fprintf (stderr, msg, savname);
++        fprintf (stderr, msg, name);
 +    }
 +
-+#if !defined(HAS_PCAP_SENDPACKET) && defined (xBSD) && !defined (__APPLE__)
-+    /* Tell the kernel that the header is fully-formed when it gets it.
-+    This is required in order to fake the src address. */
-+    {
-+        int one = 1;
-+        ioctl(pcap_fileno(dev->pcaphandle), BIOCSHDRCMPLT, &one);
-+    }
-+#endif /* xBSD */
 +#if defined (USE_READER_THREAD)
 +    {
 +        pthread_attr_t attr;
@@ -336,52 +311,6 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +#endif /* !defined (USE_READER_THREAD */
 +    return 0;
 +}
-+
-+#define ETH_MAX_DEVICE 10
-+char* eth_getname_bydesc(char* desc, char* name)
-+{
-+    // ETH_LIST list[ETH_MAX_DEVICE];
-+    struct slist {
-+        int num;
-+        char name[50];
-+        char desc[50];
-+    }list[10];
-+    int count = 1;//eth_devices(ETH_MAX_DEVICE, list);
-+    int i;
-+    int j=strlen(desc);
-+
-+    for (i=0; i<count; i++) {
-+        int found = 1;
-+        int k = strlen(list[i].desc);
-+
-+        if (j != k) continue;
-+        for (k=0; k<j; k++)
-+            if (tolower(list[i].desc[k]) != tolower(desc[k]))
-+        found = 0;
-+        if (found == 0) continue;
-+
-+        /* found a case-insensitive description match */
-+        strcpy(name, list[i].name);
-+        return name;
-+    }
-+    /* not found */
-+    return 0;
-+}
-+
-+char* eth_getname(int number, char* name)
-+{
-+    //ETH_LIST list[ETH_MAX_DEVICE];
-+    struct slist {
-+        int num;
-+        char name[50];
-+        char desc[50];
-+    }list[10];
-+    int count =1;// eth_devices(ETH_MAX_DEVICE, list);
-+
-+    if (count < number) return 0;
-+    strcpy(name, list[number].name);
-+    return name;
-+}
 +#endif //CONFIG_PCAP
 +//////////////////////////////////////////////////////////////////////////////
 +
@@ -390,7 +319,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #if !defined(_WIN32)
  
  typedef struct TAPState {
-@@ -4733,6 +5047,14 @@
+@@ -4733,6 +4976,14 @@
          ret = net_slirp_init(vlan);
      } else
  #endif
@@ -405,7 +334,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
      if (!strcmp(device, "tap")) {
          char ifname[64];
-@@ -7551,6 +7873,9 @@
+@@ -7551,6 +7802,9 @@
             "                connect the user mode network stack to VLAN 'n' and send\n"
             "                hostname 'host' to DHCP clients\n"
  #endif
@@ -415,7 +344,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
             "-net tap[,vlan=n],ifname=name\n"
             "                connect the host TAP network interface to VLAN 'n'\n"
-@@ -7656,9 +7981,6 @@
+@@ -7656,9 +7910,6 @@
      QEMU_OPTION_pflash,
      QEMU_OPTION_boot,
      QEMU_OPTION_snapshot,
@@ -425,7 +354,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      QEMU_OPTION_m,
      QEMU_OPTION_nographic,
      QEMU_OPTION_portrait,
-@@ -7746,9 +8068,6 @@
+@@ -7746,9 +7997,6 @@
      { "pflash", HAS_ARG, QEMU_OPTION_pflash },
      { "boot", HAS_ARG, QEMU_OPTION_boot },
      { "snapshot", 0, QEMU_OPTION_snapshot },
@@ -435,7 +364,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      { "m", HAS_ARG, QEMU_OPTION_m },
      { "nographic", 0, QEMU_OPTION_nographic },
      { "portrait", 0, QEMU_OPTION_portrait },
-@@ -8355,11 +8674,6 @@
+@@ -8355,11 +8603,6 @@
  		drive_add("file=\"%s\"," FD_ALIAS, optarg,
  		          popt->index - QEMU_OPTION_fda);
                  break;

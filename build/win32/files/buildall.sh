@@ -207,7 +207,7 @@ if (( $? != 0 )); then
   echo "ERROR: WinPcap Packet user space library build failed." >&2
   exit 1
 fi
-cp Packet.dll $libdir/
+cp torpkt.dll $libdir/
 cd $wpbase
 cd wpcap/PRJ
 make
@@ -215,15 +215,20 @@ if (( $? != 0 )); then
   echo "ERROR: WinPcap libwpcap user space library build failed." >&2
   exit 1
 fi
-cp wpcap.dll $libdir/
+cp torpcap.dll $libdir/
 
 echo "Building qemu ..."
 cd /usr/src
 tar zxvf qemu-0.9.1.tar.gz
 cd qemu-0.9.1
+patch -p1 < ../qemu-kernel-cmdline-from-stdin.patch 2> /dev/null
+if (( $? != 0 )); then
+  echo "ERROR: Qemu cmdline via stdin patch failed." >&2
+  exit 1
+fi
 patch -p1 < ../qemu-winpcap-0.9.1.patch 2> /dev/null
 if (( $? != 0 )); then
-  echo "ERROR: Qemu patch failed." >&2
+  echo "ERROR: Qemu winpcap patch failed." >&2
   exit 1
 fi
 ./configure --prefix=/usr --interp-prefix=qemu-%M \

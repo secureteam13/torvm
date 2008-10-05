@@ -72,6 +72,57 @@ diff -Naur orig-winpcap/Common/WpcapNames.h mod-winpcap/Common/WpcapNames.h
  
  #endif //__WPCAPNAMES_H_EED6D131C6DB4dd696757D219977A7E5
  
+diff -Naur orig-winpcap/packetNtx/Dll/AdInfo.c mod-winpcap/packetNtx/Dll/AdInfo.c
+--- orig-winpcap/packetNtx/Dll/AdInfo.c	2007-11-13 22:59:14.000000000 +0000
++++ mod-winpcap/packetNtx/Dll/AdInfo.c	2008-10-05 03:35:04.323075776 +0000
+@@ -96,7 +96,7 @@
+ #endif /* HAVE_DAG_API */
+ 
+ /// Title of error windows
+-TCHAR   szWindowTitle[] = TEXT("PACKET.DLL");
++TCHAR   szWindowTitle[] = TEXT("TORPKT.DLL");
+ 
+ ULONG inet_addrU(const WCHAR *cp);
+ 
+diff -Naur orig-winpcap/packetNtx/Dll/Packet.def mod-winpcap/packetNtx/Dll/Packet.def
+--- orig-winpcap/packetNtx/Dll/Packet.def	2006-08-09 00:11:04.000000000 +0000
++++ mod-winpcap/packetNtx/Dll/Packet.def	1970-01-01 00:00:00.000000000 +0000
+@@ -1,35 +0,0 @@
+-LIBRARY packet
+-
+-EXPORTS
+-		PacketLibraryVersion
+-		PacketGetVersion
+-		PacketGetDriverVersion
+-		PacketOpenAdapter
+-		PacketSendPacket
+-		PacketSendPackets
+-		PacketAllocatePacket
+-		PacketInitPacket
+-		PacketFreePacket
+-		PacketReceivePacket
+-		PacketCloseAdapter
+-		PacketSetHwFilter
+-		PacketGetAdapterNames
+-		PacketRequest
+-		PacketSetBuff
+-		PacketSetBpf
+-		PacketSetSnapLen
+-		PacketGetStats
+-		PacketGetStatsEx
+-		PacketGetNetType
+-		PacketSetReadTimeout
+-		PacketSetMode
+-		PacketSetNumWrites
+-		PacketGetNetInfoEx
+-		PacketSetMinToCopy
+-		PacketGetReadEvent
+-		PacketStopDriver
+-		PacketSetDumpName
+-		PacketSetDumpLimits
+-		PacketIsDumpEnded
+-		PacketSetLoopbackBehavior
+-		PacketGetAirPcapHandle
 diff -Naur orig-winpcap/packetNtx/Dll/Packet32.c mod-winpcap/packetNtx/Dll/Packet32.c
 --- orig-winpcap/packetNtx/Dll/Packet32.c	2007-11-13 22:59:30.000000000 +0000
 +++ mod-winpcap/packetNtx/Dll/Packet32.c	2008-09-27 09:17:40.512431904 +0000
@@ -94,23 +145,103 @@ diff -Naur orig-winpcap/packetNtx/Dll/Packet32.c mod-winpcap/packetNtx/Dll/Packe
  		result = TRUE;
  	}
  
+diff -Naur orig-winpcap/packetNtx/Dll/Project/GNUmakefile mod-winpcap/packetNtx/Dll/Project/GNUmakefile
+--- orig-winpcap/packetNtx/Dll/Project/GNUmakefile	2006-11-17 02:29:18.000000000 +0000
++++ mod-winpcap/packetNtx/Dll/Project/GNUmakefile	2008-10-05 03:29:27.294311936 +0000
+@@ -1,23 +1,22 @@
+ # Makefile for cygwin gcc
+ # Nate Lawson <nate@rootlabs.com>
++# Modifications added for Tor VM WinPcap to prevent collision with WinPcap proper
+ 
+ # OPTFLAGS = -g -DDBG 
+ OPTFLAGS = -O -D_WINNT4
+ # I am suspicious of -O2 since it hosed wpcap.dll. To be safe, use -O only
+ 
+ CFLAGS = -I ../../../common -shared -mno-cygwin ${OPTFLAGS} -I..
+-LDFLAGS = -Wl,--out-implib,libpacket.a
++LDFLAGS = -Wl,--out-implib,libtorpkt.a
+ OBJS = ../Packet32.o ../AdInfo.o
+ LIBS = -lws2_32 -lversion
+ 
+-Packet.dll: ${OBJS}
+-	${CC} ${CFLAGS} ${LDFLAGS} -o Packet.dll ../Packet.def ${OBJS} ${LIBS}
++torpkt.dll: ${OBJS}
++	${CC} ${CFLAGS} ${LDFLAGS} -o torpkt.dll ../torpkt.def ${OBJS} ${LIBS}
+ 
+ .c.o:
+ 	${CC} ${CFLAGS} -o $*.o -c $<
+ 
+ clean:
+-	${RM} ${OBJS} libpacket.a Packet.dll
++	${RM} ${OBJS} libtorpkt.a torpkt.dll
+ 
+-install: Packet.dll
+-	cp Packet.dll c:/winnt/system32
+diff -Naur orig-winpcap/packetNtx/Dll/torpkt.def mod-winpcap/packetNtx/Dll/torpkt.def
+--- orig-winpcap/packetNtx/Dll/torpkt.def	1970-01-01 00:00:00.000000000 +0000
++++ mod-winpcap/packetNtx/Dll/torpkt.def	2008-10-05 03:30:05.596489120 +0000
+@@ -0,0 +1,34 @@
++LIBRARY torpkt
++
++EXPORTS
++		PacketLibraryVersion
++		PacketGetVersion
++		PacketGetDriverVersion
++		PacketOpenAdapter
++		PacketSendPacket
++		PacketSendPackets
++		PacketAllocatePacket
++		PacketInitPacket
++		PacketFreePacket
++		PacketReceivePacket
++		PacketCloseAdapter
++		PacketSetHwFilter
++		PacketGetAdapterNames
++		PacketRequest
++		PacketSetBuff
++		PacketSetBpf
++		PacketSetSnapLen
++		PacketGetStats
++		PacketGetStatsEx
++		PacketGetNetType
++		PacketSetReadTimeout
++		PacketSetMode
++		PacketSetNumWrites
++		PacketGetNetInfoEx
++		PacketSetMinToCopy
++		PacketGetReadEvent
++		PacketStopDriver
++		PacketSetDumpName
++		PacketSetDumpLimits
++		PacketIsDumpEnded
++		PacketSetLoopbackBehavior
 diff -Naur orig-winpcap/packetNtx/Dll/version.rc2 mod-winpcap/packetNtx/Dll/version.rc2
 --- orig-winpcap/packetNtx/Dll/version.rc2	2006-07-25 00:46:54.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/version.rc2	2008-09-28 06:58:58.871717096 +0000
-@@ -26,7 +26,7 @@
++++ mod-winpcap/packetNtx/Dll/version.rc2	2008-10-05 03:33:27.420807160 +0000
+@@ -26,20 +26,20 @@
      BEGIN
          BLOCK "000004b0"
          BEGIN
 -			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
 +			VALUE "CompanyName",       "The Tor Project, Inc."
  #ifdef _WINNT4
- 			VALUE "FileDescription",   "packet.dll (NT4) Dynamic Link Library"
+-			VALUE "FileDescription",   "packet.dll (NT4) Dynamic Link Library"
++			VALUE "FileDescription",   "torpkt.dll (NT4) Dynamic Link Library"
  #elif defined(_WINVISTA)
-@@ -39,7 +39,7 @@
+-			VALUE "FileDescription",   "packet.dll (Vista) Dynamic Link Library"
++			VALUE "FileDescription",   "torpkt.dll (Vista) Dynamic Link Library"
+ #else
+-			VALUE "FileDescription",   "packet.dll (NT5) Dynamic Link Library"
++			VALUE "FileDescription",   "torpkt.dll (NT5) Dynamic Link Library"
+ #endif
+ 			VALUE "FileVersion",       WINPCAP_VER_STRING
+-			VALUE "InternalName",      "packet.dll"
++			VALUE "InternalName",      "torpkt.dll"
  			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING
  			VALUE "LegalTrademarks",   ""
- 			VALUE "OriginalFilename",  "packet.dll"
+-			VALUE "OriginalFilename",  "packet.dll"
 -			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
++			VALUE "OriginalFilename",  "torpkt.dll"
 +			VALUE "ProductName",       "Tor VM WinPcap Packet.dll Library"
  			VALUE "ProductVersion",    WINPCAP_VER_STRING
              VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
@@ -202,8 +333,20 @@ diff -Naur orig-winpcap/version.h mod-winpcap/version.h
  #define WINPCAP_LIBPCAP_VERSION			"1.0 - branch"
 diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
 --- orig-winpcap/wpcap/PRJ/GNUmakefile	2008-05-20 17:30:46.000000000 +0000
-+++ mod-winpcap/wpcap/PRJ/GNUmakefile	2008-09-26 07:13:21.963100240 +0000
-@@ -23,15 +23,14 @@
++++ mod-winpcap/wpcap/PRJ/GNUmakefile	2008-10-05 03:43:00.025757976 +0000
+@@ -1,5 +1,6 @@
+ # Makefile for cygwin gcc
+ # Nate Lawson <nate@rootlabs.com>
++# Modified for Tor VM WinPcap to prevent collision with WinPcap proper
+ 
+ # Set according to your system type
+ SYSTYPE = "NT"
+@@ -18,21 +19,19 @@
+ YFLAGS = -y -p pcap_
+ 
+ PACKET_DIR = packetNTx
+-INSTALL_DIR = ${SYSTEMROOT}\system32
+ 
  CFLAGS = -I ../libpcap -I ../libpcap/bpf -I ../libpcap/lbl \
  	-I ../libpcap/Win32/Include -I../libpcap/Win32/Include/ipv6kit \
  	-I ../../common -I ../Win32-Extensions \
@@ -217,7 +360,221 @@ diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
 +	-DHAVE_REMOTE \
  	-mno-cygwin -shared ${OPTFLAGS}
 -LDFLAGS = -Wl,--out-implib,../lib/libwpcap.a
-+LDFLAGS = -Wl,--out-implib,libwpcap.a
- LIBS = -L ../../${PACKET_DIR}/DLL/Project -lPacket -lws2_32
+-LIBS = -L ../../${PACKET_DIR}/DLL/Project -lPacket -lws2_32
++LDFLAGS = -Wl,--out-implib,libtorpcap.a
++LIBS = -L ../../${PACKET_DIR}/DLL/Project -ltorpkt -lws2_32
  OBJS = ../libpcap/bpf/net/bpf_filter.o \
  	../libpcap/bpf_dump.o \
+ 	../libpcap/bpf_image.o \
+@@ -63,13 +62,14 @@
+ 	../Win32-Extensions/Win32-Extensions.o
+ 
+ main: ${OBJS}
+-	${CC} ${CFLAGS} ${LDFLAGS} -o wpcap.dll wpcap.def ${OBJS} ${LIBS}
++	${CC} ${CFLAGS} ${LDFLAGS} -o torpcap.dll torpcap.def ${OBJS} ${LIBS}
+ 
+-install:
+-	cp wpcap.dll ${INSTALL_DIR}
++# by default, we don't want clean to delete the generated grammar
++realclean: clean
++	${RM} ../libpcap/scanner.c ../libpcap/grammar.c
+ 
+ clean:
+-	${RM} ${OBJS} ../libpcap/scanner.c ../libpcap/grammar.c wpcap.a wpcap.dll
++	${RM} ${OBJS} torpcap.a torpcap.dll
+ 
+ # Keeps intermediate .c files from being deleted
+ .SECONDARY: ../libpcap/scanner.c ../libpcap/grammar.c
+diff -Naur orig-winpcap/wpcap/PRJ/WPCAP.DEF mod-winpcap/wpcap/PRJ/WPCAP.DEF
+--- orig-winpcap/wpcap/PRJ/WPCAP.DEF	2008-04-25 18:45:08.000000000 +0000
++++ mod-winpcap/wpcap/PRJ/WPCAP.DEF	1970-01-01 00:00:00.000000000 +0000
+@@ -1,92 +0,0 @@
+-LIBRARY wpcap.dll
+-
+-DESCRIPTION 'Win32 Packet Capture Library'
+-
+-EXPORTS
+-		pcap_lookupdev
+-		pcap_lookupnet
+-		pcap_open_live
+-		pcap_open_offline
+-		pcap_close
+-		pcap_getnonblock
+-		pcap_setnonblock
+-		pcap_loop
+-		pcap_dispatch
+-		pcap_read
+-		pcap_setuserbuffer
+-		pcap_offline_read
+-		pcap_next
+-		pcap_stats
+-		pcap_stats_ex
+-		pcap_setfilter
+-		pcap_perror
+-		pcap_strerror
+-		pcap_geterr
+-		pcap_compile
+-		pcap_compile_nopcap
+-		pcap_freecode
+-		pcap_datalink
+-		pcap_snapshot
+-		pcap_is_swapped
+-		pcap_major_version
+-		pcap_minor_version
+-		pcap_file
+-		pcap_fileno
+-		pcap_dump_open
+-		pcap_dump_close
+-		pcap_dump_flush
+-		pcap_dump
+-		pcap_dump_file
+-		pcap_setbuff
+-		pcap_setmode
+-		pcap_sendpacket
+-		pcap_sendqueue_alloc
+-		pcap_sendqueue_destroy
+-		pcap_sendqueue_queue
+-		pcap_sendqueue_transmit
+-		pcap_next_etherent
+-		pcap_getevent
+-		pcap_setmintocopy
+-		pcap_open_dead
+-		pcap_findalldevs
+-		pcap_freealldevs
+-		pcap_live_dump
+-		pcap_live_dump_ended
+-		bpf_filter
+-		bpf_validate
+-		bpf_image
+-		bpf_dump
+-		wsockinit
+-		endservent
+-		getservent
+-		eproto_db
+-		pcap_stats_ex
+-		pcap_open
+-		pcap_createsrcstr
+-		pcap_parsesrcstr
+-		pcap_findalldevs_ex
+-		pcap_remoteact_accept
+-		pcap_remoteact_list
+-		pcap_remoteact_close
+-		pcap_remoteact_cleanup
+-		install_bpf_program
+-		pcap_next_ex
+-		pcap_offline_filter
+-		pcap_setsampling
+-		pcap_breakloop
+-		pcap_list_datalinks
+-		pcap_list_datalinks
+-		pcap_set_datalink
+-		pcap_datalink_name_to_val
+-		pcap_datalink_val_to_name
+-		pcap_datalink_val_to_description
+-		pcap_lib_version
+-		pcap_dump_file
+-		pcap_dump_ftell
+-		pcap_get_airpcap_handle
+-		pcap_create
+-		pcap_activate
+-		pcap_set_promisc
+-		pcap_set_snaplen
+-		pcap_set_timeout
+-		pcap_set_buffer_size
+\ No newline at end of file
+diff -Naur orig-winpcap/wpcap/PRJ/torpcap.def mod-winpcap/wpcap/PRJ/torpcap.def
+--- orig-winpcap/wpcap/PRJ/torpcap.def	1970-01-01 00:00:00.000000000 +0000
++++ mod-winpcap/wpcap/PRJ/torpcap.def	2008-10-05 03:43:39.914693936 +0000
+@@ -0,0 +1,92 @@
++LIBRARY torpcap.dll
++
++DESCRIPTION 'Tor VM Win32 Packet Capture Library'
++
++EXPORTS
++		pcap_lookupdev
++		pcap_lookupnet
++		pcap_open_live
++		pcap_open_offline
++		pcap_close
++		pcap_getnonblock
++		pcap_setnonblock
++		pcap_loop
++		pcap_dispatch
++		pcap_read
++		pcap_setuserbuffer
++		pcap_offline_read
++		pcap_next
++		pcap_stats
++		pcap_stats_ex
++		pcap_setfilter
++		pcap_perror
++		pcap_strerror
++		pcap_geterr
++		pcap_compile
++		pcap_compile_nopcap
++		pcap_freecode
++		pcap_datalink
++		pcap_snapshot
++		pcap_is_swapped
++		pcap_major_version
++		pcap_minor_version
++		pcap_file
++		pcap_fileno
++		pcap_dump_open
++		pcap_dump_close
++		pcap_dump_flush
++		pcap_dump
++		pcap_dump_file
++		pcap_setbuff
++		pcap_setmode
++		pcap_sendpacket
++		pcap_sendqueue_alloc
++		pcap_sendqueue_destroy
++		pcap_sendqueue_queue
++		pcap_sendqueue_transmit
++		pcap_next_etherent
++		pcap_getevent
++		pcap_setmintocopy
++		pcap_open_dead
++		pcap_findalldevs
++		pcap_freealldevs
++		pcap_live_dump
++		pcap_live_dump_ended
++		bpf_filter
++		bpf_validate
++		bpf_image
++		bpf_dump
++		wsockinit
++		endservent
++		getservent
++		eproto_db
++		pcap_stats_ex
++		pcap_open
++		pcap_createsrcstr
++		pcap_parsesrcstr
++		pcap_findalldevs_ex
++		pcap_remoteact_accept
++		pcap_remoteact_list
++		pcap_remoteact_close
++		pcap_remoteact_cleanup
++		install_bpf_program
++		pcap_next_ex
++		pcap_offline_filter
++		pcap_setsampling
++		pcap_breakloop
++		pcap_list_datalinks
++		pcap_list_datalinks
++		pcap_set_datalink
++		pcap_datalink_name_to_val
++		pcap_datalink_val_to_name
++		pcap_datalink_val_to_description
++		pcap_lib_version
++		pcap_dump_file
++		pcap_dump_ftell
++		pcap_get_airpcap_handle
++		pcap_create
++		pcap_activate
++		pcap_set_promisc
++		pcap_set_snaplen
++		pcap_set_timeout
++		pcap_set_buffer_size
