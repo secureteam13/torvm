@@ -10,13 +10,16 @@ LDFLAGS += -lws2_32 -liphlpapi
 
 all: torvm$(EXESUF)
 
-OBJS+=torvm.o
+OBJS+=torvm.o torvmrc.o
 
 torvm$(EXESUF): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-%.o: %.c
+torvm.o: torvm.c
 	$(CC) $(CPPFLAGS) -c -o $@ $<
+
+torvmrc.o: torvm.rc
+	windres torvm.rc torvmrc.o
 
 clean:
 	rm -f *.o *.d torvm$(EXESUF)
