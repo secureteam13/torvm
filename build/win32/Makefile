@@ -188,8 +188,8 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mkdir -p $(ISODIR)/dl/src; \
 	mkdir $(ISODIR)/bin; \
 	mkdir $(ISODIR)/add; \
-	if [ -e ../iso/vm-isosrc/kernels/boot ]; then \
-		cp ../iso/vm-isosrc/kernels/boot $(ISODIR)/add/vmlinuz; \
+	if [ -e ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz ]; then \
+		cp ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
 	fi; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
