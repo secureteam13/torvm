@@ -65,6 +65,8 @@ IF EXIST %ISODRV%\ssh (
   cd ssh
   copy *.* %DDRV%%MDIR%\%MVER%\home\%USERNAME%\.ssh\
 )
+cd /d %DDRV%
+cd %MDIR%\%MVER%
 IF EXIST %ISODRV%\bldopts (
   print %ISODRV%\bldopts >> etc\profile.d\bldopts.sh
 )
