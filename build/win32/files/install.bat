@@ -58,6 +58,16 @@ set BUILDER=/usr/src/buildall.sh
 set MSYSROOT=C:\\msys\\1.0
 md etc\profile.d
 ECHO export MSYSROOT="%MSYSROOT%" > etc\profile.d\defpaths.sh
+IF EXIST %ISODRV%\ssh (
+  md "home\%USERNAME%"
+  md "home\%USERNAME%\.ssh"
+  cd /d %ISODRV%
+  cd ssh
+  copy *.* %DDRV%%MDIR%\%MVER%\home\%USERNAME%\.ssh\
+)
+IF EXIST %ISODRV%\bldopts (
+  print %ISODRV%\bldopts >> etc\profile.d\bldopts.sh
+)
 set WD=C:\msys\1.0\bin\
 set PATH=%WD%;%PATH%
 

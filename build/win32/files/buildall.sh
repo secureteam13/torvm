@@ -12,6 +12,14 @@ if [[ "$1" != "dobuild" ]]; then
   /usr/src/buildall.sh dobuild 2>&1 | tee build.log
 else
 
+if [ -f ~/.ssh/user ]; then
+  export BUILD_SCP_USER=`cat ~/.ssh/user`
+  export BUILD_SCP_HOST=`cat ~/.ssh/host`
+  export BUILD_SCP_DIR=`cat ~/.ssh/dest`
+  chmod 700 ~/.ssh >/dev/null 2>&1
+  chmod 600 ~/.ssh/id* >/dev/null 2>&1
+fi
+
 export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
 export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
 export WPCAP_LDFLAGS="-L${WPCAP_DIR}/wpcap/PRJ -L${WPCAP_DIR}/packetNtx/Dll/Project"
@@ -266,9 +274,27 @@ fi
 cp torvm.exe $ddir/
 
 
-# last but not least, include the virtual disk and other parts
-cp /usr/src/add/* $libdir/
-cp /usr/src/add/hdd.img $statedir/
+# don't forget the kernel and virtual disk
+cp /usr/src/add/vmlinuz $libdir/
+cp /usr/src/add/hdd.img $libdir/
+
+if [[ "$DEBUG_NO_STRIP" == "" ]]; then
+  strip $libdir/*.dll
+  strip $bindir/*.exe
+  strip $ddir/*.exe
+fi
+
+if [[ "$BUILD_SCP_USER" != "" ]]; then
+  echo "Transferring build to destination ${BUILD_SCP_HOST}:${BUILD_SCP_DIR} ..."
+  udate=`date +%s`
+  scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
+      -r /c/Tor_VM "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/Tor_VM_${udate}"
+fi
+
+if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
+  echo "Invoking automated shutdown ..."
+  shutdown.exe -f -s -t 1
+fi
 
 echo "DONE."
 exit 0

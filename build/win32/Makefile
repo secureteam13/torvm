@@ -191,13 +191,25 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	if [ -e ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz ]; then \
 		cp ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
 	fi; \
+	if [ -e $(BUILD_SCP_IDF) ]; then \
+		mkdir $(ISODIR)/ssh; \
+		cp "$(BUILD_SCP_IDF)" $(ISODIR)/ssh/; \
+		echo "$(BUILD_SCP_USER)" > $(ISODIR)/ssh/user; \
+		echo "$(BUILD_SCP_HOST)" > $(ISODIR)/ssh/host; \
+		echo "$(BUILD_SCP_DIR)" > $(ISODIR)/ssh/dest; \
+	fi; \
+	if [[ "$(AUTO_SHUTDOWN)" != "" ]]; then \
+		echo "export AUTO_SHUTDOWN=$(AUTO_SHUTDOWN)" >> $(ISODIR)/bldopts; \
+	fi; \
+	if [[ "$(DEBUG_NO_STRIP)" != "" ]]; then \
+		echo "export DEBUG_NO_STRIP=$(DEBUG_NO_STRIP)" >> $(ISODIR)/bldopts; \
+	fi; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \
 	cp patches/* $(ISODIR)/dl/src; \
-	cp files/*.tgz $(ISODIR)/dl/src; \
 	unzip $(WDLDIR)/$(ZLIB_F) -d $(ISODIR)/ bin/zlib1.dll; \
 	unzip $(WDLDIR)/$(GZIP_F) -d $(ISODIR)/ bin/gzip.exe; \
 	unzip $(WDLDIR)/$(BZIP2_F) -d $(ISODIR)/ bin/bzip2.exe bin/bzip2.dll; \
@@ -223,7 +235,13 @@ buildiso: extract
 		mkisofs -hide-rr-moved -pad -l -o $$ODIR/w32build.iso -r -J .; \
 	); if (( $$? != 0 )); then exit 1; fi
 
+ifeq (,$(W32AUTO_BUILD_CMD))
+  W32BLD=echo "Win32 build ISO image ready.  Please load the ISO into a Windows systems to start the build."
+else
+  W32BLD=$(W32AUTO_BUILD_CMD);true
+endif
+
 runinstall: buildiso
-	@echo "NOTICE: This feature is not yet automated.  Please load the ISO into a Windows systems to start the build."
+	@$(W32BLD)
 
 .PHONY: downloads extract buildiso runinstall

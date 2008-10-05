@@ -133,17 +133,32 @@ buildvmiso: buildkern
 		exit 1; \
 	fi
 
-buildw32src: buildkern
+
+W32MK=WDLDIR=$(WDLDIR) all
+ifneq (,$(BUILD_SCP_USER))
+  W32MK:=BUILD_SCP_USER=$(BUILD_SCP_USER) BUILD_SCP_IDF=$(BUILD_SCP_IDF) BUILD_SCP_HOST=$(BUILD_SCP_HOST) BUILD_SCP_DIR=$(BUILD_SCP_DIR) $(W32MK)
+endif
+ifeq (TRUE,$(AUTO_SHUTDOWN))
+  W32MK:=AUTO_SHUTDOWN=TRUE $(W32MK)
+endif
+ifneq (TRUE,$(DEBUG_NO_STRIP))
+  W32MK:=DEBUG_NO_STRIP=TRUE $(W32MK)
+endif
+ifneq (,$(W32AUTO_BUILD_CMD))
+  W32MK:=W32AUTO_BUILD_CMD="$(W32AUTO_BUILD_CMD)" $(W32MK)
+endif
+
+buildw32src: 
 	@cd build/win32; \
 	chown -R $(BUSER):$(BGROUP) . ; \
-	time su $(BUSER) -c "( $(MAKE) WDLDIR=$(WDLDIR) )"; \
+	time su $(BUSER) -c "( $(MAKE) $(W32MK) )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: Unable to create win32 build ISO image." >&2; \
 		exit 1; \
 	fi
 
 package: buildw32src buildvmiso
-	@echo "package build target does not do anything with build products yet. XXX"
+	@echo "Automated packaging of completed win32 build is not yet implemented."
 
 .PHONY: clean prereq import buildkern buildvmiso buildw32src package
 
