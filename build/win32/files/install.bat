@@ -68,7 +68,7 @@ IF EXIST %ISODRV%\ssh (
 cd /d %DDRV%
 cd %MDIR%\%MVER%
 IF EXIST %ISODRV%\bldopts (
-  print %ISODRV%\bldopts >> etc\profile.d\bldopts.sh
+  copy %ISODRV%\bldopts etc\profile.d\bldopts.sh
 )
 set WD=C:\msys\1.0\bin\
 set PATH=%WD%;%PATH%
