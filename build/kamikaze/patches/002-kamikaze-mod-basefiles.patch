@@ -954,22 +954,13 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/init.d/watchdog mod-basefi
 -}
 diff -Naur orig-kamikaze/package/base-files/files/etc/inittab mod-basefiles-kamikaze/package/base-files/files/etc/inittab
 --- orig-kamikaze/package/base-files/files/etc/inittab	2007-05-10 14:50:42.865525000 +0000
-+++ mod-basefiles-kamikaze/package/base-files/files/etc/inittab	2008-10-03 21:31:03.750201376 +0000
-@@ -1,5 +1,11 @@
++++ mod-basefiles-kamikaze/package/base-files/files/etc/inittab	2008-10-05 13:33:28.609119504 +0000
+@@ -1,5 +1,2 @@
  ::sysinit:/etc/init.d/rcS S boot
  ::shutdown:/etc/init.d/rcS K stop
 -tts/0::askfirst:/bin/ash --login
 -ttyS0::askfirst:/bin/ash --login
 -tty1::askfirst:/bin/ash --login
-+tty1::respawn:/etc/init.d/tor status
-+tty2::respawn:/bin/ash --login
-+tty3::respawn:/bin/ash --login
-+tty4::respawn:/bin/ash --login
-+tty5::respawn:/bin/ash --login
-+tty6::respawn:/bin/ash --login
-+tty7::respawn:/bin/ash --login
-+tty8::respawn:/bin/ash --login
-+tty9::respawn:/bin/ash --login
 diff -Naur orig-kamikaze/package/base-files/files/etc/ipkg.conf mod-basefiles-kamikaze/package/base-files/files/etc/ipkg.conf
 --- orig-kamikaze/package/base-files/files/etc/ipkg.conf	2008-02-29 02:41:39.429442000 +0000
 +++ mod-basefiles-kamikaze/package/base-files/files/etc/ipkg.conf	1970-01-01 00:00:00.000000000 +0000
@@ -979,8 +970,8 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/ipkg.conf mod-basefiles-ka
 -dest ram /tmp
 diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kamikaze/package/base-files/files/etc/preinit
 --- orig-kamikaze/package/base-files/files/etc/preinit	2008-04-23 16:20:46.084166000 +0000
-+++ mod-basefiles-kamikaze/package/base-files/files/etc/preinit	2008-10-03 00:31:58.174427646 +0000
-@@ -1,92 +1,163 @@
++++ mod-basefiles-kamikaze/package/base-files/files/etc/preinit	2008-10-05 13:37:29.995981748 +0000
+@@ -1,92 +1,174 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008  The Tor Project, Inc.
@@ -1015,7 +1006,7 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +syslogd >/dev/null 2>&1
 +# do we need it? klogd -c 1 >/dev/null 2>&1
 +
-+clear
++clear;echo
 +d "Initializing ..."
 +
 +hostname "Tor_VM" >/dev/null 2>&1
@@ -1103,7 +1094,8 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +  echo '       Do not run Tor in this configuration.'
 +  sleep 3
 +fi
-+
+ 
+-exec <$M0 >$M1 2>&0
 +mkdir -p /var/run
 +mkdir -p /var/log
 +mkdir -p /var/lock
@@ -1127,8 +1119,7 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
 +fi
 +echo $TZ > /etc/TZ
- 
--exec <$M0 >$M1 2>&0
++
 +PRIVIP=10.99.11.1
 +echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
@@ -1137,6 +1128,17 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +grep eth1: /proc/net/dev >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  ifconfig eth1 $PRIVIP netmask 255.255.255.252 up
++fi
++
++echo $ARGS | grep ' DEBUGINIT' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty3::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty4::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty5::askfirst:/bin/ash --login' >> /etc/inittab
++else
++  echo 'tty1::respawn:/etc/init.d/tor status' >> /etc/inittab
 +fi
 +
 +# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
