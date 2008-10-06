@@ -7,18 +7,37 @@ export bindir="${ddir}/bin"
 export confdir="${ddir}/config"
 export statedir="${ddir}/state"
 
-if [[ "$1" != "dobuild" ]]; then
-  cd /usr/src
-  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
-else
-
 if [ -f ~/.ssh/user ]; then
   export BUILD_SCP_USER=`cat ~/.ssh/user`
   export BUILD_SCP_HOST=`cat ~/.ssh/host`
   export BUILD_SCP_DIR=`cat ~/.ssh/dest`
   chmod 700 ~/.ssh >/dev/null 2>&1
-  chmod 600 ~/.ssh/id* >/dev/null 2>&1
+  # if the identity key has a prefix, remove it
+  mv ~/.ssh/*id_rsa ~/.ssh/id_rsa >/dev/null 2>&1
+  chmod 600 ~/.ssh/id_rsa >/dev/null 2>&1
 fi
+
+# wrap the actual build process so we capture stdout/stderr
+# and also transfer over the build log and shutdown, if needed.
+if [[ "$1" != "dobuild" ]]; then
+  export build_date=`date +%s`
+  cd /usr/src
+  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
+  if (( $? != 0 )); then
+    echo "BUILD_FAILED" >> build.log
+  else
+    echo "BUILD_COMPLETE" >> build.log
+  fi
+  if [[ "$BUILD_SCP_USER" != "" ]]; then
+    echo "Transferring build to destination ${BUILD_SCP_HOST}:${BUILD_SCP_DIR} ..."
+    scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
+        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/build_${build_date}.log"
+  fi
+  if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
+    echo "Invoking automated shutdown ..."
+    shutdown.exe -f -s -t 1
+  fi
+else
 
 export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
 export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
@@ -279,6 +298,7 @@ cp /usr/src/add/vmlinuz $libdir/
 cp /usr/src/add/hdd.img $libdir/
 
 if [[ "$DEBUG_NO_STRIP" == "" ]]; then
+  echo "Stripping debug symbols from binaries and libraries ..."
   strip $libdir/*.dll
   strip $bindir/*.exe
   strip $ddir/*.exe
@@ -286,14 +306,8 @@ fi
 
 if [[ "$BUILD_SCP_USER" != "" ]]; then
   echo "Transferring build to destination ${BUILD_SCP_HOST}:${BUILD_SCP_DIR} ..."
-  udate=`date +%s`
   scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-      -r /c/Tor_VM "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/Tor_VM_${udate}"
-fi
-
-if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
-  echo "Invoking automated shutdown ..."
-  shutdown.exe -f -s -t 1
+      -r /c/Tor_VM "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/Tor_VM_${build_date}"
 fi
 
 echo "DONE."

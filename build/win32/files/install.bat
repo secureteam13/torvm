@@ -73,8 +73,8 @@ IF EXIST %ISODRV%\bldopts (
 set WD=C:\msys\1.0\bin\
 set PATH=%WD%;%PATH%
 
-%WD%bash %BUILDER%
-ECHO "Build completed successfully."
+%WD%bash --login %BUILDER%
+ECHO "Build completed."
 GOTO DONE
 
 :NOINSTALL
