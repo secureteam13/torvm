@@ -1149,7 +1149,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
               ldebug ("Connection %s default gateway: %s.", ce->name, ce->gateway); 
               if (strcmp(ce->gateway, "0.0.0.0") != 0) {
                 ce->isdefgw = TRUE;
-                ldebug ("Connection %s has the default route.");
+                ldebug ("Connection %s has the default route.", ce->name);
               }
             }
             len = sizeof (name_data);
@@ -1418,14 +1418,15 @@ BOOL haveadminrights (void)
 }
 
 BOOL buildcmdline (struct s_rconnelem *  brif,
-                   char **cmdline)
+                   BOOL                  usedebug,
+                   char **               cmdline)
 {
   *cmdline = (char *)malloc(4096);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
-  const char * dbgcmds = "loglevel=9 clocksource=hpet DEBUGINIT";
+  const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
   snprintf (*cmdline, 4095,
             "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1",
-            basecmds,
+            usedebug ? dbgcmds : basecmds,
             brif->ipaddr,
             brif->netmask,
             brif->gateway,
@@ -1441,8 +1442,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   STARTUPINFO si;
   HANDLE stdin_rd = NULL;
   HANDLE stdin_wr = NULL;
-  HANDLE stdout_rd = NULL;
-  HANDLE stdout_wr = NULL;
+  HANDLE stdout_h = NULL;
   SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
@@ -1458,26 +1458,32 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   dir = TOR_VM_BIN;
   cmd = (LPTSTR)malloc(1024);
   snprintf (cmd, 1023,
-            "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -appendstdin -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\" -net user,vlan=2 -net nic,vlan=2,model=pcnet",
+            "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\" -net user,vlan=2 -net nic,vlan=2,model=pcnet",
+            cmdline,
             32,
             macaddr,
             bridgeintf,
             TOR_TAP_NAME);
   ldebug ("Launching Qemu with cmd: %s", cmd);
 
+/* don't use this stdin pipe until the read 0 issue is resolved.
   CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
   SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
 
-  si.hStdError = stderr;
-  si.hStdOutput = stdout;
+  stdout_h = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  si.hStdError = stdout_h;
+  si.hStdOutput = stdout_h;
   si.hStdInput = stdin_rd;
   si.dwFlags |= STARTF_USESTDHANDLES;
+*/
 
   if( !CreateProcess(NULL, 
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
+/*                     TRUE,   // handle inheritance needed for std handles  */
+                     FALSE,
                      opts,
                      NULL,   // environment block
                      dir,
@@ -1487,10 +1493,18 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     return FALSE;
   }
 
+/*
   CloseHandle(stdin_rd);
 
-  WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL);
+  if (! WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL)) {
+    lerror ("Failed to write kernel command line to stdin handle.  Error code: %d", GetLastError());
+  }
+  else {
+    ldebug ("Wrote %d bytes of cmdline len %d to qemu stdin.", numwritten, strlen(cmdline));
+  }
+  FlushFileBuffers (stdin_wr);
   CloseHandle(stdin_wr);
+*/
 
   return TRUE;
 }
@@ -1651,8 +1665,25 @@ int main(int argc, char **argv)
   int  numintf;
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
+  BOOL  vmdebug = FALSE;
   BOOL  foundit = FALSE;
   char *  cmdline = NULL;
+
+  /* invocation options:
+   * clean - restore network setup (if saved config exists), clean up tap, etc.
+   * debug - launch vm in debug mode, shell at console in vm, etc.
+   * TODO: implement "real" command line options
+   */
+  if (argc > 1) {
+    if (strcmp(argv[1], "clean") == 0) {
+      uninstalltap();
+      restorenetconfig();
+      exit (0);
+    }
+    if (strcmp(argv[1], "debug") == 0) {
+      vmdebug = TRUE;
+    }
+  }
 
   if (!haveadminrights()) {
     if (promptrunasadmin()) {
@@ -1691,7 +1722,6 @@ int main(int argc, char **argv)
     lerror ("Unable to install Tor NPF service driver.");
     goto shutdown;
   }
-
 
   numintf = loadnetinfo(&connlist);
 
@@ -1732,7 +1762,7 @@ int main(int argc, char **argv)
     lerror ("Unable to find network interface with a default route.");
     goto shutdown;
   }
-  if (! buildcmdline(ce, &cmdline)) {
+  if (! buildcmdline(ce, vmdebug, &cmdline)) {
     lerror ("Unable to generate command line for kernel.");
     goto shutdown;
   }
