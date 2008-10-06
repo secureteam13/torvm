@@ -35,22 +35,16 @@
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
 
-struct s_rtcpipvals {
+struct s_rconnelem {
+  BOOL    isactive;
+  BOOL    isdefgw;
   BOOL    isdhcp;
+  LPTSTR  name;
+  LPTSTR  guid;
+  LPTSTR  macaddr;
   LPTSTR  ipaddr;
   LPTSTR  netmask;
   LPTSTR  gateway;
-  LPTSTR  hostname;
-};
-
-struct s_rconnelem {
-  int     idx;
-  BOOL    isactive;
-  BOOL    isdefgw;
-  LPTSTR  name;
-  LPTSTR  guid;
-  LPTSTR  driver;
-  LPTSTR  macaddr;
   struct s_rconnelem * next;
 };
 
@@ -75,6 +69,7 @@ struct s_rconnelem {
 /* OID's we need to query */
 #define OID_802_3_PERMANENT_ADDRESS             0x01010101
 #define OID_802_3_CURRENT_ADDRESS               0x01010102
+#define OID_GEN_MEDIA_CONNECT_STATUS            0x00010114
 /* probably will never need these, but just in case ... */
 #define OID_GEN_MEDIA_IN_USE                    0x00010104
 #define OID_WAN_PERMANENT_ADDRESS               0x04010101
@@ -88,7 +83,7 @@ struct s_rconnelem {
 #define NETWORK_CLIENTS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E973-E325-11CE-BFC1-08002BE10318}"
 #define NETWORK_SERVICES_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E974-E325-11CE-BFC1-08002BE10318}"
 #define NETWORK_PROTOCOLS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E975-E325-11CE-BFC1-08002BE10318}"
-#define TCPIP_KEY "SYSTEM\\CurrentControlSet\\Services\\Tcpip"
+#define TCPIP_KEY "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces"
 
 
 /* debug, info and error logging
@@ -108,7 +103,7 @@ void logto (LPTSTR  path)
   }
   s_logh = CreateFile (path,
                        GENERIC_WRITE,
-                       0,
+                       FILE_SHARE_READ,
                        NULL,
                        CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL,
@@ -230,7 +225,7 @@ void debugto (LPTSTR  path)
   }
   s_dbgh = CreateFile (path,
                        GENERIC_WRITE,
-                       0,
+                       FILE_SHARE_READ,
                        NULL,
                        CREATE_ALWAYS,   
                        FILE_ATTRIBUTE_NORMAL,
@@ -437,6 +432,13 @@ BOOL uninstalltap(void)
   LPTSTR dir = NULL;
   DWORD exitcode;
   DWORD opts = 0;
+  LONG status;
+  HKEY key;
+  DWORD len;
+  int i = 0;
+  int stop = 0;
+  int numconn = 0;
+  const char name_string[] = "Name";
   
   opts = CREATE_NEW_PROCESS_GROUP;
   
@@ -445,7 +447,8 @@ BOOL uninstalltap(void)
   si.cb = sizeof(si);
   dir = TOR_VM_LIB;
   cmd = "\"" TOR_VM_BIN "\\devcon.exe\" remove TORTAP91";
-  
+ 
+  ldebug ("Removing TORTAP91 device via devcon."); 
   if( !CreateProcess(NULL,
                      cmd,
                      NULL,   // process handle no inherit
@@ -457,6 +460,7 @@ BOOL uninstalltap(void)
                      &si, 
                      &pi) ) { 
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    return FALSE;
   }
   
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
@@ -464,6 +468,116 @@ BOOL uninstalltap(void)
   }
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
+
+  ldebug ("Removal complete.  Checking registry for Tor Tap connection entries.");
+  /* clean up registry keys left after tap adapter is removed
+   */
+  status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                        NETWORK_CONNECTIONS_KEY,
+                        0,
+                        KEY_READ,
+                        &key);
+  if (status != ERROR_SUCCESS) {
+    lerror ("Failed to open key for read: %d", status); 
+    return -1;
+  }
+
+  while (!stop) {
+    char enum_name[REG_NAME_MAX];
+    char connection_string[REG_NAME_MAX];
+    HKEY ckey;
+    HKEY dkey;
+    char name_data[REG_NAME_MAX];
+    DWORD name_type;
+    int j;
+
+    len = sizeof (enum_name);
+    status = RegEnumKeyEx(key,
+                          i++,
+                          enum_name,
+                          &len,
+                          NULL,
+                          NULL,
+                          NULL,
+                          NULL);
+    if (status == ERROR_NO_MORE_ITEMS)
+        break;
+    else if (status != ERROR_SUCCESS) {
+      lerror ("Failed to query members of network connection tree.");
+      RegCloseKey (key);
+      return FALSE;
+    }
+
+    ldebug ("Checking connection entry %s name.", enum_name);
+    snprintf(connection_string,
+             sizeof(connection_string),
+             "%s\\%s\\Connection",
+             NETWORK_CONNECTIONS_KEY, enum_name);
+    status = RegOpenKeyEx(
+            HKEY_LOCAL_MACHINE,
+            connection_string,
+            0,
+            KEY_READ,
+            &ckey);
+
+    if (status == ERROR_SUCCESS) {
+        len = sizeof (name_data);
+        status = RegQueryValueEx(
+                ckey,
+                name_string,
+                NULL,
+                &name_type,
+                name_data,
+                &len);
+
+      if (status != ERROR_SUCCESS || name_type != REG_SZ) {
+        continue;
+      }
+      if (strcmp(name_data, TOR_TAP_NAME) == 0) {
+        /* remove this connection entry to non-existant Tor Tap32 device */
+        ldebug ("Removing registry data for %s adapter key %s.", TOR_TAP_NAME, enum_name);
+        ldebug ("Deleting Connection subkey.");
+        snprintf(connection_string,
+                 sizeof(connection_string),
+                 "%s\\%s",
+                 NETWORK_CONNECTIONS_KEY, enum_name);
+        status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                              connection_string,
+                              0,
+                              KEY_SET_VALUE,
+                              &dkey);
+        if (status != ERROR_SUCCESS) {
+          lerror ("Failed to open network connection key for write: %d", status);
+          continue; 
+        }
+        /* now we can delete the connection key itself */
+        status = RegDeleteKey(dkey, "Connection");
+        if (status != ERROR_SUCCESS) {
+          lerror ("Failed to remove tap connection subkey from registry: %d", status);
+        }
+        RegCloseKey (dkey);
+        /* finally, remove the top level connection key from the list of connections ids */
+        ldebug ("Deleting connection entry %s from top level connections key.", enum_name);
+        status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                              NETWORK_CONNECTIONS_KEY,
+                              0,
+                              KEY_SET_VALUE, 
+                              &dkey);
+        if (status != ERROR_SUCCESS) {
+          lerror ("Failed to open top level network connection key for write: %d", status);
+        }
+        status = RegDeleteKey(dkey, enum_name);
+        if (status != ERROR_SUCCESS) {
+          lerror ("Failed to remove top level tap key from registry: %d", status);
+        }
+        RegCloseKey (dkey);
+      }
+      RegCloseKey (ckey);
+    }
+  }
+
+  RegCloseKey (key);
+
   
   return TRUE;
 }
@@ -546,8 +660,8 @@ BOOL savenetconfig(void)
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL;
   dir = TOR_VM_STATE;
-  /* cmd = "\"netsh.exe\" interface ip dump" */
-  cmd = "\"netsh.exe\" dump";
+  cmd = "\"netsh.exe\" interface ip dump";
+  /* cmd = "\"netsh.exe\" dump"; <- this is noisy and slow. avoid if possible. */
 
   CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
   SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0);
@@ -739,6 +853,77 @@ BOOL configtap(void)
   return TRUE;
 }
 
+BOOL configbridge(void)
+{
+  LPSTR cmd;
+  cmd = "\"netsh.exe\" interface ip set address \"Local Area Connection\" static 10.231.254.1 255.255.255.254";
+  if (! runcommand(cmd)) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+BOOL checkvirtdisk(void) {
+  HANDLE src = NULL;
+  HANDLE dest = NULL;
+  LPTSTR srcname = TOR_VM_LIB "\\hdd.img";
+  LPTSTR destname = TOR_VM_STATE "\\hdd.img";
+  CHAR * buff = NULL;
+  DWORD  buffsz = 4096;
+  DWORD  len;
+  DWORD  written;
+  
+  dest = CreateFile (destname,
+                     GENERIC_READ,
+                     0,
+                     NULL,
+                     OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL,
+                     NULL);
+  if (dest == INVALID_HANDLE_VALUE) {
+    if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+      return FALSE;
+    }
+  } 
+  else {
+    CloseHandle (dest);
+    return TRUE;
+  }
+
+  dest = CreateFile (destname,
+                     GENERIC_WRITE,
+                     0,  
+                     NULL,
+                     CREATE_NEW,
+                     FILE_ATTRIBUTE_NORMAL,
+                     NULL);
+  if (dest == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+ 
+  src = CreateFile (srcname,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (src == INVALID_HANDLE_VALUE) {
+    CloseHandle (dest);
+    return FALSE;
+  }
+  
+  buff = (CHAR *)malloc(buffsz);
+  while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) {
+    WriteFile(dest, buff, len, &written, NULL);
+  }
+  free (buff); 
+  CloseHandle (src);
+  CloseHandle (dest);
+
+  return TRUE;
+}
+
 BOOL getmacaddr(const char *  devguid,
                 char **       mac)
 {
@@ -793,6 +978,52 @@ BOOL getmacaddr(const char *  devguid,
   return retval;
 }
 
+BOOL isconnected(const char *  devguid)
+{
+  char *  devfstr = NULL;
+  BOOL   status;
+  HANDLE devfd;
+  DWORD retsz, oidcode, intfStatus;
+  BOOL  retval = FALSE;
+
+  devfstr = malloc(1024);
+  snprintf (devfstr, 1023, "\\\\.\\%s", devguid);
+  devfd = CreateFile(devfstr,
+                     0,
+                     FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                     NULL,
+                     OPEN_EXISTING,
+                     0,
+                     NULL);
+  if (devfd == INVALID_HANDLE_VALUE)
+  {
+    lerror ("Unable to open net device handle for path: %s", devfstr);
+    goto cleanup;
+  }
+
+  oidcode = OID_GEN_MEDIA_CONNECT_STATUS;
+  status = DeviceIoControl(devfd,
+                           IOCTL_NDIS_QUERY_GLOBAL_STATS,
+                           &oidcode, sizeof(oidcode),
+                           &intfStatus, sizeof(intfStatus),
+                           &retsz,
+                           (LPOVERLAPPED) NULL);
+  if (status) {
+    ldebug ("Received media connect status %d for device %s.", intfStatus, devguid);
+    retval = (intfStatus == 0) ? TRUE : FALSE;
+  }
+  else {
+    retval = FALSE;
+  }
+
+ cleanup:
+  if (devfd != INVALID_HANDLE_VALUE)
+    CloseHandle(devfd);
+  free(devfstr);
+
+  return retval;
+}
+
 int loadnetinfo(struct s_rconnelem **connlist)
 {
   LONG status;
@@ -800,9 +1031,9 @@ int loadnetinfo(struct s_rconnelem **connlist)
   HKEY wkey;
   DWORD len;
   int i = 0;
-  int stop = 0;
   int numconn = 0;
   struct s_rconnelem *  ce = NULL;
+  struct s_rconnelem *  ne = NULL;
   const char name_string[] = "Name";
 
   status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
@@ -815,17 +1046,18 @@ int loadnetinfo(struct s_rconnelem **connlist)
     return -1;
   }
 
-  while (!stop) {
-    ce = malloc(sizeof(struct s_rconnelem));
+  while (1) {
     char enum_name[REG_NAME_MAX];
     char connection_string[REG_NAME_MAX];
+    char tcpip_string[REG_NAME_MAX];
     HKEY ckey;
+    HKEY tkey;
     char name_data[REG_NAME_MAX];
     DWORD name_type;
 
     len = sizeof (enum_name);
     status = RegEnumKeyEx(key,
-                          i,
+                          i++,
                           enum_name,
                           &len,
                           NULL,
@@ -864,19 +1096,95 @@ int loadnetinfo(struct s_rconnelem **connlist)
         return -1;
       }
       else {
-        if (getmacaddr (enum_name, &(ce->macaddr)) == TRUE) {
+        /* add this connection info the list */
+        numconn++;
+        if (ce == NULL) {
+          *connlist = ce = malloc(sizeof(struct s_rconnelem));
+          memset(ce, 0, sizeof(struct s_rconnelem));
+        }
+        else {
+          ne = malloc(sizeof(struct s_rconnelem));
+          memset(ne, 0, sizeof(struct s_rconnelem));
+          ce->next = ne;
+          ce = ne;
+        }
+        ce->name = strdup(name_data);
+        ce->guid = strdup(enum_name);
+        if (getmacaddr (ce->guid, &(ce->macaddr))) {
           linfo ("Interface %s => %s  mac(%s)", name_data, enum_name, ce->macaddr);
+        }
+        if (isconnected (enum_name)) {
+          linfo ("Interface %s (%s) is currently connected.", ce->name, ce->macaddr);
+          ce->isactive = TRUE;
+          snprintf(tcpip_string,
+                   sizeof(tcpip_string),
+                   "%s\\%s",
+                   TCPIP_KEY, enum_name);
+          status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                                tcpip_string,
+                                0,
+                                KEY_READ,   
+                                &tkey);
+          if (status == ERROR_SUCCESS) {
+            len = sizeof (BOOL);
+            status = RegQueryValueEx(tkey,
+                                     "EnableDHCP",
+                                     NULL,
+                                     NULL,
+                                     &(ce->isdhcp),
+                                     &len);
+            if (status == ERROR_SUCCESS) {
+              ce->gateway = strdup(name_data);
+              ldebug ("Connection %s %s using DHCP.", ce->name, ce->isdhcp ? "is" : "is NOT");
+            }
+            len = sizeof (name_data);
+            status = RegQueryValueEx(tkey,
+                                     "DefaultGateway",
+                                     NULL,
+                                     &name_type,
+                                     name_data,
+                                     &len);
+            if (status == ERROR_SUCCESS) {
+              ce->gateway = strdup(name_data); 
+              ldebug ("Connection %s default gateway: %s.", ce->name, ce->gateway); 
+              if (strcmp(ce->gateway, "0.0.0.0") != 0) {
+                ce->isdefgw = TRUE;
+                ldebug ("Connection %s has the default route.");
+              }
+            }
+            len = sizeof (name_data);
+            status = RegQueryValueEx(tkey,
+                                     ce->isdhcp ? "DhcpIPAddress" : "IPAddress",
+                                     NULL,
+                                     &name_type,
+                                     name_data,
+                                     &len);
+            if (status == ERROR_SUCCESS) {
+              ce->ipaddr = strdup(name_data); 
+              ldebug ("Connection %s current IP address: %s.", ce->name, ce->ipaddr); 
+            }
+            len = sizeof (name_data);
+            status = RegQueryValueEx(tkey,
+                                     ce->isdhcp ? "DhcpSubnetMask" : "SubnetMask",
+                                     NULL,
+                                     &name_type,
+                                     name_data,
+                                     &len);
+            if (status == ERROR_SUCCESS) {
+              ce->netmask = strdup(name_data);
+              ldebug ("Connection %s netmask: %s.", ce->name, ce->netmask);
+            }
+            RegCloseKey (tkey);
+          }
         }
       }
       RegCloseKey (ckey);
     }
-    ++i;
   }
 
   RegCloseKey (key);
 
     i = 0;
-    stop = 0;
     status = RegOpenKeyEx(
         HKEY_LOCAL_MACHINE,
         ADAPTER_KEY,
@@ -889,8 +1197,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
         return -1;
     }
 
-    while (!stop)
-    {
+    while (1) {
         char enum_name[REG_NAME_MAX];
         char connection_string[REG_NAME_MAX];
         HKEY ckey;
@@ -901,7 +1208,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
         len = sizeof (enum_name);
         status = RegEnumKeyEx(
             key,
-            i,
+            i++,
             enum_name,
             &len,
             NULL,
@@ -940,7 +1247,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
             if (status != ERROR_SUCCESS || name_type != REG_SZ) {
             }
             else {
-                /* printf ("-%s- %s", enum_name, name_data); */
+                ldebug ("-%s- %s", enum_name, name_data); 
             }
 
             RegCloseKey (ckey);
@@ -972,17 +1279,17 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 &len);
 
             if (status != ERROR_SUCCESS || name_type != REG_SZ) {
-                /* printf ("Failed parse of key %s\\NetCfgInstanceId , errorno: %d", connection_string, status); */
+                ldebug ("Failed parse of key %s\\NetCfgInstanceId , errorno: %d", connection_string, status);
             }
             else {
-                /* printf ("GUID: %s", name_data); */
+                ldebug ("GUID: %s", name_data);
                 strcpy (cguid, name_data);
             }
 
             RegCloseKey (ckey);
         }
         else {
-            /* printf ("Failed read key %s , errorno: %d", connection_string, status); */
+            ldebug ("Failed read key %s , errorno: %d", connection_string, status);
         }
 
         snprintf(connection_string,
@@ -1008,10 +1315,10 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 &len);
 
             if (status != ERROR_SUCCESS || name_type != REG_SZ) {
-                /* printf ("Failed parse of key %s\\Service , errorno: %d", connection_string, status); */
+                ldebug ("Failed parse of key %s\\Service , errorno: %d", connection_string, status);
             }
             else {
-                /* printf ("Service: %s", name_data); */
+                ldebug ("Service: %s", name_data);
                 if (strcmp(name_data, TOR_TAP_SVC) == 0) {
                   snprintf(connection_string,
                            sizeof(connection_string),
@@ -1041,15 +1348,13 @@ int loadnetinfo(struct s_rconnelem **connlist)
             RegCloseKey (ckey);
         }
         else {
-            /* printf ("Failed read key %s , errorno: %d", connection_string, status); */
+            ldebug ("Failed read key %s , errorno: %d", connection_string, status); 
         }
-
-        i++;
     }
 
     RegCloseKey (key);
 
-    return 0;
+    return numconn;
 }
 
 /* keep linkage to these dynamic, in case the requisite Dll's don't exist. */
@@ -1112,18 +1417,61 @@ BOOL haveadminrights (void)
   return isadmin;
 }
 
-BOOL launchtorvm (PROCESS_INFORMATION * pi)
+BOOL buildcmdline (struct s_rconnelem *  brif,
+                   char **cmdline)
+{
+  *cmdline = (char *)malloc(4096);
+  const char * basecmds = "quiet loglevel=0 clocksource=hpet";
+  const char * dbgcmds = "loglevel=9 clocksource=hpet DEBUGINIT";
+  snprintf (*cmdline, 4095,
+            "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1",
+            basecmds,
+            brif->ipaddr,
+            brif->netmask,
+            brif->gateway,
+            brif->macaddr);
+  return TRUE;
+}
+
+BOOL launchtorvm (PROCESS_INFORMATION * pi,
+                  char *  bridgeintf,
+                  char *  macaddr,
+                  char *  cmdline)
 {
   STARTUPINFO si;
+  HANDLE stdin_rd = NULL;
+  HANDLE stdin_wr = NULL;
+  HANDLE stdout_rd = NULL;
+  HANDLE stdout_wr = NULL;
+  SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS;
+  DWORD numwritten;
 
   ZeroMemory( &si, sizeof(si) );
   ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
   si.cb = sizeof(si);
+  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sattr.bInheritHandle = TRUE;
+  sattr.lpSecurityDescriptor = NULL;
   dir = TOR_VM_BIN;
-  cmd = "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"clocksource=hpet IP=172.16.2.42 MASK=255.255.255.0 GW=172.16.2.1 MAC=00:11:22:33:44:55 MTU=1480 PRIVIP=10.10.10.1\" -hda ../state/hdd.img -m 32 -std-vga -net nic,model=pcnet,macaddr=00:11:22:33:44:55 -net pcap,devicename=\"Local Area Connection\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"" TOR_TAP_NAME "\" -net user,vlan=2 -net nic,vlan=2,model=pcnet";
+  cmd = (LPTSTR)malloc(1024);
+  snprintf (cmd, 1023,
+            "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -appendstdin -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\" -net user,vlan=2 -net nic,vlan=2,model=pcnet",
+            32,
+            macaddr,
+            bridgeintf,
+            TOR_TAP_NAME);
+  ldebug ("Launching Qemu with cmd: %s", cmd);
+
+  CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
+  SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+
+  si.hStdError = stderr;
+  si.hStdOutput = stdout;
+  si.hStdInput = stdin_rd;
+  si.dwFlags |= STARTF_USESTDHANDLES;
 
   if( !CreateProcess(NULL, 
                      cmd,
@@ -1138,6 +1486,11 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi)
     lerror ("Failed to launch Qemu Tor VM process.  Error code: %d", GetLastError());
     return FALSE;
   }
+
+  CloseHandle(stdin_rd);
+
+  WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL);
+  CloseHandle(stdin_wr);
 
   return TRUE;
 }
@@ -1295,7 +1648,11 @@ BOOL setupenv (void)
 int main(int argc, char **argv)
 {
   const char *cmd;
+  int  numintf;
   struct s_rconnelem *connlist = NULL;
+  struct s_rconnelem *ce = NULL;
+  BOOL  foundit = FALSE;
+  char *  cmdline = NULL;
 
   if (!haveadminrights()) {
     if (promptrunasadmin()) {
@@ -1317,11 +1674,6 @@ int main(int argc, char **argv)
     fatal ("Unable to save current network configuration.");
   }
 
-  if (!installtornpf()) {
-    lerror ("Unable to install Tor NPF service driver.");
-    goto shutdown;
-  }
-
   uninstalltap();
 
   if (!setdriversigning (FALSE)) {
@@ -1335,8 +1687,17 @@ int main(int argc, char **argv)
     lerror ("Unable to restore driver signing checks.");
   }
 
-  loadnetinfo(&connlist);
+  if (!installtornpf()) {
+    lerror ("Unable to install Tor NPF service driver.");
+    goto shutdown;
+  }
 
+
+  numintf = loadnetinfo(&connlist);
+
+  if (! configbridge()) {
+    lerror ("Unable to configure blackhole route for bridged interface.");
+  }
   if (! disableservices()) {
     lerror ("Unable to disable dangerous windows network services.");
   }
@@ -1349,13 +1710,46 @@ int main(int argc, char **argv)
   if (! flushdns()) {
     lerror ("Unable to flush cached DNS entries.");
   }
+  if (! checkvirtdisk()) {
+    lerror ("Unable to confirm usable virtual disk is present.");
+  }
+
+  if (numintf <= 0) {
+    lerror ("Unable to find any usable network interfaces.");
+    goto shutdown;
+  }
+
+  ce = connlist;
+  while (!foundit && ce) {
+    if (ce->isdefgw) {
+      foundit = TRUE;
+    }
+    else {
+      ce = ce->next;
+    }
+  }
+  if (ce == NULL) {
+    lerror ("Unable to find network interface with a default route.");
+    goto shutdown;
+  }
+  if (! buildcmdline(ce, &cmdline)) {
+    lerror ("Unable to generate command line for kernel.");
+    goto shutdown;
+  }
+  ldebug ("Generated kernel command line: %s", cmdline);
 
   PROCESS_INFORMATION pi;
-  if (! launchtorvm(&pi)) {
+  if (! launchtorvm(&pi,
+                    ce->name,
+                    ce->macaddr,
+                    cmdline)) {
     lerror ("Unable to launch Qemu TorVM instance.");
     goto shutdown;
   }
+
+  /* need to delay long enough to allow qemu to start and open tap device */
   Sleep (4000);
+
   if (! isrunning(&pi)) {
     lerror ("Tor VM failed to start properly.");
     goto shutdown;
@@ -1365,7 +1759,6 @@ int main(int argc, char **argv)
     lerror ("Unable to configure tap device.  Exiting.");
     goto shutdown;
   }
-  Sleep (4000);
 
   waitforit(&pi);
 
