@@ -238,7 +238,7 @@ buildiso: extract
 ifeq (,$(W32AUTO_BUILD_CMD))
   W32BLD=echo "Win32 build ISO image ready.  Please load the ISO into a Windows systems to start the build."
 else
-  W32BLD=$(W32AUTO_BUILD_CMD);true
+  W32BLD=now=`date`;echo "Starting win32 automated build at $$now";$(W32AUTO_BUILD_CMD);now=`date`;echo "Build done at $$now";true
 endif
 
 runinstall: buildiso

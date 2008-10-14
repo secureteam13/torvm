@@ -10,16 +10,31 @@ LDFLAGS += -lws2_32 -liphlpapi
 
 all: torvm$(EXESUF)
 
-OBJS+=torvm.o torvmrc.o
+OBJS+=torvm.o torvmrc.o apicommon.o creds.o extension.o thrpool.o
 
-torvm$(EXESUF): $(OBJS)
+torvm$(EXESUF): $(OBJS) vmconfig.h
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-torvm.o: torvm.c
+torvm.o: torvm.c vmconfig.h
 	$(CC) $(CPPFLAGS) -c -o $@ $<
 
 torvmrc.o: torvm.rc
 	windres torvm.rc torvmrc.o
+
+apicommon.o: apicommon.c
+	$(CC) $(CPPFLAGS) -c -o $@ $<
+
+creds.o: creds.c
+	$(CC) $(CPPFLAGS) -c -o $@ $<
+
+extension.o: extension.c
+	$(CC) $(CPPFLAGS) -c -o $@ $<
+
+thrpool.o: thrpool.c
+	$(CC) $(CPPFLAGS) -c -o $@ $<
+
+vmconfig.h: vmconfig.h.in
+	@if [ ! -f $@ ]; then cp $< $@; else touch $@; fi
 
 clean:
 	rm -f *.o *.d torvm$(EXESUF)

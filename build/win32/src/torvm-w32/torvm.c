@@ -1,96 +1,43 @@
 /* Copyright (C) 2008  The Tor Project, Inc.
  * See LICENSE file for rights and terms.
  */
+#include "torvm.h"
 
-/* enable certain parts of the win32 API for process / system functions */
-#define _WIN32_WINNT 0x0500
-
-#include <windows.h>
-#include <tchar.h>
-#include <winreg.h>
-#include <winioctl.h>
-#include <winerror.h>
-#include <wincrypt.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <time.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-
-/* things that should go into configure / headers / runtime dynamic */
-#define REG_NAME_MAX   256
-#define TOR_VM_ROOT    "C:\\Tor_VM"
-#define W_TOR_VM_ROOT  L"C:\\Tor_VM"
-#define TOR_VM_BIN     TOR_VM_ROOT "\\bin"
-#define TOR_VM_LIB     TOR_VM_ROOT "\\lib"
-#define TOR_VM_STATE   TOR_VM_ROOT "\\state"
+#define TOR_VM_BASE    "C:\\Tor_VM"
+#define W_TOR_VM_BASE  L"C:\\Tor_VM"
+#define TOR_VM_BIN     TOR_VM_BASE "\\bin"
+#define TOR_VM_LIB     TOR_VM_BASE "\\lib"
+#define TOR_VM_STATE   TOR_VM_BASE "\\state"
 #define WIN_DRV_DIR    "C:\\WINDOWS\\system32\\drivers"
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
+
+BOOL buildpath (const TCHAR *dirname,
+                TCHAR **fullpath);
+BOOL buildwsyspath (TCHAR **fullpath);
+
 
 struct s_rconnelem {
   BOOL    isactive;
   BOOL    isdefgw;
   BOOL    isdhcp;
+  BOOL    istortap;
   LPTSTR  name;
   LPTSTR  guid;
   LPTSTR  macaddr;
   LPTSTR  ipaddr;
   LPTSTR  netmask;
   LPTSTR  gateway;
+  LPTSTR  dhcpsvr;
+  LPTSTR  driver;
   struct s_rconnelem * next;
 };
 
-
-/* jump hoops to read ethernet adapter MAC address.
- */
-#define _NDIS_CONTROL_CODE(request,method) \
-	CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD, request, method, FILE_ANY_ACCESS)
-#define IOCTL_NDIS_QUERY_GLOBAL_STATS   _NDIS_CONTROL_CODE( 0, METHOD_OUT_DIRECT )
-
-/* these are not yet used, but we may need them to interact with network devices
- * directly to enable/disable, change MAC, etc.
- */
-#define IOCTL_NDIS_QUERY_ALL_STATS      _NDIS_CONTROL_CODE( 1, METHOD_OUT_DIRECT )
-#define IOCTL_NDIS_ADD_DEVICE           _NDIS_CONTROL_CODE( 2, METHOD_BUFFERED )
-#define IOCTL_NDIS_DELETE_DEVICE        _NDIS_CONTROL_CODE( 3, METHOD_BUFFERED )
-#define IOCTL_NDIS_TRANSLATE_NAME       _NDIS_CONTROL_CODE( 4, METHOD_BUFFERED )
-#define IOCTL_NDIS_ADD_TDI_DEVICE       _NDIS_CONTROL_CODE( 5, METHOD_BUFFERED )
-#define IOCTL_NDIS_NOTIFY_PROTOCOL      _NDIS_CONTROL_CODE( 6, METHOD_BUFFERED )
-#define IOCTL_NDIS_GET_LOG_DATA         _NDIS_CONTROL_CODE( 7, METHOD_OUT_DIRECT )
-
-/* OID's we need to query */
-#define OID_802_3_PERMANENT_ADDRESS             0x01010101
-#define OID_802_3_CURRENT_ADDRESS               0x01010102
-#define OID_GEN_MEDIA_CONNECT_STATUS            0x00010114
-/* probably will never need these, but just in case ... */
-#define OID_GEN_MEDIA_IN_USE                    0x00010104
-#define OID_WAN_PERMANENT_ADDRESS               0x04010101
-#define OID_WAN_CURRENT_ADDRESS                 0x04010102
-#define OID_WW_GEN_PERMANENT_ADDRESS            0x0901010B
-#define OID_WW_GEN_CURRENT_ADDRESS              0x0901010C
-
-/* win32 registry fun */
-#define ADAPTER_KEY "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-#define NETWORK_CONNECTIONS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
-#define NETWORK_CLIENTS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E973-E325-11CE-BFC1-08002BE10318}"
-#define NETWORK_SERVICES_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E974-E325-11CE-BFC1-08002BE10318}"
-#define NETWORK_PROTOCOLS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E975-E325-11CE-BFC1-08002BE10318}"
-#define TCPIP_KEY "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces"
-
-
-/* debug, info and error logging
- *  lerror to stderr and log file (if set)
- *  linfo to log file
- *  ldebug to debug log file
- *  fatal logs error and then exits process
+/* logging:
+ *   lerror to stderr and log file(s) if set
+ *   linfo  to log and debug file
+ *   ldebug to debug file
+ *   fatal logs error and then exits process
  */
 static HANDLE  s_logh = INVALID_HANDLE_VALUE;
 static HANDLE  s_dbgh = INVALID_HANDLE_VALUE;
@@ -111,7 +58,9 @@ void logto (LPTSTR  path)
 }
 
 
-static void _flog (HANDLE        fd,
+static void _flog (HANDLE        fda,
+                   HANDLE        fdb,
+                   HANDLE        fdc,
                    const char *  msgtype,
                    const char *  format,
                    va_list       argptr)
@@ -125,7 +74,9 @@ static void _flog (HANDLE        fd,
   SYSTEMTIME        now;
   va_list           ap;
 
-  if (fd == INVALID_HANDLE_VALUE)
+  if ( (fda == INVALID_HANDLE_VALUE) &&
+       (fdb == INVALID_HANDLE_VALUE) &&
+       (fdc == INVALID_HANDLE_VALUE)   )
     return;
 
   if (msgbuf == NULL) {
@@ -164,9 +115,21 @@ static void _flog (HANDLE        fd,
     /* full msg buffer */
     len = msgmax -1;
   }
-  WriteFile (fd, msgbuf, len, &written, NULL);
-  WriteFile (fd, newline, strlen(newline), &written, NULL);
-  FlushFileBuffers (fd);
+  if (fda != INVALID_HANDLE_VALUE) {
+    WriteFile (fda, msgbuf, len, &written, NULL);
+    WriteFile (fda, newline, strlen(newline), &written, NULL);
+    FlushFileBuffers (fda);
+  }
+  if (fdb != INVALID_HANDLE_VALUE) {
+    WriteFile (fdb, msgbuf, len, &written, NULL);
+    WriteFile (fdb, newline, strlen(newline), &written, NULL);
+    FlushFileBuffers (fdb);
+  }
+  if (fdc != INVALID_HANDLE_VALUE) {
+    WriteFile (fdc, msgbuf, len, &written, NULL);
+    WriteFile (fdc, newline, strlen(newline), &written, NULL);
+    FlushFileBuffers (fdc);
+  }
   return;
 }
 
@@ -181,7 +144,7 @@ void fatal (const char* format, ...)
     fd = GetStdHandle (STD_OUTPUT_HANDLE);
     
   va_start (argptr, format);
-  _flog (fd, "ERROR", format, argptr);
+  _flog (fd, s_logh, s_dbgh, "FATAL", format, argptr);
   va_end (argptr);
   _exit (9);
   return;
@@ -201,7 +164,7 @@ void lerror (const char * format, ...)
   }
 
   va_start (argptr, format);
-  _flog (fd, "ERROR", format, argptr);
+  _flog (fd, s_logh, s_dbgh, "ERROR", format, argptr);
   va_end (argptr);
   return;
 }
@@ -209,11 +172,8 @@ void lerror (const char * format, ...)
 void linfo (const char* format, ...)
 {
   va_list  argptr;
-  if (s_logh == INVALID_HANDLE_VALUE)
-    return;
-
   va_start (argptr, format);
-  _flog (s_logh, "info", format, argptr);
+  _flog (s_logh, s_dbgh, INVALID_HANDLE_VALUE, "info", format, argptr);
   va_end (argptr);
   return;
 }
@@ -236,152 +196,12 @@ void debugto (LPTSTR  path)
 void ldebug (const char* format, ...)
 {
   va_list  argptr;
-  if (s_dbgh == INVALID_HANDLE_VALUE)
-    return;
-
   va_start (argptr, format);
-  _flog (s_dbgh, "debug", format, argptr);
+  _flog (s_dbgh, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, "debug", format, argptr);
   va_end (argptr);
   return;
 }
 
-
-BOOL setdriversigning (BOOL sigcheck)
-{
-  /* thanks to Stefan 'Sec' Zehl and Blaine Fleming for this snippet.
-   * see http://support.microsoft.com/?kbid=298503 for details on this subversion.
-   * the ideal alternative is to pay the thousands of dollars for a driver signature.
-   */
-#define HP_HASHVALUE HP_HASHVAL
-  HCRYPTPROV cryptoprovider;
-  HCRYPTHASH digest;
-  BYTE data[16];
-  DWORD len;
-  DWORD seed;
-  HKEY rkey;
-  BYTE onoff;
-  char regval[4];
-  int x;
-
-  onoff = sigcheck ? 1 : 0;
-  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                   "System\\WPA\\PnP",
-                   0,
-                   KEY_READ,
-                   &rkey) != ERROR_SUCCESS){
-    return FALSE;
-  }
-  len = sizeof(seed);
-  if(RegQueryValueEx(rkey,
-                     "seed",
-                     NULL,
-                     NULL,
-                     (BYTE*)&seed,
-                     &len) != ERROR_SUCCESS){
-    return FALSE;
-  }
-  RegCloseKey(rkey);
-  if (!CryptAcquireContext(&cryptoprovider,
-                          NULL,
-                          NULL,
-                          PROV_RSA_FULL,
-                          0)) {
-    if (!CryptAcquireContext(&cryptoprovider,
-                             NULL,
-                             NULL,
-                             PROV_RSA_FULL,
-                             CRYPT_NEWKEYSET)) {
-      return FALSE;
-    }
-  }
-  if (!CryptCreateHash(cryptoprovider,
-                       CALG_MD5,
-                       0,
-                       0,
-                       &digest)) {
-    return FALSE;
-  }
-  ZeroMemory( regval, sizeof(regval) );
-  regval[1] = onoff;
-  if (!CryptHashData(digest,
-                     regval,
-                     sizeof(regval),
-                     0)) {
-    return FALSE;
-  }
-  if (!CryptHashData(digest,
-                     (BYTE*)&seed,
-                     sizeof(seed),
-                     0)) {
-    return FALSE;
-  }
-  len = sizeof(data);
-  if (!CryptGetHashParam(digest,
-                         HP_HASHVALUE,
-                         data,
-                         &len,
-                         0)) {
-    return FALSE;
-  }
-  CryptDestroyHash(digest);
-  CryptReleaseContext(cryptoprovider, 0);
-  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                   "Software\\Microsoft\\Windows\\CurrentVersion\\Setup",
-                   0,
-                   KEY_WRITE,
-                   &rkey) != ERROR_SUCCESS) {
-    return FALSE;
-  }
-  if (RegSetValueEx(rkey,
-                    "PrivateHash",
-                    0,
-                    REG_BINARY,
-                    data,
-                    sizeof(data)) != ERROR_SUCCESS) {
-    return FALSE;
-  }
-  RegCloseKey(rkey);
-
-  /* the user preference may or may not be set.  if not, go to machine pref. */
-  if (RegOpenKeyEx(HKEY_CURRENT_USER,
-                   "Software\\Microsoft\\Driver Signing",
-                   0,
-                   KEY_WRITE,
-                   &rkey) == ERROR_SUCCESS) {
-    if(RegSetValueEx(rkey,
-                     "Policy",
-                     0,
-                     REG_BINARY,
-                     &onoff,
-                     1) != ERROR_SUCCESS) {
-      /* return FALSE; */
-    }
-    RegCloseKey(rkey);
-  }
-  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                   "Software\\Microsoft\\Driver Signing",
-                   0,
-                   KEY_WRITE,
-                   &rkey) != ERROR_SUCCESS) {
-    return FALSE;
-  }
-  if(RegSetValueEx(rkey,
-                   "Policy",
-                   0,
-                   REG_BINARY,
-                   &onoff,
-                   1) != ERROR_SUCCESS) {
-    return FALSE;
-  }
-  RegCloseKey(rkey);
-
-  return TRUE;
-}
-
-BOOL istapinstalled(struct s_rconnelem *  connlist)
-{
-  return FALSE;
-}
 
 BOOL installtap(void)
 {
@@ -399,6 +219,7 @@ BOOL installtap(void)
   si.cb = sizeof(si);
   dir = TOR_VM_LIB;
   cmd = "\"" TOR_VM_BIN "\\devcon.exe\" install tortap91.inf TORTAP91";
+  ldebug ("Tap install cmd: %s", cmd);
 
   if( !CreateProcess(NULL,
                      cmd,
@@ -439,6 +260,7 @@ BOOL uninstalltap(void)
   int stop = 0;
   int numconn = 0;
   const char name_string[] = "Name";
+  char svc_string[REG_NAME_MAX];
   
   opts = CREATE_NEW_PROCESS_GROUP;
   
@@ -447,6 +269,7 @@ BOOL uninstalltap(void)
   si.cb = sizeof(si);
   dir = TOR_VM_LIB;
   cmd = "\"" TOR_VM_BIN "\\devcon.exe\" remove TORTAP91";
+  ldebug ("Tap un-install cmd: %s", cmd);
  
   ldebug ("Removing TORTAP91 device via devcon."); 
   if( !CreateProcess(NULL,
@@ -547,13 +370,13 @@ BOOL uninstalltap(void)
                               KEY_SET_VALUE,
                               &dkey);
         if (status != ERROR_SUCCESS) {
-          lerror ("Failed to open network connection key for write: %d", status);
+          lerror ("Failed to open network connection key for write: %d", GetLastError());
           continue; 
         }
         /* now we can delete the connection key itself */
         status = RegDeleteKey(dkey, "Connection");
         if (status != ERROR_SUCCESS) {
-          lerror ("Failed to remove tap connection subkey from registry: %d", status);
+          lerror ("Failed to remove tap connection subkey from registry: %d", GetLastError());
         }
         RegCloseKey (dkey);
         /* finally, remove the top level connection key from the list of connections ids */
@@ -564,11 +387,11 @@ BOOL uninstalltap(void)
                               KEY_SET_VALUE, 
                               &dkey);
         if (status != ERROR_SUCCESS) {
-          lerror ("Failed to open top level network connection key for write: %d", status);
+          lerror ("Failed to open top level network connection key for write: %d", GetLastError());
         }
         status = RegDeleteKey(dkey, enum_name);
         if (status != ERROR_SUCCESS) {
-          lerror ("Failed to remove top level tap key from registry: %d", status);
+          lerror ("Failed to remove top level tap key from registry: %d", GetLastError());
         }
         RegCloseKey (dkey);
       }
@@ -578,6 +401,51 @@ BOOL uninstalltap(void)
 
   RegCloseKey (key);
 
+  /* now for any service entries for the Tor tap service */
+  snprintf(svc_string,
+           sizeof(svc_string),
+           "%s\\%s",
+           SERVICES_KEY, TOR_TAP_SVC);
+  status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                        svc_string,
+                        0,
+                        KEY_READ,
+                        &key);
+  if (status == ERROR_SUCCESS) {
+    RegCloseKey (key);
+    ldebug ("Found a Tor tap service entry.  Attempting removal...");
+    status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                          svc_string,
+                          0,
+                          KEY_SET_VALUE,
+                          &key);
+    if (status != ERROR_SUCCESS) {
+      lerror ("Cannot open Tor tap services key for write access.  Error code: %d", GetLastError());
+    }
+    else {
+      RegDeleteKey(key, "Enum");
+      RegDeleteKey(key, "Security");
+      RegCloseKey (key);
+    }
+    status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                          SERVICES_KEY,
+                          0, 
+                          KEY_SET_VALUE,
+                          &key);
+    if (status != ERROR_SUCCESS) {
+      lerror ("Cannot open service parent key for write access to remove tap subkey.  Error code: %d", GetLastError());
+    }
+    else {
+      status = RegDeleteKey(key, TOR_TAP_SVC);
+      if (status != ERROR_SUCCESS) {
+        lerror ("Failed to remove tap service key from registry: %d", GetLastError());
+      }
+      else {
+        ldebug ("Removal complete.");
+      }
+      RegCloseKey (key);
+    }
+  }
   
   return TRUE;
 }
@@ -628,7 +496,11 @@ BOOL installtornpf (void)
 BOOL uninstalltornpf (void)
 {
   LPTSTR fname = WIN_DRV_DIR "\\tornpf.sys";
+  LPTSTR cmd = "\"net.exe\" stop tornpf";
   DeleteFile (fname);
+  if (! runcommand(cmd)) {
+    return FALSE;
+  }
   return TRUE;
 }
 
@@ -646,12 +518,31 @@ BOOL savenetconfig(void)
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   DWORD exitcode;
-  DWORD opts = 0;
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
   DWORD numread;
   DWORD numwritten;
-  CHAR * buff;
+  CHAR * buff = NULL;
 
-  opts = CREATE_NEW_PROCESS_GROUP;
+  /* for vista or above also save the firewall context
+   * do this before the IP context so that restore doesn't leave us vulnerable (even briefly)
+   */
+  if (getosversion() >= OS_VISTA) {
+    cmd = "\"netsh.exe\" advfirewall export \"" TOR_VM_STATE "\\firewall.wfw\"";
+    runcommand(cmd);
+    linfo ("Saved current firewall configuration state.");
+  }
+
+  fh = CreateFile (TOR_VM_STATE "\\netcfg.save",
+                   GENERIC_WRITE,
+                   0,
+                   NULL,
+                   CREATE_ALWAYS,
+                   FILE_ATTRIBUTE_NORMAL,
+                   NULL);
+  if (fh == INVALID_HANDLE_VALUE) {
+    lerror ("Unable to open network save file for writing. Error code: %d", GetLastError());
+    return FALSE;
+  }
 
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
@@ -661,7 +552,6 @@ BOOL savenetconfig(void)
   sattr.lpSecurityDescriptor = NULL;
   dir = TOR_VM_STATE;
   cmd = "\"netsh.exe\" interface ip dump";
-  /* cmd = "\"netsh.exe\" dump"; <- this is noisy and slow. avoid if possible. */
 
   CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
   SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0);
@@ -678,13 +568,16 @@ BOOL savenetconfig(void)
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     TRUE,   // handles are inherited
+                     FALSE,  // default handle inheritance false
                      opts,
                      NULL,   // environment block
                      dir,
                      &si,
                      &pi) ) {
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    lerror ("Failed to launch netsh process.  Error code: %d", GetLastError());
+    if (buff)
+      free(buff);
+    CloseHandle(fh);
     return FALSE;
   }
 
@@ -692,24 +585,18 @@ BOOL savenetconfig(void)
   CloseHandle(stdin_rd);
   CloseHandle(stdin_wr);
 
-  fh = CreateFile (TOR_VM_STATE "\\netcfg.save",
-                   GENERIC_WRITE,
-                   0,
-                   NULL,
-                   CREATE_ALWAYS,
-                   FILE_ATTRIBUTE_NORMAL,
-                   NULL);
-
   buff = (CHAR *)malloc(READSIZE);
   while (ReadFile(stdout_rd, buff, READSIZE, &numread, NULL) && (numread > 0)) {
     WriteFile(fh, buff, numread, &numwritten, NULL);
   }
-  CloseHandle (fh);
 
-  linfo ("Saved current network configuration state.");
+  linfo ("Saved current IP network configuration state.");
+  free(buff);
   CloseHandle(stdout_rd);
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
+
+  CloseHandle (fh);
 
   return TRUE;  
 }
@@ -721,9 +608,13 @@ BOOL restorenetconfig(void)
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   DWORD exitcode;
-  DWORD opts = 0;
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
 
-  opts = CREATE_NEW_PROCESS_GROUP;
+  if (getosversion() >= OS_VISTA) {
+    cmd = "\"netsh.exe\" advfirewall import \"" TOR_VM_STATE "\\firewall.wfw\"";
+    runcommand(cmd);
+    linfo ("Imported saved firewall configuration.");
+  }
 
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
@@ -807,8 +698,19 @@ BOOL disableservices(void)
 
 BOOL disablefirewall(void)
 {
-  LPSTR cmd;
-  cmd = "\"netsh.exe\" firewall set opmode disable";
+  LPTSTR cmd = "\"netsh.exe\" firewall set opmode disable";
+  ldebug ("Disable firewall cmd: %s", cmd);
+  if (! runcommand(cmd)) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+BOOL enablefirewall(void)
+{
+  /* TODO: we need to check if exceptions are disabled, and set opmode enable disable accordingly. */
+  LPTSTR cmd = "\"netsh.exe\" firewall set opmode enable";
+  ldebug ("Re-enable firewall cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
@@ -819,6 +721,7 @@ BOOL cleararpcache(void)
 {
   LPSTR cmd;
   cmd = "\"netsh.exe\" interface ip delete arpcache";
+  ldebug ("Clear ARP cache cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
@@ -829,6 +732,7 @@ BOOL flushdns(void)
 { 
   LPSTR cmd;
   cmd = "\"ipconfig.exe\" /flushdns";
+  ldebug ("Flush DNS cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
@@ -839,17 +743,21 @@ BOOL configtap(void)
 {
   LPSTR cmd;
   cmd = "\"netsh.exe\" interface ip set address \"" TOR_TAP_NAME "\" static 10.10.10.2 255.255.255.252 10.10.10.1 1";
+  ldebug ("Tap config cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
   cmd = "\"netsh.exe\" interface ip set dns \"" TOR_TAP_NAME "\" static 4.2.2.2";
+  ldebug ("Tap config cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
   cmd = "\"netsh.exe\" interface ip add dns \"" TOR_TAP_NAME "\" 4.2.2.4";
+  ldebug ("Tap config cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
+  ldebug ("Tap config complete.");
   return TRUE;
 }
 
@@ -857,6 +765,7 @@ BOOL configbridge(void)
 {
   LPSTR cmd;
   cmd = "\"netsh.exe\" interface ip set address \"Local Area Connection\" static 10.231.254.1 255.255.255.254";
+  ldebug ("Bridge interface null route cmd: %s", cmd);
   if (! runcommand(cmd)) {
     return FALSE;
   }
@@ -924,106 +833,6 @@ BOOL checkvirtdisk(void) {
   return TRUE;
 }
 
-BOOL getmacaddr(const char *  devguid,
-                char **       mac)
-{
-  char *  devfstr = NULL;
-  unsigned char  macbuf[6];
-  BOOL   status;
-  HANDLE devfd;
-  DWORD retsz, oidcode;
-  BOOL  retval = FALSE;
-
-  *mac = NULL;
-  devfstr = malloc(1024);
-  snprintf (devfstr, 1023, "\\\\.\\%s", devguid);
-  devfd = CreateFile(devfstr,
-                     0,
-                     FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                     NULL,
-                     OPEN_EXISTING,
-                     0,
-                     NULL);
-  if (devfd == INVALID_HANDLE_VALUE)
-  {
-    lerror ("Unable to open net device handle for path: %s", devfstr);
-    goto cleanup;
-  }
-
-#define MAXMAC 24
-  oidcode = OID_802_3_CURRENT_ADDRESS;
-  status = DeviceIoControl(devfd,
-                           IOCTL_NDIS_QUERY_GLOBAL_STATS,
-                           &oidcode, sizeof(oidcode),
-                           macbuf, sizeof(macbuf),
-                           &retsz,
-                           (LPOVERLAPPED) NULL);
-  if (retsz == sizeof(macbuf)) {
-    *mac = malloc(MAXMAC);
-    memset(*mac, 0, MAXMAC);
-    snprintf(*mac, MAXMAC-1,
-             "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
-             macbuf[0], macbuf[1], macbuf[2], macbuf[3], macbuf[4], macbuf[5]);
-    retval = TRUE;
-  }
-  else {
-    retval = FALSE;
-  }
-
- cleanup:
-  if (devfd != INVALID_HANDLE_VALUE)
-    CloseHandle(devfd);
-  free(devfstr);
-
-  return retval;
-}
-
-BOOL isconnected(const char *  devguid)
-{
-  char *  devfstr = NULL;
-  BOOL   status;
-  HANDLE devfd;
-  DWORD retsz, oidcode, intfStatus;
-  BOOL  retval = FALSE;
-
-  devfstr = malloc(1024);
-  snprintf (devfstr, 1023, "\\\\.\\%s", devguid);
-  devfd = CreateFile(devfstr,
-                     0,
-                     FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                     NULL,
-                     OPEN_EXISTING,
-                     0,
-                     NULL);
-  if (devfd == INVALID_HANDLE_VALUE)
-  {
-    lerror ("Unable to open net device handle for path: %s", devfstr);
-    goto cleanup;
-  }
-
-  oidcode = OID_GEN_MEDIA_CONNECT_STATUS;
-  status = DeviceIoControl(devfd,
-                           IOCTL_NDIS_QUERY_GLOBAL_STATS,
-                           &oidcode, sizeof(oidcode),
-                           &intfStatus, sizeof(intfStatus),
-                           &retsz,
-                           (LPOVERLAPPED) NULL);
-  if (status) {
-    ldebug ("Received media connect status %d for device %s.", intfStatus, devguid);
-    retval = (intfStatus == 0) ? TRUE : FALSE;
-  }
-  else {
-    retval = FALSE;
-  }
-
- cleanup:
-  if (devfd != INVALID_HANDLE_VALUE)
-    CloseHandle(devfd);
-  free(devfstr);
-
-  return retval;
-}
-
 int loadnetinfo(struct s_rconnelem **connlist)
 {
   LONG status;
@@ -1067,7 +876,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
     if (status == ERROR_NO_MORE_ITEMS)
         break;
     else if (status != ERROR_SUCCESS) {
-        return -1;
+        break;
     }
 
     snprintf(connection_string,
@@ -1093,10 +902,10 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 &len);
 
       if (status != ERROR_SUCCESS || name_type != REG_SZ) {
-        return -1;
+        break;
       }
       else {
-        /* add this connection info the list */
+        /* add this connection info to the list */
         numconn++;
         if (ce == NULL) {
           *connlist = ce = malloc(sizeof(struct s_rconnelem));
@@ -1131,15 +940,14 @@ int loadnetinfo(struct s_rconnelem **connlist)
                                      "EnableDHCP",
                                      NULL,
                                      NULL,
-                                     &(ce->isdhcp),
+                                     (LPBYTE)&(ce->isdhcp),
                                      &len);
             if (status == ERROR_SUCCESS) {
-              ce->gateway = strdup(name_data);
               ldebug ("Connection %s %s using DHCP.", ce->name, ce->isdhcp ? "is" : "is NOT");
             }
             len = sizeof (name_data);
             status = RegQueryValueEx(tkey,
-                                     "DefaultGateway",
+                                     ce->isdhcp ? "DhcpDefaultGateway" : "DefaultGateway",
                                      NULL,
                                      &name_type,
                                      name_data,
@@ -1147,7 +955,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
             if (status == ERROR_SUCCESS) {
               ce->gateway = strdup(name_data); 
               ldebug ("Connection %s default gateway: %s.", ce->name, ce->gateway); 
-              if (strcmp(ce->gateway, "0.0.0.0") != 0) {
+              if ( (strlen(ce->gateway) > 6) && (strcmp(ce->gateway, "0.0.0.0") != 0) ) {
                 ce->isdefgw = TRUE;
                 ldebug ("Connection %s has the default route.", ce->name);
               }
@@ -1184,29 +992,29 @@ int loadnetinfo(struct s_rconnelem **connlist)
 
   RegCloseKey (key);
 
-    i = 0;
-    status = RegOpenKeyEx(
-        HKEY_LOCAL_MACHINE,
-        ADAPTER_KEY,
-        0,
-        KEY_READ,
-        &key);
+  if (numconn <= 0)
+    return numconn;
 
-    if (status != ERROR_SUCCESS) {
-        lerror ("Failed to open key for read: %d", status);
-        return -1;
-    }
-
+  i = 0;
+  status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                        ADAPTER_KEY,
+                        0,
+                        KEY_READ,
+                        &key);
+  if (status != ERROR_SUCCESS) {
+    lerror ("Failed to open key for read: %d", status);
+  }
+  else {
     while (1) {
-        char enum_name[REG_NAME_MAX];
-        char connection_string[REG_NAME_MAX];
-        HKEY ckey;
-        char name_data[REG_NAME_MAX];
-        char cguid[REG_NAME_MAX];
-        DWORD name_type;
+      char enum_name[REG_NAME_MAX];
+      char connection_string[REG_NAME_MAX];
+      HKEY ckey;
+      char name_data[REG_NAME_MAX];
+      char cguid[REG_NAME_MAX];
+      DWORD name_type;
 
-        len = sizeof (enum_name);
-        status = RegEnumKeyEx(
+      len = sizeof (enum_name);
+      status = RegEnumKeyEx(
             key,
             i++,
             enum_name,
@@ -1216,25 +1024,24 @@ int loadnetinfo(struct s_rconnelem **connlist)
             NULL,
             NULL);
 
-        if (status == ERROR_NO_MORE_ITEMS)
-            break;
-        else if (status != ERROR_SUCCESS) {
-            return -1;
-        }
+      if (status == ERROR_NO_MORE_ITEMS)
+        break;
+      else if (status != ERROR_SUCCESS) 
+        break;
 
-        snprintf(connection_string,
+      snprintf(connection_string,
              sizeof(connection_string),
              "%s\\%s",
              ADAPTER_KEY, enum_name);
 
-        status = RegOpenKeyEx(
+      status = RegOpenKeyEx(
             HKEY_LOCAL_MACHINE,
             connection_string,
             0,
             KEY_READ,
             &ckey);
 
-        if (status == ERROR_SUCCESS) {
+      if (status == ERROR_SUCCESS) {
             len = sizeof (name_data);
             status = RegQueryValueEx(
                 ckey,
@@ -1251,24 +1058,24 @@ int loadnetinfo(struct s_rconnelem **connlist)
             }
 
             RegCloseKey (ckey);
-        }
-        else {
+      }
+      else {
             /* printf ("Failed read key %s , errorno: %d", connection_string, status); */
-        }
+      }
 
-        snprintf(connection_string,
+      snprintf(connection_string,
              sizeof(connection_string),
              "%s\\%s",
              ADAPTER_KEY, enum_name);
 
-        status = RegOpenKeyEx(
+      status = RegOpenKeyEx(
             HKEY_LOCAL_MACHINE,
             connection_string,
             0,
             KEY_READ,
             &ckey);
 
-        if (status == ERROR_SUCCESS) {
+      if (status == ERROR_SUCCESS) {
             len = sizeof (name_data);
             status = RegQueryValueEx(
                 ckey,
@@ -1278,33 +1085,32 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 name_data,
                 &len);
 
-            if (status != ERROR_SUCCESS || name_type != REG_SZ) {
+            if (status != ERROR_SUCCESS || name_type != REG_SZ) 
                 ldebug ("Failed parse of key %s\\NetCfgInstanceId , errorno: %d", connection_string, status);
-            }
             else {
                 ldebug ("GUID: %s", name_data);
                 strcpy (cguid, name_data);
             }
 
             RegCloseKey (ckey);
-        }
-        else {
-            ldebug ("Failed read key %s , errorno: %d", connection_string, status);
-        }
+      }
+      else {
+          ldebug ("Failed read key %s , errorno: %d", connection_string, status);
+      }
 
-        snprintf(connection_string,
+      snprintf(connection_string,
              sizeof(connection_string),
              "%s\\%s\\Ndi",
              ADAPTER_KEY, enum_name);
 
-        status = RegOpenKeyEx(
+      status = RegOpenKeyEx(
             HKEY_LOCAL_MACHINE,
             connection_string,
             0,
             KEY_READ,
             &ckey);
 
-        if (status == ERROR_SUCCESS) {
+      if (status == ERROR_SUCCESS) {
             len = sizeof (name_data);
             status = RegQueryValueEx(
                 ckey,
@@ -1314,12 +1120,20 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 name_data,
                 &len);
 
-            if (status != ERROR_SUCCESS || name_type != REG_SZ) {
+          if (status != ERROR_SUCCESS || name_type != REG_SZ)
                 ldebug ("Failed parse of key %s\\Service , errorno: %d", connection_string, status);
-            }
-            else {
+          else {
                 ldebug ("Service: %s", name_data);
+                ce = *connlist;
+                while (ce && strcmp(ce->guid , cguid) != 0) {
+                  ce = ce->next;
+                }
+                if (ce) {
+                  ce->driver = strdup(name_data);
+                }
                 if (strcmp(name_data, TOR_TAP_SVC) == 0) {
+                  if (ce) 
+                    ce->istortap = TRUE;
                   snprintf(connection_string,
                            sizeof(connection_string),
                            "%s\\%s\\Connection",
@@ -1343,100 +1157,97 @@ int loadnetinfo(struct s_rconnelem **connlist)
                     RegCloseKey (wkey);
                   }
                 }
-            }
+          }
 
-            RegCloseKey (ckey);
+          RegCloseKey (ckey);
         }
-        else {
+        else 
             ldebug ("Failed read key %s , errorno: %d", connection_string, status); 
-        }
     }
 
     RegCloseKey (key);
-
-    return numconn;
-}
-
-/* keep linkage to these dynamic, in case the requisite Dll's don't exist. */
-typedef BOOL (__stdcall *PFnIsUserAnAdmin)(void);
-typedef BOOL (__stdcall *PFnAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY pIdAuth, BYTE nSubAuthCount, DWORD dwSubAuth0, DWORD dwSubAuth1, DWORD dwSubAuth2, DWORD dwSubAuth3, DWORD dwSubAuth4, DWORD dwSubAuth5, DWORD dwSubAuth6, DWORD dwSubAuth7, PSID pSid);
-typedef BOOL (WINAPI *PFnCheckTokenMembership)(HANDLE TokenHandle, PSID SidToCheck, PBOOL IsMember);
-typedef PVOID (__stdcall *PFnFreeSid)(PSID pSid);
-
-BOOL haveadminrights (void)
-{
-  SID_IDENTIFIER_AUTHORITY  ntauth = SECURITY_NT_AUTHORITY;
-  PSID  admgroup;
-  BOOL  isadmin = FALSE;
-  HMODULE   module;
-  PFnIsUserAnAdmin  pfnIsUserAnAdmin = NULL;
-  PFnAllocateAndInitializeSid  pfnAllocateAndInitializeSid = NULL;
-  PFnCheckTokenMembership  pfnCheckTokenMembership = NULL;
-  PFnFreeSid  pfnFreeSid = NULL;
-  
-  /* use IsUserAnAdmin when possible (Vista or greater).  otherwise we fall back to checking
-   * token membership manually.  For Vista and greater we want to know if we are currently running
-   * with Administrator rights, not only that user is a member of Administrator group.
-   */
-  module = LoadLibrary("shell32.dll");
-  if (module) {
-    pfnIsUserAnAdmin = (PFnIsUserAnAdmin) GetProcAddress(module, "IsUserAnAdmin");
-    if (pfnIsUserAnAdmin) {
-      isadmin = pfnIsUserAnAdmin();
-      FreeLibrary(module);
-      return isadmin;
-    }
-    FreeLibrary(module);
-  }
-  module = LoadLibrary("advapi32.dll");
-  if (module) {
-    pfnAllocateAndInitializeSid = (PFnAllocateAndInitializeSid) GetProcAddress(module, "AllocateAndInitializeSid");
-    pfnCheckTokenMembership = (PFnCheckTokenMembership) GetProcAddress(module, "CheckTokenMembership");
-    pfnFreeSid = (PFnFreeSid) GetProcAddress(module, "FreeSid");
-    if (pfnAllocateAndInitializeSid && pfnCheckTokenMembership && pfnFreeSid) {
-      if(pfnAllocateAndInitializeSid(&ntauth,
-                                     2,
-                                     SECURITY_BUILTIN_DOMAIN_RID,
-                                     DOMAIN_ALIAS_RID_ADMINS,
-                                     0, 0, 0, 0, 0, 0,
-                                     &admgroup))
-      {
-        if( !pfnCheckTokenMembership(NULL,
-                                     admgroup,
-                                     &isadmin) )
-        {
-          /* error occurred? default to false */
-          isadmin = FALSE;
-        }
-        pfnFreeSid(admgroup);
-      }
-    }
-    FreeLibrary(module);
   }
 
-  return isadmin;
+  return numconn;
 }
 
 BOOL buildcmdline (struct s_rconnelem *  brif,
                    BOOL                  usedebug,
+                   BOOL                  noinit,
                    char **               cmdline)
 {
+/* DHCPSVR DHCPNAME LEASE ISDHCP CTLSOCK HASHPW */
   *cmdline = (char *)malloc(4096);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
-  snprintf (*cmdline, 4095,
-            "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1",
-            usedebug ? dbgcmds : basecmds,
-            brif->ipaddr,
-            brif->netmask,
-            brif->gateway,
-            brif->macaddr);
+  if (noinit) {
+    snprintf (*cmdline, 4095,
+              "%s NOINIT",
+              basecmds);
+  }
+  else {
+    if (brif->isdhcp == FALSE) {
+      snprintf (*cmdline, 4095,
+                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1",
+                usedebug ? dbgcmds : basecmds,
+                brif->ipaddr,
+                brif->netmask,
+                brif->gateway,
+                brif->macaddr);
+    }
+    else {
+      snprintf (*cmdline, 4095,
+                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1 ISDHCP DHCPSVR=%s LEASE=%d CTLSOCK=10.10.10.1:9051 HASHPW=%s",
+                usedebug ? dbgcmds : basecmds,
+                brif->ipaddr,
+                brif->netmask,
+                brif->gateway,
+                brif->macaddr,
+                brif->dhcpsvr,
+                0,
+                /* control port password is "password"
+                 * TODO: use Crypto API to collect entropy for ephemeral password generation
+                 */
+                "16:6407E39581A121B26051A360CA8BB1535C73877C894E7B6EC554422789");
+    }
+  }
+  return TRUE;
+}
+
+BOOL spawnprocess (PROCESS_INFORMATION * pi,
+                   const TCHAR *cmdline)
+{
+  STARTUPINFO si;
+  SECURITY_ATTRIBUTES sattr;
+  DWORD opts = 0;
+  ZeroMemory( &si, sizeof(si) );
+  si.cb = sizeof(si);
+  ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
+
+  TCHAR *cmd = (TCHAR*)malloc(4096);
+  snprintf (cmd, 4095,
+            "\"C:\\Tor_VM\\bin\\qemu.exe\" -L . -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga");
+  ldebug ("Launching Qemu with cmd: %s", cmd);
+  if( !CreateProcess(NULL,
+                     cmd,
+                     NULL,   // process handle no inherit
+                     NULL,   // thread handle no inherit
+                     TRUE,
+                     opts,
+                     NULL,   // environment block
+                     TOR_VM_BIN,
+                     &si,
+                     pi) ) {
+    lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    return FALSE;
+  }
   return TRUE;
 }
 
 BOOL launchtorvm (PROCESS_INFORMATION * pi,
                   char *  bridgeintf,
                   char *  macaddr,
+                  char *  tapname,
                   char *  cmdline)
 {
   STARTUPINFO si;
@@ -1446,29 +1257,50 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
-  DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS;
+  /* DWORD opts = BELOW_NORMAL_PRIORITY_CLASS; */
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
   DWORD numwritten;
+  DWORD pipesz;
 
   ZeroMemory( &si, sizeof(si) );
+  ZeroMemory( &sattr, sizeof(sattr) );
   ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
   si.cb = sizeof(si);
-  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+/*  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
-  sattr.lpSecurityDescriptor = NULL;
+  sattr.lpSecurityDescriptor = NULL; */
   dir = TOR_VM_BIN;
-  cmd = (LPTSTR)malloc(1024);
-  snprintf (cmd, 1023,
-            "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\" -net user,vlan=2 -net nic,vlan=2,model=pcnet",
+  cmd = (LPTSTR)malloc(4096);
+  if (tapname) {
+    snprintf (cmd, 4095,
+              "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
             cmdline,
             32,
             macaddr,
             bridgeintf,
-            TOR_TAP_NAME);
+            tapname);
+  }
+  else {
+    snprintf (cmd, 4095,
+              "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
+            cmdline,
+            32,
+            macaddr,
+            bridgeintf);
+  }
   ldebug ("Launching Qemu with cmd: %s", cmd);
 
-/* don't use this stdin pipe until the read 0 issue is resolved.
-  CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
+/*
+  pipesz = strlen(cmdline);
+  CreatePipe(&stdin_rd, &stdin_wr, &sattr, pipesz);
   SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+
+  if (! WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL)) {
+    lerror ("Failed to write kernel command line to stdin handle.  Error code: %d", GetLastError());
+  }
+  else {
+    ldebug ("Wrote %d bytes of cmdline len %d to qemu stdin pipe.", numwritten, strlen(cmdline));
+  }
 
   stdout_h = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -1477,35 +1309,24 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   si.hStdInput = stdin_rd;
   si.dwFlags |= STARTF_USESTDHANDLES;
 */
-
-  if( !CreateProcess(NULL, 
+  if( !CreateProcess(NULL,
                      cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-/*                     TRUE,   // handle inheritance needed for std handles  */
-                     FALSE,
+                     NULL,
+                     NULL,
+                     TRUE,
                      opts,
-                     NULL,   // environment block
+                     NULL,
                      dir,
                      &si,
                      pi) ) {
     lerror ("Failed to launch Qemu Tor VM process.  Error code: %d", GetLastError());
     return FALSE;
   }
-
 /*
-  CloseHandle(stdin_rd);
-
-  if (! WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL)) {
-    lerror ("Failed to write kernel command line to stdin handle.  Error code: %d", GetLastError());
-  }
-  else {
-    ldebug ("Wrote %d bytes of cmdline len %d to qemu stdin.", numwritten, strlen(cmdline));
-  }
   FlushFileBuffers (stdin_wr);
+  CloseHandle(stdin_rd);
   CloseHandle(stdin_wr);
 */
-
   return TRUE;
 }
 
@@ -1554,12 +1375,11 @@ BOOL respawnasadmin (void)
   DWORD authopts = 0;
   DWORD propts = 0;
 
-  //authopts = LOGON_WITH_PROFILE;
   propts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS;
 
   si.cb = sizeof(si);
-  wcmd = W_TOR_VM_ROOT L"\\torvm.exe";
-  cmd = TOR_VM_ROOT "\\torvm.exe";
+  wcmd = W_TOR_VM_BASE L"\\torvm.exe";
+  cmd = TOR_VM_BASE "\\torvm.exe";
 
   /* first, let's see if Administrator has no password set. */
   if( !CreateProcessWithLogonW(username,
@@ -1584,6 +1404,42 @@ BOOL respawnasadmin (void)
       return FALSE;
     }
   }
+  return TRUE;
+}
+
+BOOL runningdetached (void)
+{
+  return TRUE;
+}
+
+BOOL detachself (void)
+{
+  STARTUPINFOW si = {0};
+  PROCESS_INFORMATION pi = {0};
+  LPTSTR cmd = NULL;
+  LPTSTR mypath = NULL;
+  LPTSTR args = "";
+  bgstartupinfo (&si);
+  getmypath(&mypath);
+  cmd = (TCHAR *)malloc (4096);
+  snprintf (cmd, 4095,
+            "\"%s\" %s",
+            mypath, args);
+  if( !CreateProcess(NULL,
+                     cmd,
+                     NULL,
+                     NULL,
+                     FALSE,
+                     CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS,
+                     NULL,
+                     NULL,
+                     &si,
+                     &pi) ) {
+    lerror ("Failed to launch detached torvm.exe process.  Error code: %d", GetLastError());
+    free (cmd);
+    return FALSE;
+  }
+  free (cmd);
   return TRUE;
 }
 
@@ -1665,13 +1521,37 @@ int main(int argc, char **argv)
   int  numintf;
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
-  BOOL  vmdebug = FALSE;
+  BOOL  indebug = FALSE;
+  BOOL  vmnop = FALSE;
+  BOOL  noinit = FALSE;
   BOOL  foundit = FALSE;
   char *  cmdline = NULL;
+
+  if (getosbits() > 32) {
+    lerror ("Error: only 32bit operating systems are currently supported.");
+    MessageBox(NULL,
+               "Sorry, only 32bit operating systems are currently supported.",
+               "Unsupported Operating System Architecture",
+               MB_OK);
+    exit (1);
+  }
+
+  if (!setupenv()) {
+    fatal ("Unable to prepare process environment.");
+  }
+
+  /* ensure we are running detached or as service */
+  if (! runningdetached()) {
+    if(detachself()) {
+      _exit(0);
+    }
+  }
 
   /* invocation options:
    * clean - restore network setup (if saved config exists), clean up tap, etc.
    * debug - launch vm in debug mode, shell at console in vm, etc.
+   * vmnop - launch vm without any network devices.
+   * repair - replace virtual disk with original empty disk image.
    * TODO: implement "real" command line options
    */
   if (argc > 1) {
@@ -1680,8 +1560,23 @@ int main(int argc, char **argv)
       restorenetconfig();
       exit (0);
     }
-    if (strcmp(argv[1], "debug") == 0) {
-      vmdebug = TRUE;
+    else if (strcmp(argv[1], "debug") == 0) {
+      indebug = TRUE;
+    }
+    else if (strcmp(argv[1], "vmnop") == 0) {
+      indebug = TRUE;
+      vmnop = TRUE;
+    }
+    else if (strcmp(argv[1], "noinit") == 0) {
+      noinit = TRUE;
+    }
+    else if (strcmp(argv[1], "detach") == 0) {
+      if(detachself()) { _exit(0); }
+    }
+    else if (strcmp(argv[1], "repair") == 0) {
+      LPTSTR fname = TOR_VM_STATE "\\hdd.img";
+      DeleteFile (fname);
+      linfo ("Restored virtual disk image back to original state.");
     }
   }
 
@@ -1694,100 +1589,138 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  logto (TOR_VM_STATE "\\torvm.log");
-  debugto (TOR_VM_STATE "\\debug.log");
+  logto (TOR_VM_STATE "\\vmlog.txt");
+  debugto (TOR_VM_STATE "\\debug.txt");
 
-  if (!setupenv()) {
-    fatal ("Unable to prepare process environment.");
+  if (!vmnop) {
+    if (!savenetconfig()) {
+      fatal ("Unable to save current network configuration.");
+    }
+
+    ce = NULL;
+    numintf = loadnetinfo(&connlist);
+    if (numintf > 0) {
+      ce = connlist;
+      while (ce && ce->istortap != TRUE) {
+        ce = ce->next;
+      }
+    }
+    /* disable removing the tap automatically until reload issues resolved.
+     * uninstalltap(); */
+    if (ce == NULL) {
+      if (!setdriversigning (FALSE)) {
+        lerror ("Unable to disable driver signing checks. Installing tap anyway...");
+      }
+      if (!installtap()) {
+        lerror ("Unable to load TAP-Win32 network driver.");
+        goto shutdown;
+      }
+      if (!setdriversigning (TRUE)) {
+        lerror ("Unable to restore driver signing checks.");
+      }
+      /* TODO: util method to free structure of list elem */
+      numintf = loadnetinfo(&connlist);
+    }
+
+    if (!installtornpf()) {
+      lerror ("Unable to install Tor NPF service driver.");
+      goto shutdown;
+    }
+
+    if (! configbridge()) {
+      lerror ("Unable to configure blackhole route for bridged interface.");
+    }
+    if (! disableservices()) {
+      lerror ("Unable to disable dangerous windows network services.");
+    }
+    if (getosversion() > OS_2000) {
+      if (! disablefirewall()) {
+        lerror ("Unable to disable windows firewall.");
+      }
+    }
+    if (! cleararpcache()) {
+      lerror ("Unable to clear arp cache.");
+    }
+    if (! flushdns()) {
+      lerror ("Unable to flush cached DNS entries.");
+    }
   }
 
-  if (!savenetconfig()) {
-    fatal ("Unable to save current network configuration.");
-  }
-
-  uninstalltap();
-
-  if (!setdriversigning (FALSE)) {
-    lerror ("Unable to disable driver signing checks. Installing tap anyway...");
-  }
-  if (!installtap()) {
-    lerror ("Unable to load TAP-Win32 network driver.");
-    goto shutdown;
-  }
-  if (!setdriversigning (TRUE)) {
-    lerror ("Unable to restore driver signing checks.");
-  }
-
-  if (!installtornpf()) {
-    lerror ("Unable to install Tor NPF service driver.");
-    goto shutdown;
-  }
-
-  numintf = loadnetinfo(&connlist);
-
-  if (! configbridge()) {
-    lerror ("Unable to configure blackhole route for bridged interface.");
-  }
-  if (! disableservices()) {
-    lerror ("Unable to disable dangerous windows network services.");
-  }
-  if (! disablefirewall()) {
-    lerror ("Unable to disable windows firewall.");
-  }
-  if (! cleararpcache()) {
-    lerror ("Unable to clear arp cache.");
-  }
-  if (! flushdns()) {
-    lerror ("Unable to flush cached DNS entries.");
-  }
+  /* all invocations past this point need a virtual disk at minimum */
   if (! checkvirtdisk()) {
     lerror ("Unable to confirm usable virtual disk is present.");
   }
 
-  if (numintf <= 0) {
-    lerror ("Unable to find any usable network interfaces.");
-    goto shutdown;
+  if (!vmnop) {
+    if (numintf <= 0) {
+      lerror ("Unable to find any usable network interfaces.");
+      goto shutdown;
+    }
+
+    ce = connlist;
+    while (!foundit && ce) {
+      if (ce->isdefgw) {
+        foundit = TRUE;
+      }
+      else {
+        ce = ce->next;
+      }
+    }
+    if (ce == NULL) {
+      lerror ("Unable to find network interface with a default route.");
+      goto shutdown;
+    }
   }
 
-  ce = connlist;
-  while (!foundit && ce) {
-    if (ce->isdefgw) {
-      foundit = TRUE;
-    }
-    else {
-      ce = ce->next;
+  if (!vmnop) {
+    if (! buildcmdline(ce, indebug, noinit, &cmdline)) {
+      lerror ("Unable to generate command line for kernel.");
+      goto shutdown;
     }
   }
-  if (ce == NULL) {
-    lerror ("Unable to find network interface with a default route.");
-    goto shutdown;
-  }
-  if (! buildcmdline(ce, vmdebug, &cmdline)) {
-    lerror ("Unable to generate command line for kernel.");
-    goto shutdown;
-  }
+
   ldebug ("Generated kernel command line: %s", cmdline);
 
   PROCESS_INFORMATION pi;
-  if (! launchtorvm(&pi,
-                    ce->name,
-                    ce->macaddr,
-                    cmdline)) {
-    lerror ("Unable to launch Qemu TorVM instance.");
-    goto shutdown;
+  if (!vmnop) {
+    if (! launchtorvm(&pi,
+                      ce->name,
+                      ce->macaddr,
+                      TOR_TAP_NAME,
+                      cmdline)) {
+      lerror ("Unable to launch Qemu TorVM instance.");
+      goto shutdown;
+    }
+  }
+  else {
+    if (! spawnprocess(&pi, "qemu.exe")) {
+      lerror ("Unable to launch default Qemu instance.");
+      goto shutdown;
+    }
   }
 
   /* need to delay long enough to allow qemu to start and open tap device */
-  Sleep (4000);
+  Sleep (2000);
 
   if (! isrunning(&pi)) {
-    lerror ("Tor VM failed to start properly.");
-    goto shutdown;
+    buildcmdline(ce, FALSE, TRUE, &cmdline);
+    launchtorvm(&pi,
+                ce->name,
+                ce->macaddr,
+                NULL,
+                cmdline);
+    /* need to delay long enough to allow qemu to start and open tap device */
+    Sleep (2000);
+    if (! isrunning(&pi)) {
+      lerror ("Tor VM no tap fallback failed to start properly.");
+      goto shutdown;
+    }
   }
-
-  if (! configtap()) {
-    lerror ("Unable to configure tap device.  Exiting.");
-    goto shutdown;
+  else {
+    if (! configtap()) {
+      lerror ("Unable to configure tap device.  Exiting.");
+      goto shutdown;
+    }
   }
 
   waitforit(&pi);
@@ -1795,9 +1728,16 @@ int main(int argc, char **argv)
   linfo ("Tor VM closed, restoring host network and services.");
 
  shutdown:
+  if (getosversion() > OS_2000) {
+    if (! enablefirewall()) {
+      lerror ("Unable to re-enable windows firewall.");
+    }
+  }
+ /* TEMP: leave for now ....
   if (! uninstalltap()) {
     lerror ("Unable to remove TAP-Win32 device.");
   }
+ */
   if (! uninstalltornpf()) {
     lerror ("Unable to remove Tor NPF service driver.");
   }
