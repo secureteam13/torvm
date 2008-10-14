@@ -115,8 +115,8 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +$(eval $(call BuildPackage,tor))
 diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/tor/files/tor.init
 --- orig-kamikaze/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/files/tor.init	2008-10-04 12:44:54.731592482 +0000
-@@ -0,0 +1,89 @@
++++ mod-torpkg-kamikaze/package/tor/files/tor.init	2008-10-14 01:04:18.402521406 +0000
+@@ -0,0 +1,108 @@
 +#!/bin/sh 
 +
 +BIN=tor
@@ -151,6 +151,25 @@ diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/
 +	chown $RUN_USER:$RUN_GROUP $RUN_D
 +	chmod 700 $RUN_D
 +	rm -f $LOG_F >/dev/null 2>&1
++	# append any runtime options as needed
++	TMP_F="${CONF_F}_tmp"; \
++	ARGS=`cat /proc/cmdline` ; \
++	ARGS="_ $ARGS _" ; \
++	echo $ARGS | grep ' HASHPW=' >/dev/null 2>&1 ; \
++	if [ $? -eq 0 ]; then \
++	  HASHPW=`echo $ARGS | sed 's/.* HASHPW=//' | sed 's/ .*//'`; \
++	  cat $CONF_F | grep -v 'HashedControlPassword' > $TMP_F; \
++	  echo "HashedControlPassword ${HASHPW}" >> $TMP_F; \
++	  mv -f $TMP_F $CONF_F; \
++	fi; \
++	echo $ARGS | grep ' CTLSOCK=' >/dev/null 2>&1 ; \
++	if [ $? -eq 0 ]; then \
++	  CTLSOCK=`echo $ARGS | sed 's/.* CTLSOCK=//' | sed 's/ .*//'`; \
++	  cat $CONF_F | grep -v 'ControlListenAddress' > $TMP_F; \
++	  echo "ControlListenAddress ${CTLSOCK}" >> $TMP_F; \
++	  mv -f $TMP_F $CONF_F; \
++	fi;
++	# start tor process
 +	$BIN -f $CONF_F $OPTIONS > $SLOG_F 2>&1
 +	# forcibly filter some traffic which should never go over Tor:
 +	# no SMTP
