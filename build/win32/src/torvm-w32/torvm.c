@@ -3,19 +3,34 @@
  */
 #include "torvm.h"
 
-#define TOR_VM_BASE    "C:\\Tor_VM"
-#define W_TOR_VM_BASE  L"C:\\Tor_VM"
-#define TOR_VM_BIN     TOR_VM_BASE "\\bin"
-#define TOR_VM_LIB     TOR_VM_BASE "\\lib"
-#define TOR_VM_STATE   TOR_VM_BASE "\\state"
+#define TOR_VM_BASE    "Tor_VM"
+#define W_TOR_VM_BASE  L"Tor_VM"
+#define TOR_VM_BIN     "bin"
+#define TOR_VM_LIB     "lib"
+#define TOR_VM_STATE   "state"
 #define WIN_DRV_DIR    "C:\\WINDOWS\\system32\\drivers"
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
+#define TOR_CAP_SYS    "tornpf.sys"
+#define TOR_HDD_FILE   "hdd.img"
+#define QEMU_DEF_MEM   32
 
 BOOL buildpath (const TCHAR *dirname,
                 TCHAR **fullpath);
 BOOL buildwsyspath (TCHAR **fullpath);
 
+#define PATH_FQ        1
+#define PATH_RELATIVE  2
+#define PATH_MSYS      3
+#define VMDIR_BASE     1
+#define VMDIR_BIN      2
+#define VMDIR_LIB      3
+#define VMDIR_STATE    4
+static BOOL buildfpath (DWORD   pathtype,
+                        DWORD   subdirtype,
+                        LPTSTR  wdpath,
+                        LPTSTR  append,
+			LPTSTR *fpath);
 
 struct s_rconnelem {
   BOOL    isactive;
@@ -202,6 +217,90 @@ void ldebug (const char* format, ...)
   return;
 }
 
+/* initial attempt to keep file locations dynamic and configurable.
+ */
+static BOOL buildfpath (DWORD   pathtype,
+                        DWORD   subdirtype,
+                        LPTSTR  wdpath,
+                        LPTSTR  append,
+			LPTSTR *fpath)
+{
+  LPTSTR basepath;
+  DWORD  buflen;
+  *fpath = NULL;
+  LPTSTR dsep = "\\";
+  if (pathtype == PATH_RELATIVE) {
+    if (!wdpath) {
+      basepath = strdup(".");
+    }
+    else {
+      /* TODO: for now, we check if we're in one of the bin/lib/state subdirs
+       * and adjust accordingly.  what we really need to do is is build a full
+       * relative path based on cwd for situations when we might be executing
+       * in a location other than the usual subdirs above.
+       */
+      if ( (strstr(wdpath, "\\" TOR_VM_BIN)) ||
+           (strstr(wdpath, "\\" TOR_VM_LIB)) || 
+           (strstr(wdpath, "\\" TOR_VM_STATE))   ) {
+	basepath = (pathtype == PATH_MSYS) ? strdup("../") : strdup("..\\");
+      }
+    }
+  }
+  else {
+    if (!getmypath(&basepath)) {
+      lerror ("Unable to get current process working directory.");
+      /* TODO: what fallbacks should be used? check common locations? */
+      return FALSE;
+    }
+    if (pathtype == PATH_MSYS) {
+      /* TODO: split drive and path, then sub dir separator */
+      dsep = "/";
+    }
+    /* truncate off our program name from the basepath */
+    if (strlen(basepath) > 1) {
+      LPTSTR cp = basepath + strlen(basepath) - 1;
+      while (cp > basepath && *cp) {
+        if (*cp == '\\')
+	  *cp = 0;
+	else
+	  cp--;
+      }
+    }
+  }
+  buflen = strlen(basepath) + 32; /* leave plenty of room for subdir */
+  if (append)
+    buflen += strlen(append);
+  *fpath = (TCHAR *)malloc(buflen);
+  **fpath = 0;
+  if (subdirtype == VMDIR_BASE) {
+    snprintf (*fpath, buflen-1,
+              "%s%s%s",
+	      basepath,
+	      append ? dsep : "",
+	      append ? append : "");
+  }
+  else {
+    LPTSTR csd = "";
+    if (subdirtype == VMDIR_BIN)
+      csd = TOR_VM_BIN;
+    else if (subdirtype == VMDIR_LIB)
+      csd = TOR_VM_LIB;
+    else if (subdirtype == VMDIR_STATE)
+      csd = TOR_VM_STATE;
+
+    snprintf (*fpath, buflen-1,
+              "%s%s%s%s%s",
+	      basepath,
+	      dsep,
+	      csd,
+	      append ? dsep : "",
+	      append ? append : "");
+  }
+  ldebug ("Returning build file path %s for path type %d subdir type %d working path %s and append %s", *fpath, pathtype, subdirtype, wdpath ? wdpath : "", append ? append : "");
+
+  free (basepath);
+  return TRUE;
+}
 
 BOOL installtap(void)
 {
@@ -209,17 +308,27 @@ BOOL installtap(void)
   PROCESS_INFORMATION pi;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
+  LPTSTR devcon = NULL;
+  DWORD cmdlen;
   DWORD exitcode;
   DWORD opts = 0;
 
   opts = CREATE_NEW_PROCESS_GROUP;
 
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for lib dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, dir, "devcon.exe", &devcon)) {
+    lerror ("Unable to build path for devcon.exe utility.");
+    return FALSE;
+  }
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
-  dir = TOR_VM_LIB;
-  cmd = "\"" TOR_VM_BIN "\\devcon.exe\" install tortap91.inf TORTAP91";
-  ldebug ("Tap install cmd: %s", cmd);
+  cmdlen = strlen(devcon) + 64;
+  snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
+  ldebug ("Tap install pwd: %s, cmd: %s", dir, cmd);
 
   if( !CreateProcess(NULL,
                      cmd,
@@ -251,6 +360,8 @@ BOOL uninstalltap(void)
   PROCESS_INFORMATION pi;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
+  LPTSTR devcon = NULL;
+  DWORD cmdlen;
   DWORD exitcode;
   DWORD opts = 0;
   LONG status;
@@ -264,12 +375,21 @@ BOOL uninstalltap(void)
   
   opts = CREATE_NEW_PROCESS_GROUP;
   
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for lib dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, dir, "devcon.exe", &devcon)) {
+    lerror ("Unable to build path for devcon.exe utility.");
+    return FALSE;
+  }
+
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
-  dir = TOR_VM_LIB;
-  cmd = "\"" TOR_VM_BIN "\\devcon.exe\" remove TORTAP91";
-  ldebug ("Tap un-install cmd: %s", cmd);
+  cmdlen = strlen(devcon) + 64;
+  snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
+  ldebug ("Tap un-install pwd: %s, cmd: %s", dir, cmd);
  
   ldebug ("Removing TORTAP91 device via devcon."); 
   if( !CreateProcess(NULL,
@@ -454,12 +574,17 @@ BOOL installtornpf (void)
 {
   HANDLE src = NULL;
   HANDLE dest = NULL;
-  LPTSTR srcname = TOR_VM_LIB "\\tornpf.sys";
-  LPTSTR destname = WIN_DRV_DIR "\\tornpf.sys";
+  LPTSTR srcname = NULL;
+  LPTSTR destname = WIN_DRV_DIR "\\" TOR_CAP_SYS;
   CHAR * buff = NULL;
   DWORD  buffsz = 4096;
   DWORD  len;
   DWORD  written;
+  
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, TOR_CAP_SYS, &srcname)) {
+    lerror ("Unable to build path for %s", TOR_CAP_SYS);
+    srcname = "C:\\Tor_VM\\lib\\" TOR_CAP_SYS;
+  }
   
   src = CreateFile (srcname,
                     GENERIC_READ,
@@ -495,7 +620,7 @@ BOOL installtornpf (void)
 
 BOOL uninstalltornpf (void)
 {
-  LPTSTR fname = WIN_DRV_DIR "\\tornpf.sys";
+  LPTSTR fname = WIN_DRV_DIR "\\" TOR_CAP_SYS;
   LPTSTR cmd = "\"net.exe\" stop tornpf";
   DeleteFile (fname);
   if (! runcommand(cmd)) {
@@ -517,6 +642,7 @@ BOOL savenetconfig(void)
   SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
+  LPTSTR savepath = NULL;
   DWORD exitcode;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
   DWORD numread;
@@ -532,7 +658,15 @@ BOOL savenetconfig(void)
     linfo ("Saved current firewall configuration state.");
   }
 
-  fh = CreateFile (TOR_VM_STATE "\\netcfg.save",
+  if (!buildfpath(PATH_FQ, VMDIR_STATE, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for state dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_STATE, NULL, "netcfg.save", &savepath)) {
+    lerror ("Unable to build path for save file in state dir.");
+    return FALSE;
+  }
+  fh = CreateFile (savepath,
                    GENERIC_WRITE,
                    0,
                    NULL,
@@ -540,17 +674,18 @@ BOOL savenetconfig(void)
                    FILE_ATTRIBUTE_NORMAL,
                    NULL);
   if (fh == INVALID_HANDLE_VALUE) {
-    lerror ("Unable to open network save file for writing. Error code: %d", GetLastError());
+    ldebug ("Unable to open network save file for writing. Error code: %d", GetLastError());
     return FALSE;
   }
+  ldebug ("Opened %s for write at offset 0", savepath);
 
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
+  ZeroMemory( &sattr, sizeof(sattr) );
   si.cb = sizeof(si);
   sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL;
-  dir = TOR_VM_STATE;
   cmd = "\"netsh.exe\" interface ip dump";
 
   CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
@@ -588,6 +723,7 @@ BOOL savenetconfig(void)
   buff = (CHAR *)malloc(READSIZE);
   while (ReadFile(stdout_rd, buff, READSIZE, &numread, NULL) && (numread > 0)) {
     WriteFile(fh, buff, numread, &numwritten, NULL);
+    ldebug ("Read %d bytes from net dump and wrote %d to save file.", numread, numwritten);
   }
 
   linfo ("Saved current IP network configuration state.");
@@ -607,8 +743,9 @@ BOOL restorenetconfig(void)
   PROCESS_INFORMATION pi;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
+  LPTSTR savepath = NULL;
   DWORD exitcode;
-  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  DWORD opts = 0;
 
   if (getosversion() >= OS_VISTA) {
     cmd = "\"netsh.exe\" advfirewall import \"" TOR_VM_STATE "\\firewall.wfw\"";
@@ -616,17 +753,25 @@ BOOL restorenetconfig(void)
     linfo ("Imported saved firewall configuration.");
   }
 
+  if (!buildfpath(PATH_FQ, VMDIR_STATE, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for state dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_STATE, NULL, "netcfg.save", &savepath)) {
+    lerror ("Unable to build path for save file in state dir.");
+    return FALSE;
+  }
+
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
-  dir = TOR_VM_STATE;
   cmd = "\"netsh.exe\" exec netcfg.save";
 
   if( !CreateProcess(NULL,
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
+                     TRUE,   // default handle inheritance false
                      opts,
                      NULL,   // environment block
                      dir,
@@ -642,10 +787,10 @@ BOOL restorenetconfig(void)
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
 
-  LPTSTR fname = TOR_VM_STATE "\\netcfg.save";
-  DeleteFile (fname);
-  linfo ("Restored current network configuration state.");
+  ldebug ("Removing original network save file at %s", savepath);
+  DeleteFile (savepath);
 
+  linfo ("Restored current network configuration state.");
   return TRUE;  
 }
 
@@ -659,10 +804,14 @@ BOOL runcommand(LPSTR cmd)
 
   opts = CREATE_NEW_PROCESS_GROUP;
 
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for bin dir.");
+    return FALSE;
+  }
+
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
-  dir = TOR_VM_BIN;
 
   if( !CreateProcess(NULL,
                      cmd,
@@ -775,12 +924,21 @@ BOOL configbridge(void)
 BOOL checkvirtdisk(void) {
   HANDLE src = NULL;
   HANDLE dest = NULL;
-  LPTSTR srcname = TOR_VM_LIB "\\hdd.img";
-  LPTSTR destname = TOR_VM_STATE "\\hdd.img";
+  LPTSTR srcname = NULL;
+  LPTSTR destname = NULL;
   CHAR * buff = NULL;
   DWORD  buffsz = 4096;
   DWORD  len;
   DWORD  written;
+
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, TOR_HDD_FILE, &srcname)) {
+    lerror ("Unable to build path for src %s", TOR_HDD_FILE);
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_STATE, NULL, TOR_HDD_FILE, &destname)) {
+    lerror ("Unable to build path for dest %s", TOR_HDD_FILE);
+    return FALSE;
+  }
   
   dest = CreateFile (destname,
                      GENERIC_READ,
@@ -807,6 +965,7 @@ BOOL checkvirtdisk(void) {
                      FILE_ATTRIBUTE_NORMAL,
                      NULL);
   if (dest == INVALID_HANDLE_VALUE) {
+    lerror ("Unable to open virtual disk file %s for writing", destname);
     return FALSE;
   }
  
@@ -818,6 +977,7 @@ BOOL checkvirtdisk(void) {
                     FILE_ATTRIBUTE_NORMAL,
                     NULL);
   if (src == INVALID_HANDLE_VALUE) {
+    lerror ("Unable to open virtual disk file %s for reading", srcname);
     CloseHandle (dest);
     return FALSE;
   }
@@ -826,7 +986,10 @@ BOOL checkvirtdisk(void) {
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) {
     WriteFile(dest, buff, len, &written, NULL);
   }
-  free (buff); 
+  ldebug ("Created new virtual disk image file at %s", destname);
+  free (buff);
+  free (srcname);
+  free (destname);
   CloseHandle (src);
   CloseHandle (dest);
 
@@ -1223,10 +1386,22 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
+  LPTSTR dir = NULL;
+  LPTSTR qemubin = NULL;
+
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for bin dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, "qemu.exe", &qemubin)) {
+    lerror ("Unable to build path for qemu program.");
+    return FALSE;
+  }
 
   TCHAR *cmd = (TCHAR*)malloc(4096);
+  /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, 4095,
-            "\"C:\\Tor_VM\\bin\\qemu.exe\" -L . -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga");
+            "\"%s\" -L . -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1261,6 +1436,16 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
   DWORD numwritten;
   DWORD pipesz;
+  LPTSTR qemubin = NULL;
+
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for bin dir.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, "qemu.exe", &qemubin)) {
+    lerror ("Unable to build path for qemu program.");
+    return FALSE;
+  }
 
   ZeroMemory( &si, sizeof(si) );
   ZeroMemory( &sattr, sizeof(sattr) );
@@ -1269,24 +1454,25 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
 /*  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL; */
-  dir = TOR_VM_BIN;
   cmd = (LPTSTR)malloc(4096);
   if (tapname) {
     snprintf (cmd, 4095,
-              "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
-            cmdline,
-            32,
-            macaddr,
-            bridgeintf,
-            tapname);
+              "\"%s\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
+	      qemubin,
+              cmdline,
+              QEMU_DEF_MEM,
+              macaddr,
+              bridgeintf,
+              tapname);
   }
   else {
     snprintf (cmd, 4095,
-              "\"" TOR_VM_BIN "\\qemu.exe\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
-            cmdline,
-            32,
-            macaddr,
-            bridgeintf);
+              "\"%s\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
+	      qemubin,
+              cmdline,
+              QEMU_DEF_MEM,
+              macaddr,
+              bridgeintf);
   }
   ldebug ("Launching Qemu with cmd: %s", cmd);
 
@@ -1378,8 +1564,9 @@ BOOL respawnasadmin (void)
   propts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS;
 
   si.cb = sizeof(si);
+  /* TODO: also need to fix unicode / wide char issues. */
   wcmd = W_TOR_VM_BASE L"\\torvm.exe";
-  cmd = TOR_VM_BASE "\\torvm.exe";
+  getmypath(&cmd);
 
   /* first, let's see if Administrator has no password set. */
   if( !CreateProcessWithLogonW(username,
@@ -1456,10 +1643,21 @@ BOOL setupenv (void)
   BOOL    exists = FALSE;
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
+  LPTSTR  libpath;
+  LPTSTR  binpath;
  
   envvar = (LPTSTR) malloc(EBUFSZ * sizeof(TCHAR));
   if(envvar == NULL) {
     lerror ("setupenv: out of memory.");
+    return FALSE;
+  }
+
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, NULL, &libpath)) {
+    lerror ("Unable to build vm lib path");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &binpath)) {
+    lerror ("Unable to build vm bin path");
     return FALSE;
   }
 
@@ -1499,7 +1697,7 @@ BOOL setupenv (void)
   else {
     *envvar = (TCHAR)0;
   }
-  snprintf (newvar, retval -1, "%s;%s;%s", TOR_VM_LIB, TOR_VM_BIN, envvar);
+  snprintf (newvar, retval -1, "%s;%s;%s", libpath, binpath, envvar);
 
   if (! SetEnvironmentVariable(PATHVAR, newvar)) {
     lerror ("setupenv: SetEnvironmentVariable failed with errornum: %d for new val: %s",
@@ -1526,6 +1724,7 @@ int main(int argc, char **argv)
   BOOL  noinit = FALSE;
   BOOL  foundit = FALSE;
   char *  cmdline = NULL;
+  LPTSTR  logfile = NULL;
 
   if (getosbits() > 32) {
     lerror ("Error: only 32bit operating systems are currently supported.");
@@ -1574,9 +1773,16 @@ int main(int argc, char **argv)
       if(detachself()) { _exit(0); }
     }
     else if (strcmp(argv[1], "repair") == 0) {
-      LPTSTR fname = TOR_VM_STATE "\\hdd.img";
-      DeleteFile (fname);
-      linfo ("Restored virtual disk image back to original state.");
+      LPTSTR fname = NULL;
+      if (!buildfpath(PATH_RELATIVE, VMDIR_STATE, NULL, TOR_HDD_FILE, &fname)) {
+        lerror ("Unable to build path for dest %s", TOR_HDD_FILE);
+      }
+      else {
+        DeleteFile (fname);
+	free(fname);
+        linfo ("Restored virtual disk image back to original state.");
+      }
+      exit (0);
     }
   }
 
@@ -1589,8 +1795,16 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  logto (TOR_VM_STATE "\\vmlog.txt");
-  debugto (TOR_VM_STATE "\\debug.txt");
+  if (buildfpath(PATH_FQ, VMDIR_STATE, NULL, "vmlog.txt", &logfile)) {
+    logto (logfile);
+    free (logfile);
+    logfile = NULL;
+  }
+  if (buildfpath(PATH_FQ, VMDIR_STATE, NULL, "debug.txt", &logfile)) {
+    debugto (logfile);
+    free (logfile);
+    logfile = NULL;
+  }
 
   if (!vmnop) {
     if (!savenetconfig()) {

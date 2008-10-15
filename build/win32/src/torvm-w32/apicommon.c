@@ -35,13 +35,15 @@
 BOOL getmypath (TCHAR **path)
 {
   TCHAR  mypath[MAX_PATH];
+  memset (mypath, 0, sizeof(mypath));
   if (! GetModuleFileName(NULL,
                           &mypath,
-                          sizeof(mypath))) {
+                          sizeof(mypath)-1)) {
     lerror ("Unable to obtain current program path.");
     return FALSE;
   }
   *path = strdup(mypath);
+  return TRUE;
 }
 
 void bgstartupinfo (STARTUPINFO *si)
