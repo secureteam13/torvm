@@ -95,7 +95,7 @@ static void _flog (HANDLE        fda,
     return;
 
   if (msgbuf == NULL) {
-    msgbuf = (char *) malloc (msgmax);
+    msgbuf = malloc (msgmax);
     if (!msgbuf) return;
   }
   GetSystemTime (&now);
@@ -270,7 +270,7 @@ static BOOL buildfpath (DWORD   pathtype,
   buflen = strlen(basepath) + 32; /* leave plenty of room for subdir */
   if (append)
     buflen += strlen(append);
-  *fpath = (TCHAR *)malloc(buflen);
+  *fpath = malloc(buflen);
   **fpath = 0;
   if (subdirtype == VMDIR_BASE) {
     snprintf (*fpath, buflen-1,
@@ -327,7 +327,7 @@ BOOL installtap(void)
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   cmdlen = strlen(devcon) + 64;
-  cmd = (LPTSTR)malloc(cmdlen);
+  cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap install pwd: %s, cmd: %s", dir, cmd);
 
@@ -390,7 +390,7 @@ BOOL uninstalltap(void)
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   cmdlen = strlen(devcon) + 64;
-  cmd = (LPTSTR)malloc(cmdlen);
+  cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap un-install pwd: %s, cmd: %s", dir, cmd);
  
@@ -611,7 +611,7 @@ BOOL installtornpf (void)
     return FALSE;
   } 
   
-  buff = (CHAR *)malloc(buffsz);
+  buff = malloc(buffsz);
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) {
     WriteFile(dest, buff, len, &written, NULL);
   }
@@ -724,7 +724,7 @@ BOOL savenetconfig(void)
   CloseHandle(stdin_rd);
   CloseHandle(stdin_wr);
 
-  buff = (CHAR *)malloc(READSIZE);
+  buff = malloc(READSIZE);
   while (ReadFile(stdout_rd, buff, READSIZE, &numread, NULL) && (numread > 0)) {
     WriteFile(fh, buff, numread, &numwritten, NULL);
     ldebug ("Read %d bytes from net dump and wrote %d to save file.", numread, numwritten);
@@ -986,7 +986,7 @@ BOOL checkvirtdisk(void) {
     return FALSE;
   }
   
-  buff = (CHAR *)malloc(buffsz);
+  buff = malloc(buffsz);
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) {
     WriteFile(dest, buff, len, &written, NULL);
   }
@@ -1344,7 +1344,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                    char **               cmdline)
 {
 /* DHCPSVR DHCPNAME LEASE ISDHCP CTLSOCK HASHPW */
-  *cmdline = (char *)malloc(4096);
+  *cmdline = malloc(4096);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
   if (noinit) {
@@ -1402,7 +1402,7 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
     return FALSE;
   }
 
-  TCHAR *cmd = (TCHAR*)malloc(4096);
+  TCHAR *cmd = malloc(4096);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, 4095,
             "\"%s\" -L . -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
@@ -1458,7 +1458,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
 /*  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL; */
-  cmd = (LPTSTR)malloc(4096);
+  cmd = malloc(4096);
   if (tapname) {
     snprintf (cmd, 4095,
               "\"%s\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
@@ -1612,7 +1612,7 @@ BOOL detachself (void)
   LPTSTR args = "";
   bgstartupinfo (&si);
   getmypath(&mypath);
-  cmd = (TCHAR *)malloc (4096);
+  cmd = malloc (4096);
   snprintf (cmd, 4095,
             "\"%s\" %s",
             mypath, args);
@@ -1650,7 +1650,7 @@ BOOL setupenv (void)
   LPTSTR  libpath;
   LPTSTR  binpath;
  
-  envvar = (LPTSTR) malloc(EBUFSZ * sizeof(TCHAR));
+  envvar = malloc(EBUFSZ * sizeof(TCHAR));
   if(envvar == NULL) {
     lerror ("setupenv: out of memory.");
     return FALSE;
@@ -1690,7 +1690,7 @@ BOOL setupenv (void)
 
   retval = (exists) ? strlen(envvar) : 0;
   retval +=  EBUFSZ;
-  newvar = (LPTSTR) malloc(retval * sizeof(TCHAR));
+  newvar = malloc(retval * sizeof(TCHAR));
   if (newvar == NULL) {
     lerror ("setupenv: out of memory.");
     return FALSE;

@@ -101,7 +101,7 @@ BOOL getcompguid (TCHAR **guid)
 /* MRP_TEMP this needs dynamic linkage */
   return FALSE;
   static const int  alen = 64 * sizeof(TCHAR);
-  *guid = (TCHAR *)malloc(alen);
+  *guid = malloc(alen);
   if (! *guid)
     fatal ("Allocation failure in: %s line no: %s with sz: %d", __FILE__ , __LINE__ , alen);
 #if 0

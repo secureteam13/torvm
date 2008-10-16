@@ -213,7 +213,7 @@ static void  loadadvapifuncs (void)
   if (s_advapi != NULL)
     return;
 
-  s_advapi = (struct ft_advapi *)malloc(sizeof(struct ft_advapi));
+  s_advapi = malloc(sizeof(struct ft_advapi));
   memset(s_advapi, 0, sizeof(struct ft_advapi));
   s_advapi_hnd = LoadLibrary("advapi32.dll");
   if (s_advapi_hnd) {
