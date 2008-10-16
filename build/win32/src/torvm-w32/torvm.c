@@ -707,7 +707,7 @@ BOOL savenetconfig(void)
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
+                     TRUE,   // must inherit handles for redirection to work
                      opts,
                      NULL,   // environment block
                      dir,
@@ -775,7 +775,7 @@ BOOL restorenetconfig(void)
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     TRUE,   // default handle inheritance false
+                     FALSE,  // default handle inheritance false
                      opts,
                      NULL,   // environment block
                      dir,
