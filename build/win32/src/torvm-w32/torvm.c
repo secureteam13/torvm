@@ -1090,7 +1090,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
         if (getmacaddr (ce->guid, &(ce->macaddr))) {
           linfo ("Interface %s => %s  mac(%s)", name_data, enum_name, ce->macaddr);
         }
-        if (isconnected (enum_name)) {
+        if (isconnected (ce->guid)) {
           linfo ("Interface %s (%s) is currently connected.", ce->name, ce->macaddr);
           ce->isactive = TRUE;
           snprintf(tcpip_string,
@@ -1261,9 +1261,6 @@ int loadnetinfo(struct s_rconnelem **connlist)
             }
 
             RegCloseKey (ckey);
-      }
-      else {
-            /* printf ("Failed read key %s , errorno: %d", connection_string, status); */
       }
 
       snprintf(connection_string,
@@ -1759,12 +1756,14 @@ int main(int argc, char **argv)
   int  numintf;
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
+  struct s_rconnelem *tapconn = NULL;
   BOOL  indebug = FALSE;
   BOOL  vmnop = FALSE;
   BOOL  noinit = FALSE;
   BOOL  foundit = FALSE;
   char *  cmdline = NULL;
   LPTSTR  logfile = NULL;
+  DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
 
   if (getosbits() > 32) {
     lerror ("Error: only 32bit operating systems are currently supported.");
@@ -1875,6 +1874,10 @@ int main(int argc, char **argv)
       /* TODO: util method to free structure of list elem */
       numintf = loadnetinfo(&connlist);
     }
+    tapconn = connlist;
+    while (tapconn && tapconn->istortap != TRUE) {
+      tapconn = tapconn->next;
+    }
 
     if (!installtornpf()) {
       lerror ("Unable to install Tor NPF service driver.");
@@ -1954,27 +1957,25 @@ int main(int argc, char **argv)
   }
 
   /* need to delay long enough to allow qemu to start and open tap device */
-  Sleep (2000);
-
-  if (! isrunning(&pi)) {
-    buildcmdline(ce, FALSE, TRUE, &cmdline);
-    launchtorvm(&pi,
-                ce->name,
-                ce->macaddr,
-                NULL,
-                cmdline);
-    /* need to delay long enough to allow qemu to start and open tap device */
-    Sleep (2000);
-    if (! isrunning(&pi)) {
-      lerror ("Tor VM no tap fallback failed to start properly.");
-      goto shutdown;
+  if (tapconn) {
+    while ( taptimeout-- && isrunning(&pi) && (! isconnected(tapconn->guid)) ) {
+      ldebug ("Waiting for tap adapter to be connected...");
+      Sleep (1000);
     }
   }
-  else {
-    if (! configtap()) {
-      lerror ("Unable to configure tap device.  Exiting.");
-      goto shutdown;
-    }
+  ldebug ("Done waiting.");
+
+  if (! isrunning(&pi)) {
+    lerror ("Qemu VM failed to start properly.");
+    goto shutdown;
+  }
+  if (! isconnected(tapconn->guid)) {
+    lerror ("Network tap device is not connected to VM.");
+    goto shutdown;
+  }
+  if (! configtap()) {
+    lerror ("Unable to configure tap device.");
+    goto shutdown;
   }
 
   waitforit(&pi);

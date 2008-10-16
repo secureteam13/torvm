@@ -205,7 +205,8 @@ BOOL getmacaddr(const char *  devguid,
                      NULL);
   if (devfd == INVALID_HANDLE_VALUE)
   {
-    lerror ("Unable to open net device handle for path: %s", devfstr);
+    /* this is a normal condition for non-ethernet devices */
+    ldebug ("Unable to open net device handle for path: %s", devfstr);
     goto cleanup;
   }
 
@@ -256,7 +257,7 @@ BOOL isconnected(const char *  devguid)
                      NULL);
   if (devfd == INVALID_HANDLE_VALUE)
   {
-    lerror ("Unable to open net device handle for path: %s", devfstr);
+    linfo ("Unable to open net device handle for path: %s", devfstr);
     goto cleanup;
   }
 
@@ -282,6 +283,5 @@ BOOL isconnected(const char *  devguid)
 
   return retval;
 }
-
 
 
