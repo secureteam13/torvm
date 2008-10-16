@@ -327,6 +327,7 @@ BOOL installtap(void)
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   cmdlen = strlen(devcon) + 64;
+  cmd = (LPTSTR)malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap install pwd: %s, cmd: %s", dir, cmd);
 
