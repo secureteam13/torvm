@@ -1,4 +1,10 @@
 Critical tasks:
+ . documentation: convert to more useful TODO format.
+
+ . documentation: integrate Kyle's build documentation.
+
+ . resolve all placeholder 'TODO' comments in code.
+
  . integrate iptables / firewall rules with torwall
 
  . clean up dynamic memory handling in win32 controller
@@ -16,9 +22,8 @@ Critical tasks:
  . provide some priviledge separation for processes (by user in 2k/xp, fine
    grained on vista/svr2008)
 
- . identify saved state per machine, so that a portable instance on a pen
-   drive does not try to restore settings from a different host to the current
-   system
+ . identify saved state per machine so that a portable instance on a pen drive
+   does not try to restore settings from a different host to the current system
 
  . finish the rest of this list 
 
