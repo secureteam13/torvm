@@ -343,6 +343,7 @@ BOOL installtap(void)
                      &pi) ) {
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
   }
+  free (cmd);
 
   linfo ("waiting for TAP-Win32 driver install to complete ...");
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
@@ -389,6 +390,7 @@ BOOL uninstalltap(void)
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   cmdlen = strlen(devcon) + 64;
+  cmd = (LPTSTR)malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap un-install pwd: %s, cmd: %s", dir, cmd);
  
@@ -406,7 +408,8 @@ BOOL uninstalltap(void)
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
     return FALSE;
   }
-  
+  free (cmd);
+
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
     Sleep (200);
   }
