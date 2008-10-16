@@ -115,8 +115,8 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +$(eval $(call BuildPackage,tor))
 diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/tor/files/tor.init
 --- orig-kamikaze/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/files/tor.init	2008-10-16 01:08:41.832711721 +0000
-@@ -0,0 +1,112 @@
++++ mod-torpkg-kamikaze/package/tor/files/tor.init	2008-10-16 03:58:30.534196384 +0000
+@@ -0,0 +1,113 @@
 +#!/bin/sh 
 +
 +BIN=tor
@@ -171,6 +171,7 @@ diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/
 +	  echo "ControlListenAddress ${CTLSOCK}" >> $TMP_F; \
 +	  mv -f $TMP_F $CONF_F; \
 +	fi;
++	chown $RUN_USER:$RUN_GROUP $CONF_F
 +	# start tor process
 +	$BIN -f $CONF_F $OPTIONS > $SLOG_F 2>&1
 +	# TODO for now used fixed control port accept rule

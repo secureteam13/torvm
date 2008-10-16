@@ -44,6 +44,7 @@ struct s_rconnelem {
   LPTSTR  netmask;
   LPTSTR  gateway;
   LPTSTR  dhcpsvr;
+  LPTSTR  dhcpname;
   LPTSTR  driver;
   struct s_rconnelem * next;
 };
@@ -1095,7 +1096,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
           snprintf(tcpip_string,
                    sizeof(tcpip_string),
                    "%s\\%s",
-                   TCPIP_KEY, enum_name);
+                   TCPIP_INTF_KEY, enum_name);
           status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                                 tcpip_string,
                                 0,
@@ -1161,8 +1162,30 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 ce->dhcpsvr = strdup(name_data);
                 ldebug ("Connection %s dhcp server: %s.", ce->name, ce->dhcpsvr);
               }
+              RegCloseKey (tkey);
+              status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                                    TCPIP_PARM_KEY,
+                                    0,
+                                    KEY_READ,   
+                                    &tkey);
+              if (status == ERROR_SUCCESS) {
+                len = sizeof (name_data);
+                status = RegQueryValueEx(tkey,
+                                         "Hostname",
+                                         NULL,
+                                         &name_type,
+                                         name_data,
+                                         &len);
+                if (status == ERROR_SUCCESS) {
+                  ce->dhcpname = strdup(name_data);
+                  ldebug ("Connection %s using dhcp hostname: %s", ce->name, ce->dhcpname);
+                }
+                RegCloseKey (tkey);
+              }
             }
-            RegCloseKey (tkey);
+            else {
+              RegCloseKey (tkey);
+            }
           }
         }
       }
@@ -1377,14 +1400,14 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
     }
     else {
       snprintf (*cmdline, 4095,
-                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1 ISDHCP DHCPSVR=%s LEASE=%d CTLSOCK=10.10.10.1:9051 HASHPW=%s",
+                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1 ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=10.10.10.1:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
                 brif->macaddr,
                 brif->dhcpsvr,
-                0,
+                brif->dhcpname,
                 /* control port password is "password"
                  * TODO: use Crypto API to collect entropy for ephemeral password generation
                  */

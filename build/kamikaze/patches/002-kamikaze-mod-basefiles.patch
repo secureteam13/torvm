@@ -970,8 +970,8 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/ipkg.conf mod-basefiles-ka
 -dest ram /tmp
 diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kamikaze/package/base-files/files/etc/preinit
 --- orig-kamikaze/package/base-files/files/etc/preinit	2008-04-23 16:20:46.084166000 +0000
-+++ mod-basefiles-kamikaze/package/base-files/files/etc/preinit	2008-10-05 13:37:29.995981748 +0000
-@@ -1,92 +1,174 @@
++++ mod-basefiles-kamikaze/package/base-files/files/etc/preinit	2008-10-16 03:56:25.281916765 +0000
+@@ -1,92 +1,194 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008  The Tor Project, Inc.
@@ -1120,6 +1120,11 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +fi
 +echo $TZ > /etc/TZ
 +
++echo $ARGS | grep '  NOINIT' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++else
++
 +PRIVIP=10.99.11.1
 +echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
@@ -1145,16 +1150,28 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +netup=0
 +echo $ARGS | grep ' IP=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
++  LEASE=""
++  DHCPSVR=""
++  DHCPNAME=""
 +  IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//'`
 +  MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//'`
 +  GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//'`
 +  MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//'`
 +  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//'`
++  ISDHCP=0
 +  dn "Setting IP $IP / $MASK via $GW ..."
 +  ifconfig eth0 hw ether $MAC
 +  ifconfig eth0 $IP netmask $MASK up
 +  ifconfig eth0 mtu $MTU
 +  route add default gw $GW
++  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    ISDHCP=1
++    DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//'`
++    DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
++    # fire up udhcpc to keep the lease active for however long is needed
++    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  fi
 +  netup=1
 +else
 +  # dhcp for address
@@ -1174,6 +1191,21 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 +  done
 +  # XXX MRP enforce MTU under 1500 to work around winpcap issue until resolved
 +  ifconfig eth0 mtu 1482
++fi
++
++if [ $netup -eq 0 ]; then
++  echo " FAILED."
++  d "ERROR: Unable to get an IP address."
++  d "Check your DHCP server or configure one manually with ifconfig."
++  d "Remember to start Tor via /etc/init.d/tor start when ready."
++else
++  echo " done."
++  dn "Starting tor ... "
++  /etc/init.d/tor start
++  echo "done."
++  echo
++  d "Run /etc/init.d/tor status"
++  d " for bootstrap status."
 +fi
  
 -echo "- preinit -"
@@ -1199,19 +1231,7 @@ diff -Naur orig-kamikaze/package/base-files/files/etc/preinit mod-basefiles-kami
 -	
 -	killall hotplug2
 -	exec /sbin/init
-+if [ $netup -eq 0 ]; then
-+  echo " FAILED."
-+  d "ERROR: Unable to get an IP address."
-+  d "Check your DHCP server or configure one manually with ifconfig."
-+  d "Remember to start Tor via /etc/init.d/tor start when ready."
-+else
-+  echo " done."
-+  dn "Starting tor ... "
-+  /etc/init.d/tor start
-+  echo "done."
-+  echo
-+  d "Run /etc/init.d/tor status"
-+  d " for bootstrap status."
++# end if !NOINIT
  fi
 diff -Naur orig-kamikaze/package/base-files/files/etc/rc.common mod-basefiles-kamikaze/package/base-files/files/etc/rc.common
 --- orig-kamikaze/package/base-files/files/etc/rc.common	2008-01-25 10:59:40.292163000 +0000
