@@ -11,9 +11,16 @@
 #define WIN_DRV_DIR    "C:\\WINDOWS\\system32\\drivers"
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
+/* TODO: network config defaults via vmconfig.h and runtime configuration */
+#define TOR_TAP_NET    "255.255.255.252"  /* mask 255.255.255.252 or CIDR /30 */
+#define TOR_TAP_VMIP   "10.10.10.1" 
+#define TOR_TAP_HOSTIP "10.10.10.2" 
+#define TOR_TAP_DNS1   "4.2.2.4"
+#define TOR_TAP_DNS2   "4.2.2.2"
 #define TOR_CAP_SYS    "tornpf.sys"
 #define TOR_HDD_FILE   "hdd.img"
 #define QEMU_DEF_MEM   32
+#define CAP_MTU        1480
 
 BOOL buildpath (const TCHAR *dirname,
                 TCHAR **fullpath);
@@ -895,23 +902,46 @@ BOOL flushdns(void)
 
 BOOL configtap(void)
 {
-  LPSTR cmd;
-  cmd = "\"netsh.exe\" interface ip set address \"" TOR_TAP_NAME "\" static 10.10.10.2 255.255.255.252 10.10.10.1 1";
+  const DWORD  cmdlen = 1024;
+  LPTSTR cmd;
+  LPTSTR netsh = "netsh.exe";
+
+  cmd = malloc(cmdlen);
+
+  snprintf (cmd, cmdlen,
+            "\"%s\" interface ip set address \"%s\" static %s %s %s 1",
+            netsh,
+            TOR_TAP_NAME,
+            TOR_TAP_HOSTIP,
+            TOR_TAP_NET,
+            TOR_TAP_VMIP);
   ldebug ("Tap config cmd: %s", cmd);
   if (! runcommand(cmd)) {
+    free (cmd);
     return FALSE;
   }
-  cmd = "\"netsh.exe\" interface ip set dns \"" TOR_TAP_NAME "\" static 4.2.2.2";
-  ldebug ("Tap config cmd: %s", cmd);
+  snprintf (cmd, cmdlen,
+            "\"%s\" interface ip set dns  \"%s\" static %s",
+            netsh,
+            TOR_TAP_NAME,
+            TOR_TAP_DNS1);
+  ldebug ("Tap dns config cmd: %s", cmd);
   if (! runcommand(cmd)) {
+    free (cmd);
     return FALSE;
   }
-  cmd = "\"netsh.exe\" interface ip add dns \"" TOR_TAP_NAME "\" 4.2.2.4";
-  ldebug ("Tap config cmd: %s", cmd);
+  snprintf (cmd, cmdlen,
+            "\"%s\" interface ip add dns  \"%s\" %s",
+            netsh,
+            TOR_TAP_NAME,
+            TOR_TAP_DNS2);
+  ldebug ("Tap dns2 config cmd: %s", cmd);
   if (! runcommand(cmd)) {
+    free (cmd);
     return FALSE;
   }
   ldebug ("Tap config complete.");
+  free (cmd);
   return TRUE;
 }
 
@@ -1377,38 +1407,48 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                    char **               cmdline)
 {
 /* DHCPSVR DHCPNAME LEASE ISDHCP CTLSOCK HASHPW */
-  *cmdline = malloc(4096);
+  const DWORD  cmdlen = 4096;
+  *cmdline = malloc(cmdlen);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
+  /* control port password is "password"
+   * TODO: use Crypto API to collect entropy for ephemeral password generation
+   */
+  char * ctlpass = "16:6407E39581A121B26051A360CA8BB1535C73877C894E7B6EC554422789";
+
   if (noinit) {
-    snprintf (*cmdline, 4095,
+    snprintf (*cmdline, cmdlen -1,
               "%s NOINIT",
               basecmds);
   }
   else {
     if (brif->isdhcp == FALSE) {
-      snprintf (*cmdline, 4095,
-                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1",
-                usedebug ? dbgcmds : basecmds,
-                brif->ipaddr,
-                brif->netmask,
-                brif->gateway,
-                brif->macaddr);
-    }
-    else {
-      snprintf (*cmdline, 4095,
-                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=1480 PRIVIP=10.10.10.1 ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=10.10.10.1:9051 HASHPW=%s",
+      snprintf (*cmdline, cmdlen -1,
+                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
                 brif->macaddr,
+                CAP_MTU,
+                TOR_TAP_VMIP,
+                TOR_TAP_VMIP,
+                ctlpass);
+    }
+    else {
+      snprintf (*cmdline, cmdlen -1,
+                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
+                usedebug ? dbgcmds : basecmds,
+                brif->ipaddr,
+                brif->netmask,
+                brif->gateway,
+                brif->macaddr,
+                CAP_MTU,
+                TOR_TAP_VMIP,
                 brif->dhcpsvr,
                 brif->dhcpname,
-                /* control port password is "password"
-                 * TODO: use Crypto API to collect entropy for ephemeral password generation
-                 */
-                "16:6407E39581A121B26051A360CA8BB1535C73877C894E7B6EC554422789");
+                TOR_TAP_VMIP,
+                ctlpass);
     }
   }
   return TRUE;
@@ -1978,6 +2018,10 @@ int main(int argc, char **argv)
     goto shutdown;
   }
 
+  /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
+   * add an exception for the control port on the Tap adapter.
+   */
+
   waitforit(&pi);
 
   linfo ("Tor VM closed, restoring host network and services.");
@@ -1988,7 +2032,7 @@ int main(int argc, char **argv)
       lerror ("Unable to re-enable windows firewall.");
     }
   }
- /* TEMP: leave for now ....
+ /* TODO: leave for now, perhaps as default unless running from removable media?
   if (! uninstalltap()) {
     lerror ("Unable to remove TAP-Win32 device.");
   }
