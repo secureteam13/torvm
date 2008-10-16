@@ -1,0 +1,35 @@
+Critical tasks:
+ . integrate iptables / firewall rules with torwall
+
+ . clean up dynamic memory handling in win32 controller
+   (handle alloc failures and proper free'ing)
+
+ . complete registry helpers for searching / cleaning registry entries created
+   by tap and pcap devices. (this will resolve the issues with adding/removing
+   the tap driver multiple times without a reboot)
+
+ . fix detection of default route when multiple gateways present and route
+   metric must be used to distinguish properly.
+
+ . autotools / configure 'ify the kamikaze and win32 builds
+
+ . provide some priviledge separation for processes (by user in 2k/xp, fine
+   grained on vista/svr2008)
+
+ . identify saved state per machine, so that a portable instance on a pen
+   drive does not try to restore settings from a different host to the current
+   system
+
+ . finish the rest of this list 
+
+
+Additional tasks:
+ . improve display output
+ . run as service
+ . vidalia integration
+ . handle abnormal tap connection changes / failure gracefully
+
+
+Nice to have tasks:
+ . show icon for tap adapter in dock when connected
+
