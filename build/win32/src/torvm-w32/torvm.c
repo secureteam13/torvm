@@ -1149,6 +1149,19 @@ int loadnetinfo(struct s_rconnelem **connlist)
               ce->netmask = strdup(name_data);
               ldebug ("Connection %s netmask: %s.", ce->name, ce->netmask);
             }
+            if (ce->isdhcp) {
+              len = sizeof (name_data);
+              status = RegQueryValueEx(tkey,
+                                       "DhcpServer",
+                                       NULL,
+                                       &name_type,
+                                       name_data,
+                                       &len);
+              if (status == ERROR_SUCCESS) {
+                ce->dhcpsvr = strdup(name_data);
+                ldebug ("Connection %s dhcp server: %s.", ce->name, ce->dhcpsvr);
+              }
+            }
             RegCloseKey (tkey);
           }
         }
