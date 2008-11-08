@@ -14,13 +14,13 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.6-alpha
++PKG_VERSION:=0.2.1.7-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=db49c016e3ec55773687207dfe556662
++PKG_MD5SUM:=f4eeebb9d536317e4a5391cb03732947
 +
 +include $(INCLUDE_DIR)/package.mk
 +
