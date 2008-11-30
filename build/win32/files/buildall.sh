@@ -4,8 +4,16 @@ export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 export ddir=/c/Tor_VM
 export libdir="${ddir}/lib"
 export bindir="${ddir}/bin"
-export confdir="${ddir}/config"
 export statedir="${ddir}/state"
+
+export ZLIB_VER="1.2.3"
+export ZLIB_DIR="zlib-${ZLIB_VER}"
+export ZLIB_FILE="zlib-${ZLIB_VER}.tar.gz"
+
+export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
+export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
+export WPCAP_LDFLAGS="-L${WPCAP_DIR}/wpcap/PRJ -L${WPCAP_DIR}/packetNtx/Dll/Project"
+
 
 if [ -f ~/.ssh/user ]; then
   export BUILD_SCP_USER=`cat ~/.ssh/user`
@@ -20,6 +28,9 @@ fi
 # wrap the actual build process so we capture stdout/stderr
 # and also transfer over the build log and shutdown, if needed.
 if [[ "$1" != "dobuild" ]]; then
+  if [[ "$1" == "shell" ]]; then
+    exec /bin/bash -l
+  fi
   export build_date=`date +%s`
   cd /usr/src
   /usr/src/buildall.sh dobuild 2>&1 | tee build.log
@@ -39,11 +50,7 @@ if [[ "$1" != "dobuild" ]]; then
   fi
 else
 
-export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
-export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
-export WPCAP_LDFLAGS="-L${WPCAP_DIR}/wpcap/PRJ -L${WPCAP_DIR}/packetNtx/Dll/Project"
-
-for dir in $ddir $libdir $bindir $confdir $statedir; do
+for dir in $ddir $libdir $bindir $statedir; do
   if [ ! -d $dir ]; then
     mkdir $dir
   fi
@@ -72,8 +79,9 @@ cp /usr/local/bin/autoheader-* /bin/autoheader
 cp /usr/local/bin/automake-* /bin/automake
 cp /usr/local/bin/autom4te-* /bin/autom4te
 
-cp /bin/msys-z.dll $libdir/
-cp /bin/msys-1.0.dll $libdir/
+# make sure that msys libz headers and static libs are not present
+# we only need the dll for ssh and friends.
+rm -f /include/zlib.h /include/zconf.h /lib/libz.a /lib/libz.dll.a 
 
 
 echo "Building pthreads-w32 ..."
@@ -87,6 +95,32 @@ if (( $? != 0 )); then
   exit 1
 fi
 cp pthreadGC2.dll $libdir/
+
+
+echo "Building zlib ..."
+cd /usr/src
+tar zxvf $ZLIB_FILE
+cd $ZLIB_DIR
+./configure --prefix=/usr --enable-shared
+if (( $? != 0 )); then
+  echo "ERROR: zlib configure failed." >&2
+  exit 1
+fi
+make
+if (( $? != 0 )); then
+  echo "ERROR: zlib build failed." >&2
+  exit 1
+fi
+make install
+if (( $? != 0 )); then
+  echo "ERROR: zlib install failed." >&2
+  exit 1
+fi
+make -f win32/Makefile.gcc
+if (( $? != 0 )); then
+  echo "ERROR: zlib dynamic build failed." >&2
+  exit 1
+fi
 
 
 echo "Building SDL library ..."
@@ -106,23 +140,6 @@ if (( $? != 0 )); then
 fi
 make install
 cp /usr/bin/SDL.dll $libdir/
-
-
-echo "Building zlib ..."
-cd /usr/src
-tar zxvf zlib-1.2.3.tar.gz
-cd zlib-1.2.3
-./configure --prefix=/usr
-if (( $? != 0 )); then
-  echo "ERROR: zlib configure failed." >&2
-  exit 1
-fi
-make
-if (( $? != 0 )); then
-  echo "ERROR: zlib build failed." >&2
-  exit 1
-fi
-make install
 
 
 echo "Locating Windows Driver Development Kit ..."
@@ -264,8 +281,8 @@ fi
   --disable-kqemu \
   --disable-system \
   --disable-vnc-tls \
-  --extra-cflags="-DHAVE_INTSZ_TYPES -I. -I.. -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/usr/src/pthreads-w32 -I/usr/include/SDL" \
-  --extra-ldflags="-L/usr/lib -L/usr/local/lib $WPCAP_LDFLAGS -L/usr/src/pthreads-w32" \
+  --extra-cflags="-DHAVE_INTSZ_TYPES -I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
+  --extra-ldflags="-L/src/$ZLIB_DIR -L/usr/lib -L/usr/local/lib $WPCAP_LDFLAGS -L/src/pthreads-w32" \
   --target-list=i386-softmmu
 if (( $? != 0 )); then
   echo "ERROR: Qemu configure failed." >&2
@@ -301,6 +318,7 @@ if [[ "$DEBUG_NO_STRIP" == "" ]]; then
   echo "Stripping debug symbols from binaries and libraries ..."
   strip $libdir/*.dll
   strip $bindir/*.exe
+  strip $bindir/*.dll
   strip $ddir/*.exe
 fi
 
