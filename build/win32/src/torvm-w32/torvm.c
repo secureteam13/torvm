@@ -1981,7 +1981,7 @@ int main(int argc, char **argv)
   PROCESS_INFORMATION pi;
   if (!vmnop) {
     if (! launchtorvm(&pi,
-                      ce->name,
+                      ce->guid,
                       ce->macaddr,
                       TOR_TAP_NAME,
                       cmdline)) {
