@@ -1,6 +1,6 @@
 diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
 --- orig-qemu-0.9.1/Makefile.target	2008-01-06 19:38:41.000000000 +0000
-+++ mod-qemu-0.9.1/Makefile.target	2008-10-05 03:18:14.491593496 +0000
++++ mod-qemu-0.9.1/Makefile.target	2008-11-30 09:35:06.913417440 +0000
 @@ -237,7 +237,7 @@
  LIBS+=-lz
  endif
@@ -12,7 +12,7 @@ diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
  LIBS+=-lsocket -lnsl -lresolv
 diff -Naur orig-qemu-0.9.1/configure mod-qemu-0.9.1/configure
 --- orig-qemu-0.9.1/configure	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/configure	2008-09-26 07:33:17.468355816 +0000
++++ mod-qemu-0.9.1/configure	2008-11-30 09:35:06.914417288 +0000
 @@ -600,7 +600,7 @@
  #undef main /* We don't want SDL to override our main() */
  int main( void ) { return SDL_Init (SDL_INIT_VIDEO); }
@@ -35,7 +35,7 @@ diff -Naur orig-qemu-0.9.1/configure mod-qemu-0.9.1/configure
    echo "CONFIG_ADLIB=yes" >> $config_mak
 diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
 --- orig-qemu-0.9.1/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/dyngen-exec.h	2008-09-26 07:33:18.468203816 +0000
++++ mod-qemu-0.9.1/dyngen-exec.h	2008-11-30 09:35:06.915417136 +0000
 @@ -32,6 +32,7 @@
     host headers do not allow that. */
  #include <stddef.h>
@@ -68,8 +68,8 @@ diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
  #else
 diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 --- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-10-05 03:16:48.525662304 +0000
-@@ -3858,6 +3858,249 @@
++++ mod-qemu-0.9.1/vl.c	2008-11-30 10:48:37.382924160 +0000
+@@ -3858,6 +3858,263 @@
  
  #endif /* CONFIG_SLIRP */
  
@@ -99,6 +99,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +#define ADAPTER_KEY "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 +#define NETWORK_CONNECTIONS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 +#define DEVICE_PREFIX "\\Device\\TORNPF_"
++#define NETGUIDLEN 38
 +
 +static int get_net_device_guid(
 +    char *name,
@@ -209,9 +210,22 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +    snprintf(pcap_vc->info_str,sizeof(pcap_vc->info_str),"pcap redirector");
 +    char dev_guid[256];
 +    *dev_guid = 0;
-+    if (get_net_device_guid (pcap_devicename, sizeof(pcap_devicename), dev_guid, sizeof(dev_guid))) {
-+        fprintf(stderr, "qemu: could not set up pcap bridge to alias: %s\n", pcap_devicename);
-+        exit(1);
++
++    /* we don't have strnlen??? */
++    pcap_devicename[sizeof(pcap_devicename)-1] = 0;
++
++    /* accept passing a GUID instead of name, which is more precise.  there is a known
++     * issue with disabled adapters sharing names of active ones leading to open failure.
++     */
++    if ( (strlen(pcap_devicename) == NETGUIDLEN) && (*pcap_devicename == '{') ) {
++        snprintf(dev_guid, sizeof(dev_guid), "%s%s", DEVICE_PREFIX, pcap_devicename);
++        fprintf(stderr, "qemu: pcap bridge using explicit device guid: %s\n", dev_guid);
++    }
++    else {
++        if (get_net_device_guid (pcap_devicename, sizeof(pcap_devicename), dev_guid, sizeof(dev_guid))) {
++            fprintf(stderr, "qemu: could not set up pcap bridge to alias: %s\n", pcap_devicename);
++            exit(1);
++        }
 +    }
 +    /* either this works or we exit. don't bother with retval */
 +    eth_open(dev_guid);
@@ -319,7 +333,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #if !defined(_WIN32)
  
  typedef struct TAPState {
-@@ -4733,6 +4976,14 @@
+@@ -4733,6 +4990,14 @@
          ret = net_slirp_init(vlan);
      } else
  #endif
@@ -334,7 +348,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
      if (!strcmp(device, "tap")) {
          char ifname[64];
-@@ -7551,6 +7802,9 @@
+@@ -7551,6 +7816,9 @@
             "                connect the user mode network stack to VLAN 'n' and send\n"
             "                hostname 'host' to DHCP clients\n"
  #endif
@@ -344,7 +358,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
  #ifdef _WIN32
             "-net tap[,vlan=n],ifname=name\n"
             "                connect the host TAP network interface to VLAN 'n'\n"
-@@ -7656,9 +7910,6 @@
+@@ -7656,9 +7924,6 @@
      QEMU_OPTION_pflash,
      QEMU_OPTION_boot,
      QEMU_OPTION_snapshot,
@@ -354,7 +368,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      QEMU_OPTION_m,
      QEMU_OPTION_nographic,
      QEMU_OPTION_portrait,
-@@ -7746,9 +7997,6 @@
+@@ -7746,9 +8011,6 @@
      { "pflash", HAS_ARG, QEMU_OPTION_pflash },
      { "boot", HAS_ARG, QEMU_OPTION_boot },
      { "snapshot", 0, QEMU_OPTION_snapshot },
@@ -364,7 +378,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
      { "m", HAS_ARG, QEMU_OPTION_m },
      { "nographic", 0, QEMU_OPTION_nographic },
      { "portrait", 0, QEMU_OPTION_portrait },
-@@ -8355,11 +8603,6 @@
+@@ -8355,11 +8617,6 @@
  		drive_add("file=\"%s\"," FD_ALIAS, optarg,
  		          popt->index - QEMU_OPTION_fda);
                  break;
