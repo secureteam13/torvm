@@ -1,6 +1,6 @@
 diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Makefile
 --- orig-kamikaze/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/Makefile	2008-10-01 21:19:28.077996000 +0000
++++ mod-torpkg-kamikaze/package/tor/Makefile	2008-12-09 06:28:06.000000000 +0000
 @@ -0,0 +1,111 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -14,13 +14,13 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.7-alpha
++PKG_VERSION:=0.2.1.8-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=f4eeebb9d536317e4a5391cb03732947
++PKG_MD5SUM:=43d2587e0f27d3766f75950227f74839
 +
 +include $(INCLUDE_DIR)/package.mk
 +
