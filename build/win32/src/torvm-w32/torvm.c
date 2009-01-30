@@ -1,7 +1,8 @@
-/* Copyright (C) 2008  The Tor Project, Inc.
+/* Copyright (C) 2008-2009  The Tor Project, Inc.
  * See LICENSE file for rights and terms.
  */
 #include "torvm.h"
+#include <getopt.h>
 
 #define TOR_VM_BASE    "Tor_VM"
 #define W_TOR_VM_BASE  L"Tor_VM"
@@ -1678,7 +1679,7 @@ BOOL runningdetached (void)
 
 BOOL detachself (void)
 {
-  STARTUPINFOW si = {0};
+  STARTUPINFO si = {0};
   PROCESS_INFORMATION pi = {0};
   LPTSTR cmd = NULL;
   LPTSTR mypath = NULL;
@@ -1789,6 +1790,41 @@ BOOL setupenv (void)
   return TRUE; 
 }
 
+static struct option torvm_options[] =
+{
+  /* opt name,
+   * no_argument | required_argument | optional_argument,
+   * int* flag | NULL,
+   * 'x' (char)  OR  flag && lval
+   */
+  { "verbose" , no_argument , NULL, 'v' },
+  { "update" , no_argument , NULL, 'u' },
+  { "bundle" , no_argument , NULL, 'b' },
+  { "service" , no_argument , NULL, 's' },
+  { "replace" , no_argument , NULL, 'r' },
+  { "clean" , no_argument , NULL, 'c' },
+  { "vmnop" , no_argument , NULL, 'X' },
+  { "noinit" , no_argument , NULL, 'Z' },
+  { "help" , no_argument , NULL, 'h' },
+  {0}
+};
+
+void usage(void)
+{
+  fprintf(stderr, "Usage:\t"
+    "torvm.exe [options]\n\n"
+    "Valid options are:\n"
+    "  --verbose\n"
+    "  --update\n"
+    "  --bundle\n"
+    "  --service\n"
+    "  --replace\n"
+    "  --clean\n"
+    "  --vmnop\n"
+    "  --noinit\n"
+    "  --help\n");
+  exit (1);
+}
 
 int main(int argc, char **argv)
 {
@@ -1804,7 +1840,72 @@ int main(int argc, char **argv)
   char *  cmdline = NULL;
   LPTSTR  logfile = NULL;
   DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
+  int c, optidx = 0;
 
+  while (1) {
+    c = getopt_long(argc, argv, "vubshrcXZ", torvm_options, &optidx);
+    if (c == -1)
+      break;
+
+    switch (c) {
+        case 'v':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          indebug = TRUE;
+          break;
+
+        case 'b':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          break;
+
+        case 's':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          break;
+
+        case 'r':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          LPTSTR fname = NULL;
+          if (!buildfpath(PATH_RELATIVE, VMDIR_STATE, NULL, TOR_HDD_FILE, &fname)) {
+            lerror ("Unable to build path for dest %s", TOR_HDD_FILE);
+          }
+          else {
+            DeleteFile (fname);
+	    free(fname);
+            linfo ("Removed existing virtual disk image for replacement to original state.");
+          }
+          break;
+
+        case 'c':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          uninstalltap();
+          restorenetconfig();
+          exit(0);
+
+        case 'X':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          indebug = TRUE;
+          vmnop = TRUE;
+          break;
+
+        case 'Z':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          indebug = TRUE;
+          noinit = TRUE;
+          break;
+
+        case 'h':
+          linfo ("Help for command usage invoked.");
+          usage();
+          break;
+
+        case 0:  /* not used for flags currently. */
+          break;
+      default:
+        lerror ("Unrecognized command line argument or option passed.");
+        usage();
+        break;
+    }
+  }
+  
   if (getosbits() > 32) {
     lerror ("Error: only 32bit operating systems are currently supported.");
     MessageBox(NULL,
@@ -1816,53 +1917,6 @@ int main(int argc, char **argv)
 
   if (!setupenv()) {
     fatal ("Unable to prepare process environment.");
-  }
-
-  /* ensure we are running detached or as service */
-  if (! runningdetached()) {
-    if(detachself()) {
-      _exit(0);
-    }
-  }
-
-  /* invocation options:
-   * clean - restore network setup (if saved config exists), clean up tap, etc.
-   * debug - launch vm in debug mode, shell at console in vm, etc.
-   * vmnop - launch vm without any network devices.
-   * repair - replace virtual disk with original empty disk image.
-   * TODO: implement "real" command line options
-   */
-  if (argc > 1) {
-    if (strcmp(argv[1], "clean") == 0) {
-      uninstalltap();
-      restorenetconfig();
-      exit (0);
-    }
-    else if (strcmp(argv[1], "debug") == 0) {
-      indebug = TRUE;
-    }
-    else if (strcmp(argv[1], "vmnop") == 0) {
-      indebug = TRUE;
-      vmnop = TRUE;
-    }
-    else if (strcmp(argv[1], "noinit") == 0) {
-      noinit = TRUE;
-    }
-    else if (strcmp(argv[1], "detach") == 0) {
-      if(detachself()) { _exit(0); }
-    }
-    else if (strcmp(argv[1], "repair") == 0) {
-      LPTSTR fname = NULL;
-      if (!buildfpath(PATH_RELATIVE, VMDIR_STATE, NULL, TOR_HDD_FILE, &fname)) {
-        lerror ("Unable to build path for dest %s", TOR_HDD_FILE);
-      }
-      else {
-        DeleteFile (fname);
-	free(fname);
-        linfo ("Restored virtual disk image back to original state.");
-      }
-      exit (0);
-    }
   }
 
   if (!haveadminrights()) {
