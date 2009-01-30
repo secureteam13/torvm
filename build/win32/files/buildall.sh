@@ -22,7 +22,7 @@ export TORSVN_DIR="tor-latest"
 export TORSVN_FILE="tor-latest.tar.gz"
 
 
-export OPENSSL_VER="0.9.8i"
+export OPENSSL_VER="0.9.8j"
 export OPENSSL_DIR="openssl-${OPENSSL_VER}"
 export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
 

@@ -130,9 +130,9 @@ CMAKE_F=cmake-2.6.2.tar.gz
 CMAKE_URL=http://www.cmake.org/files/v2.6/cmake-2.6.2.tar.gz
 CMAKE_SUM=48d33afaf23d40f2ea9aa2f5018c7213983222c2
 
-SSLSRC_F=openssl-0.9.8i.tar.gz
-SSLSRC_URL=http://www.openssl.org/source/openssl-0.9.8i.tar.gz
-SSLSRC_SUM=b2e029cfb68bf32eae997d60317a40945db5a65f
+SSLSRC_F=openssl-0.9.8j.tar.gz
+SSLSRC_URL=http://www.openssl.org/source/openssl-0.9.8j.tar.gz
+SSLSRC_SUM=f70f7127a26e951e8a0d854c0c9e6b4c24df78e4
 
 PY2EXE_F=py2exe-0.6.9.zip
 PY2EXE_TGZ=py2exe.tar.gz
