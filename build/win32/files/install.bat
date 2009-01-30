@@ -34,6 +34,11 @@ cd /d %DDRV%
 cd %MDIR%\%MVER%\dl\
 bzip2 -d *.bz2
 gzip -d *.gz
+IF NOT EXIST "%PROGRAMFILES%\7-Zip" (
+IF EXIST 7zip.msi (
+  msiexec /i 7zip.msi /QN
+)
+)
 cd /d %DDRV%
 cd %MDIR%\%MVER%
 for %%f in (dl\*.tar) do bsdtar xvf %%f

@@ -1,0 +1,655 @@
+diff -Naur orig-vidalia/cmake/FindOpenSSL.cmake mod-vidalia/cmake/FindOpenSSL.cmake
+--- orig-vidalia/cmake/FindOpenSSL.cmake	2008-04-02 02:00:24.794800000 +0000
++++ mod-vidalia/cmake/FindOpenSSL.cmake	2009-01-26 10:46:24.132337536 +0000
+@@ -96,8 +96,8 @@
+   mark_as_advanced(OPENSSL_LIBSSL_DEBUG   OPENSSL_LIBCRYPTO_DEBUG
+                    OPENSSL_LIBSSL_RELEASE OPENSSL_LIBCRYPTO_RELEASE)
+ else(MSVC)
+-  find_library(OPENSSL_LIBSSL NAMES ssl ssleay32)
+-  find_library(OPENSSL_LIBCRYPTO NAMES crypto libeay32)
++  find_library(OPENSSL_LIBSSL NAMES ssleay32-0.9.8 ssl ssleay32)
++  find_library(OPENSSL_LIBCRYPTO NAMES cryptoeay32-0.9.8 crypto libeay32)
+ endif(MSVC)
+ 
+ 
+diff -Naur orig-vidalia/pkg/build-geoip-cache.sh mod-vidalia/pkg/build-geoip-cache.sh
+--- orig-vidalia/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
++++ mod-vidalia/pkg/build-geoip-cache.sh	2009-01-26 10:47:18.600057184 +0000
+@@ -13,7 +13,7 @@
+ 
+ 
+ DIRURL="http://tor.noreply.org/tor/status/all"
+-GEOIPURL="http://geoip.vidalia-project.net/cgi-bin/geoip"
++GEOIPURL="http://peertech.org/geoip"
+ CACHEFILE="geoip-cache"
+ 
+ if [ "$1" == "-notimestamp" -o "$1" == "--notimestamp" ]; then
+diff -Naur orig-vidalia/pkg/win32/WixUI_Tor.wxs mod-vidalia/pkg/win32/WixUI_Tor.wxs
+--- orig-vidalia/pkg/win32/WixUI_Tor.wxs	1970-01-01 00:00:00.000000000 +0000
++++ mod-vidalia/pkg/win32/WixUI_Tor.wxs	2009-01-26 10:47:34.940573048 +0000
+@@ -0,0 +1,62 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!--
++    Copyright (c) Microsoft Corporation.  All rights reserved.
++    
++    The use and distribution terms for this software are covered by the
++    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
++    which can be found in the file CPL.TXT at the root of this distribution.
++    By using this software in any fashion, you are agreeing to be bound by
++    the terms of this license.
++    
++    You must not remove this notice, or any other, from this software.
++
++    This is modified from WixUI_Mondo to omit EULA and other parts not necessary
++    for Tor installation.
++-->
++<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
++    <Fragment>
++        <UI Id="WixUI_Tor">
++            <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
++            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
++            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
++
++            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
++            <Property Id="WixUI_Mode" Value="Tor" />
++
++            <DialogRef Id="ErrorDlg" />
++            <DialogRef Id="FatalError" />
++            <DialogRef Id="FilesInUse" />
++            <DialogRef Id="MsiRMFilesInUse" />
++            <DialogRef Id="PrepareDlg" />
++            <DialogRef Id="ProgressDlg" />
++            <DialogRef Id="ResumeDlg" />
++            <DialogRef Id="UserExit" />
++
++            <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
++
++            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="SetupTypeDlg">1</Publish>
++
++            <Publish Dialog="SetupTypeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
++            <Publish Dialog="SetupTypeDlg" Control="TypicalButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
++            <Publish Dialog="SetupTypeDlg" Control="CustomButton" Event="NewDialog" Value="CustomizeDlg">1</Publish>
++
++            <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1">WixUI_InstallMode = "Change"</Publish>
++            <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="SetupTypeDlg" Order="2">WixUI_InstallMode = "InstallCustom"</Publish>
++            <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
++
++            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg" Order="1">WixUI_InstallMode = "InstallCustom"</Publish>
++            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="SetupTypeDlg" Order="2">WixUI_InstallMode = "InstallTypical" OR WixUI_InstallMode = "InstallComplete"</Publish>
++            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg" Order="3">WixUI_InstallMode = "Change"</Publish>
++            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="4">WixUI_InstallMode = "Repair" OR WixUI_InstallMode = "Remove"</Publish>
++
++            <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
++
++            <Publish Dialog="MaintenanceTypeDlg" Control="ChangeButton" Event="NewDialog" Value="CustomizeDlg">1</Publish>
++            <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
++            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
++            <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
++        </UI>
++
++        <UIRef Id="WixUI_Common" />
++    </Fragment>
++</Wix>
+diff -Naur orig-vidalia/pkg/win32/polipo.conf mod-vidalia/pkg/win32/polipo.conf
+--- orig-vidalia/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
++++ mod-vidalia/pkg/win32/polipo.conf	2009-01-26 10:49:35.056312680 +0000
+@@ -36,8 +36,9 @@
+ 
+ # Uncomment this if you want to use a parent SOCKS proxy:
+ 
+-socksParentProxy = "localhost:9050"
+-socksProxyType = socks5
++# For Tor VM we don't use an upstream proxy, just transparent
++#socksParentProxy = "localhost:9050"
++#socksProxyType = socks5
+ 
+ 
+ ### Memory
+@@ -88,7 +89,7 @@
+ # Uncomment this if you want to contact IPv4 hosts only (and make DNS
+ # queries somewhat faster):
+ #
+-# dnsQueryIPv6 = no
++dnsQueryIPv6 = no
+ 
+ # Uncomment this if you want Polipo to prefer IPv4 to IPv6 for
+ # double-stack hosts:
+@@ -99,7 +100,9 @@
+ # default resolver instead.  If you do that, Polipo will freeze during
+ # every DNS query:
+ 
+-dnsUseGethostbyname = yes
++# For Tor VM we transparently proxy DNS and thus don't need to use this
++# slow resolver
++# dnsUseGethostbyname = yes
+ 
+ 
+ ### HTTP
+diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.wxs.in
+--- orig-vidalia/pkg/win32/vidalia.wxs.in	2008-12-09 23:53:31.956238000 +0000
++++ mod-vidalia/pkg/win32/vidalia.wxs.in	2009-01-26 03:37:43.609451352 +0000
+@@ -1,89 +1,198 @@
+ <?xml version="1.0" encoding="Windows-1252" ?>
+ <!-- 
+-  $Id: vidalia.wxs.in 3377 2008-12-09 23:53:31Z edmanm $
++  $Id: vidalia.wxs.in 3329 2008-11-21 02:04:34Z edmanm $
++
++  This file is part of Vidalia, and is subject to the license terms in the
++  LICENSE file, found in the top level directory of this distribution. If 
++  you did not receive the LICENSE file with this file, you may obtain it
++  from the Vidalia source package distributed by the Vidalia Project at
++  http://www.vidalia-project.net/. No part of Vidalia, including this file,
++  may be copied, modified, propagated, or distributed except according to
++  the terms described in the LICENSE file.
++
++  Compile with: 
++    candle.exe vidalia.wxs
++    light.exe vidalia.wixobj -out vidalia.msi -ext C:\Path\to\Wix\bin\WixUIExtension.dll
+  -->
+ <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+-  <Product Name="Vidalia @VERSION@" Id="B3C22D59-D907-4559-9569-92AAA34DB6F0"
++  <?define ThisProductVersion="@VER_MAJOR@.@VER_MINOR@.@VER_PATCH@" ?>
++  <?define ThisProductVersionDisp="@VERSION@" ?>
++  <?define UpgradeCode="147903e8-fa6f-47f0-bf97-b7250337b2b7" ?>
++  
++  <?define CurrProductGUID="0a57c31b-6cce-4bd0-b3ef-652a6cceb914" ?>
++  <?define CurrExecutableGUID="737794bc-3662-4f12-9755-86568c3164e0" ?>
++  <?define CurrQtLibsGUID="90548e2f-390e-4b93-b844-24ee75a83d4e" ?>
++  <?define CurrCryptoLibsGUID="d887b89a-984f-4301-9f18-7811361372d3" ?>
++  <?define CurrMingwLibsGUID="86b879cf-306f-438e-b38f-b9e6d74152cb" ?>
++  <?define CurrGeoIPCacheGUID="8686ff7a-d812-44db-8c11-b94478495096" ?>
++  <?define CurrPolipoConfigGUID="2151ad60-10ce-4e91-ab44-d1895d3b001d" ?>
++  <?define CurrDocumentsGUID="abfaae86-352e-4b63-b9b3-c222936f24b3" ?>
++  <?define CurrConfigFileGUID="4428ffd8-710d-4550-b51d-16e69e073981" ?>
++  <?define CurrStartMenuGUID="69d3f4bb-755c-4ade-aeb1-771fd5f8ba60" ?>
++  <?define CurrDesktopGUID="65ff7a92-7e27-4d20-b925-8b86387bc56c" ?>
++  <?define CurrDocsOnDesktopGUID="1e141231-e111-4567-94a6-7f42def8a516" ?>
++  <?define CurrStartupGUID="6073bd5b-8eee-465e-9eca-f1ec7c6ddd67" ?>
++  <?define CurrLocalProgramsGUID="24aaf630-09aa-45ef-a3cc-4088302b3488" ?>
++
++  <Product Name="Vidalia $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
+            Language="1033" Codepage="1252"
+-           Version="@VER_MAJOR@.@VER_MINOR@.@VER_PATCH@" 
++           Version="$(var.ThisProductVersion)"
+            Manufacturer="vidalia-project.net"
+-           UpgradeCode="B7FBFE11-D7CA-4895-A1FB-1D7E065E4D04">
++           UpgradeCode="$(var.UpgradeCode)">
+     
+     <Package Id="*" Keywords="Installer"
+-             Description="Vidalia @VERSION@ Installer"
++             Description="Vidalia $(var.ThisProductVersionDisp) Installer"
+              Manufacturer="vidalia-project.net"
+              InstallerVersion="100" Compressed="yes"
+-             Languages="1033"  SummaryCodepage="1252" />
++             Languages="1033"  SummaryCodepage="1252"
++             InstallPrivileges="limited" />
+ 
+     <Media Id="1" Cabinet="Vidalia.cab" CompressionLevel="high"
+            EmbedCab="yes" DiskPrompt="CD-ROM #1" />
+-    <Property Id="DiskPrompt" Value="Vidalia @VERSION@ Installation [1]" />
++    <Property Id="DiskPrompt" Value="Vidalia $(var.ThisProductVersionDisp) Installation Volume [1]" />
++    <Property Id="ALLUSERS" Secure="yes"/>
++    <Property Id="ReinstallModeText">omus</Property>
++
++    <!-- To avoid placing shortcuts all over the desktop / start menu during a
++    silent installation the NOSC=1 option can be passed to omit shortcuts.
++    This is useful if bundled with other applications like Vidalia that manage
++    configuration and Tor related processes themselves.
++      -->
++    <Property Id="NOSC" Secure="yes"/>
++
++    <!-- Associate this package with the upgrade code for this series
++    to ensure that upgrade installations by Thandy or other means work
++    as expected.
++    The OnlyDetect option must be false to ensure that existing files
++    from an older version are removed and replaced with current files.
++      -->
++    <Upgrade Id="$(var.UpgradeCode)">
++      <UpgradeVersion
++        Property="UPGRADEFOUND"
++        OnlyDetect="no"
++        Minimum="0.0.1"
++        IncludeMinimum="yes"
++        Maximum="$(var.ThisProductVersion)"
++        IncludeMaximum="no"
++      />
++    </Upgrade>
++
+ 
+     <Directory Id="TARGETDIR" Name="SourceDir">
+-      <Directory Id="ProgramFilesFolder" Name="ProgramFilesDir">
+-        <Directory Id="INSTALLDIR" Name="Vidalia">
++      <Directory Id="LocalAppDataFolder" Name="LocalAppData">
++       <Directory Id="LocalProgramsFolder" Name="Programs">
++
++         <!-- Until proper support for per-user installs is available we manage Programs folder.
++         Note that this directory will be left in place if it is in use by any other app.
++           -->
++         <Component Id="LocalProgramsFolderRef" Guid="$(var.CurrLocalProgramsGUID)">
++           <CreateFolder/>
++           <RemoveFolder Id="RemoveLocalProgramsFolder" On="uninstall" />
++           <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++             <RegistryValue Name="LocalProgramsFolderRef" Value="1" Type="integer" KeyPath="yes" />
++           </RegistryKey>
++         </Component>
++
++         <Directory Id="LocalProgramsInstDir" Name="Vidalia">
+ 
+           <!-- Main Vidalia application files -->
+-          <Component Id="VidaliaExecutable" Guid="*">
++          <Component Id="VidaliaExecutable" Guid="$(var.CurrExecutableGUID)">
++            <CreateFolder/>
++            <RemoveFolder Id="RemoveLocalProgramsInstDir" On="uninstall" />
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="Version" Value="$(var.ThisProductVersion)" Type="string" KeyPath="yes" />
++            </RegistryKey>
+             <File Id="VidaliaExe" DiskId="1"
+-                  Name="vidalia.exe" Source="@Vidalia_BINARY_DIR@\src\vidalia\vidalia.exe" />
+-          </Component>
+-
+-          <!-- Vidalia-related documents -->
+-          <Component Id="VidaliaDocuments" Guid="6A51C86C-A7D4-407f-9B84-7ADCE016E939">
+-            <File Id="VidaliaReadme" DiskId="1"
+-                  Name="README" Source="@Vidalia_SOURCE_DIR@\README" />
+-            <File Id="VidaliaCredits" DiskId="1"
+-                  Name="CREDITS" Source="@Vidalia_SOURCE_DIR@\CREDITS" />
+-            <File Id="VidaliaChangeLog" DiskId="1"
+-                  Name="CHANGELOG" Source="@Vidalia_SOURCE_DIR@\CHANGELOG" />
+-            <File Id="VidaliaLicense" DiskId="1"
+-                  Name="LICENSE" Source="@Vidalia_SOURCE_DIR@\LICENSE" />
+-            <File Id="VidaliaLicenseGplV2" DiskId="1"
+-                  Name="LICENSE-GPLV2" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV2" />
+-            <File Id="VidaliaLicenseGplV3" DiskId="1"
+-                  Name="LICENSE-GPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV3" />
+-            <File Id="VidaliaLicenseLgplV3" DiskId="1"
+-                  Name="LICENSE-LGPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-LGPLV3" />
+-            <File Id="VidaliaLicenseOpenSSL" DiskId="1"
+-                  Name="LICENSE-OPENSSL" Source="@Vidalia_SOURCE_DIR@\LICENSE-OPENSSL" />
++                  Name="vidalia.exe" Source="src\vidalia\vidalia.exe" />
+           </Component>
+ 
+           <!-- Qt-related library files -->
+-          <Component Id="QtLibrary" Guid="00F354CB-B313-4100-8900-11293A66B385">
++          <Component Id="QtLibrary" Guid="$(var.CurrQtLibsGUID)">
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="QtLibrary" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
+             <File Id="QtCore4Dll" DiskId="1"
+-                  Name="QtCore4.dll" Source="@QT_BINARY_DIR@\QtCore4.dll" />
++                  Name="QtCore4.dll" Source="bin\QtCore4.dll" />
+             <File Id="QtGui4Dll" DiskId="1"
+-                  Name="QtGui4.dll" Source="@QT_BINARY_DIR@\QtGui4.dll" />
++                  Name="QtGui4.dll" Source="bin\QtGui4.dll" />
+             <File Id="QtNetwork4Dll" DiskId="1"
+-                  Name="QtNetwork4.dll" Source="@QT_BINARY_DIR@\QtNetwork4.dll" />
++                  Name="QtNetwork4.dll" Source="bin\QtNetwork4.dll" />
+             <File Id="QtXml4Dll" DiskId="1"
+-                  Name="QtXml4.dll" Source="@QT_BINARY_DIR@\QtXml4.dll" />
++                  Name="QtXml4.dll" Source="bin\QtXml4.dll" />
++            <File Id="QtSvg4Dll" DiskId="1"
++                  Name="QtSvg4.dll" Source="bin\QtSvg4.dll" />
+           </Component>
+ 
+           <!-- MinGW-related library files -->
+-          <Component Id="MinGWLibrary" Guid="2287E844-F9CD-4129-8BD0-50D071698194">
++          <Component Id="MinGWLibrary" Guid="$(var.CurrMingwLibsGUID)">
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="MinGWLibrary" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
+             <File Id="MinGWDll" DiskId="1"
+-                  Name="mingwm10.dll" Source="@MINGW_BINARY_DIR@\mingwm10.dll" />
++                  Name="mingwm10.dll" Source="bin\mingwm10.dll" />
++            <File Id="gnurxdll" DiskId="1"
++                  Name="libgnurx-0.dll" Source="bin\libgnurx-0.dll" />
+           </Component>
+ 
+           <!-- OpenSSL-related library files -->
+-          <Component Id="OpenSSLLibrary" Guid="C3EDC2EC-D0B1-452a-83A6-85B0BC94735B">
++          <Component Id="OpenSSLLibrary" Guid="$(var.CurrCryptoLibsGUID)">
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="OpenSSLLibrary" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
+             <File Id="ssleay32dll" DiskId="1"
+-                  Name="ssleay32.dll" Source="@OPENSSL_BINARY_DIR@\ssleay32.dll" />
++                  Name="ssleay32-0.9.8.dll" Source="bin\ssleay32-0.9.8.dll" />
++            <File Id="cryptoeay32dll" DiskId="1"
++                  Name="cryptoeay32-0.9.8.dll" Source="bin\cryptoeay32-0.9.8.dll" />
++            <File Id="zlibdll" DiskId="1"
++                  Name="zlib1.dll" Source="bin\zlib1.dll" />
++          </Component>
++
++          <!-- Place this here until argument parsing with quoted escapes works as expected. -->
++          <Component Id="PolipoConfig" Guid="$(var.CurrPolipoConfigGUID)">
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="PolipoConfigFile" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
++            <File
++              Id="PolipoConfigFile"
++              Name="polipocfg.txt"
++              Source="pkg/win32/polipo.conf"
++              Vital="yes"
++              ReadOnly="no"
++              DiskId="1"
++            />
++          </Component>
++         </Directory>
++        </Directory>
++
++        <Directory Id="INSTALLDIR" Name="Vidalia">
++          <Component Id="GeoIPCache" Guid="$(var.CurrGeoIPCacheGUID)">
++            <CreateFolder/>
++            <RemoveFolder Id="RemoveINSTALLDIR" On="uninstall" />
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="GeoIPCacheFile" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
++            <File
++              Id="GeoIPCacheFile"
++              Name="geoip-cache"
++              Source="pkg/geoip-cache"
++              Vital="no"
++              ReadOnly="no"
++              DiskId="1"
++            /> 
+           </Component>
+         </Directory>
+       </Directory>
+ 
+       <Directory Id="ProgramMenuFolder" Name="Programs">
+         <Directory Id="ShortcutFolder" Name="Vidalia">
+-          <Component Id="AddVidaliaToStartMenu" Guid="0F2CEE2C-8730-432e-8A8F-E49AF78AF28C">
++          <Component Id="AddVidaliaToStartMenu" Guid="$(var.CurrStartMenuGUID)">
++            <Condition><![CDATA[NOSC <> 1]]> </Condition>
+             <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
+               <RegistryValue Name="StartMenuShortcut" Value="1" Type="integer" KeyPath="yes" />
+             </RegistryKey>
+             <Shortcut Id="VidaliaStartMenuShortcut"
+-                      Name="Vidalia" Target="[INSTALLDIR]vidalia.exe"
+-                      Directory="ShortcutFolder" WorkingDirectory="INSTALLDIR"
++                      Name="Vidalia" Target="[LocalProgramsInstDir]vidalia.exe"
++                      Directory="ShortcutFolder" WorkingDirectory="LocalProgramsInstDir"
+                       Icon="vidalia.ico" IconIndex="0" />
+             <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
+           </Component>
+@@ -91,22 +200,24 @@
+       </Directory>
+ 
+       <Directory Id="DesktopFolder" Name="Desktop">
+-        <Component Id="AddVidaliaToDesktop" Guid="A7688EE5-4EDE-4429-A2D9-C8B9BD85AB5A">
++        <Component Id="AddVidaliaToDesktop" Guid="$(var.CurrDesktopGUID)">
++          <Condition><![CDATA[NOSC <> 1]]> </Condition>
+           <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
+             <RegistryValue Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
+           </RegistryKey>
+           <Shortcut Id="VidaliaDesktopShortcut"
+-                    Name="Vidalia" Target="[INSTALLDIR]vidalia.exe"
+-                    Directory="DesktopFolder" WorkingDirectory="INSTALLDIR"
++                    Name="Vidalia" Target="[LocalProgramsInstDir]vidalia.exe"
++                    Directory="DesktopFolder" WorkingDirectory="LocalProgramsInstDir"
+                     Icon="vidalia.ico" IconIndex="0" />
+         </Component>
+       </Directory>
+ 
+-      <Component Id="AddToStartupItems" Guid="E7BC3F3C-86BA-4a08-966C-F3F8D8CB3AF4">
++      <Component Id="AddToStartupItems" Guid="$(var.CurrStartupGUID)">
++        <Condition><![CDATA[NOSC <> 1]]> </Condition>
+         <RegistryKey Root="HKCU"
+                      Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                      Action="createAndRemoveOnUninstall">
+-          <RegistryValue Name="Vidalia" Value='"[INSTALLDIR]vidalia.exe"' Type="string" />
++          <RegistryValue Name="Vidalia" Value='"[LocalProgramsInstDir]vidalia.exe"' Type="string" />
+         </RegistryKey>
+       </Component>
+     </Directory>
+@@ -115,14 +226,16 @@
+     <Feature Id="Complete" Title="Vidalia"
+              Level="1" Display="expand" ConfigurableDirectory="INSTALLDIR"
+              Description="Vidalia is application that helps you control, monitor, and configure the Tor software.">
+-      <Feature Id="MainApplication" Title="Vidalia @VERSION@"
++      <Feature Id="MainApplication" Title="Vidalia $(var.ThisProductVersionDisp)"
+                AllowAdvertise="no" Absent="disallow" Level="1"
+                Description="Main application">
++        <ComponentRef Id="LocalProgramsFolderRef" />
+         <ComponentRef Id="VidaliaExecutable" />
+-        <ComponentRef Id="VidaliaDocuments" />
+         <ComponentRef Id="QtLibrary" />
+         <ComponentRef Id="MinGWLibrary" />
+         <ComponentRef Id="OpenSSLLibrary" />
++        <ComponentRef Id="GeoIPCache" />
++        <ComponentRef Id="PolipoConfig" />
+       </Feature>
+       <Feature Id="Shortcuts" Title="Shortcuts"
+                AllowAdvertise="no" Absent="allow" Level="1"
+@@ -145,10 +258,15 @@
+       </Feature>
+     </Feature>
+ 
++    <!-- Upgrade installation sequence. -->
++    <InstallExecuteSequence>
++      <RemoveExistingProducts After="InstallValidate" />
++    </InstallExecuteSequence>
++
+     <!-- Set the UI options -->
+-    <UIRef Id="WixUI_Custom" />
+-    <Icon Id="vidalia.ico" SourceFile="@Vidalia_SOURCE_DIR@\src\vidalia\res\icons\vidalia.ico" />
+-    <WixVariable Id="WixUIBannerBmp" Value="@Vidalia_SOURCE_DIR@\pkg\win32\msi-header.bmp" />
+-    <WixVariable Id="WixUIDialogBmp" Value="@Vidalia_SOURCE_DIR@\pkg\win32\msi-welcome.bmp" />
++    <UIRef Id="WixUI_Tor" />
++    <Icon Id="vidalia.ico" SourceFile="src\vidalia\res\icons\vidalia.ico" />
++    <WixVariable Id="WixUIBannerBmp" Value="pkg\win32\msi-header.bmp" />
++    <WixVariable Id="WixUIDialogBmp" Value="pkg\win32\msi-welcome.bmp" />
+   </Product>
+ </Wix>
+diff -Naur orig-vidalia/src/common/win32.cpp mod-vidalia/src/common/win32.cpp
+--- orig-vidalia/src/common/win32.cpp	2008-02-29 04:30:11.928307000 +0000
++++ mod-vidalia/src/common/win32.cpp	2009-01-26 10:50:51.146745176 +0000
+@@ -67,16 +67,20 @@
+ QString
+ win32_program_files_folder()
+ {
+-  return win32_get_folder_location(
+-     CSIDL_PROGRAM_FILES, QDir::rootPath() + "\\Program Files");
++  QString local_appdata = win32_get_folder_location(CSIDL_LOCAL_APPDATA, "");
++  if (local_appdata != "")
++    return local_appdata + "\\Programs";
++  return win32_get_folder_location(CSIDL_PROGRAM_FILES, QDir::rootPath() + "\\Program Files");
+ }
+ 
+ /** Gets the location of the user's %APPDATA% folder. */
+ QString
+ win32_app_data_folder()
+ {
+-  return win32_get_folder_location(
+-      CSIDL_APPDATA, QDir::homePath() + "\\Application Data");
++  QString local_appdata = win32_get_folder_location(CSIDL_LOCAL_APPDATA, "");
++  if (local_appdata != "")
++    return local_appdata;
++  return win32_get_folder_location(CSIDL_APPDATA, QDir::homePath() + "\\Application Data");
+ }
+ 
+ /** Returns the value in keyName at keyLocation. 
+diff -Naur orig-vidalia/src/vidalia/config/torsettings.cpp mod-vidalia/src/vidalia/config/torsettings.cpp
+--- orig-vidalia/src/vidalia/config/torsettings.cpp	2008-11-10 01:10:01.532843000 +0000
++++ mod-vidalia/src/vidalia/config/torsettings.cpp	2009-01-26 10:53:08.283897160 +0000
+@@ -59,6 +59,7 @@
+ {
+ #if defined(Q_OS_WIN32)
+   QString programFiles = win32_program_files_folder();
++  QString appData = win32_app_data_folder();
+   if (QFileInfo(programFiles + "\\Vidalia Bundle\\Tor\\tor.exe").exists())
+     setDefault(SETTING_TOR_EXECUTABLE,
+                programFiles + "\\Vidalia Bundle\\Tor\\tor.exe");
+@@ -68,7 +69,14 @@
+   setDefault(SETTING_TOR_EXECUTABLE, "tor");
+ #endif
+ 
+-  setDefault(SETTING_TORRC,         Vidalia::dataDirectory() + "/torrc");
++#if defined(Q_OS_WIN32)
++  if (QFileInfo(appData + "\\Tor\\torrc.txt").exists())
++    setDefault(SETTING_TORRC, appData + "\\Tor\\torrc.txt");
++  else
++    setDefault(SETTING_TORRC,         Vidalia::dataDirectory() + "/torrc");
++#else
++   setDefault(SETTING_TORRC,         Vidalia::dataDirectory() + "/torrc");
++#endif
+   setDefault(SETTING_CONTROL_ADDR,  "127.0.0.1");
+   setDefault(SETTING_CONTROL_PORT,  9051);
+   setDefault(SETTING_AUTH_METHOD,   toString(DEFAULT_AUTH_METHOD));
+diff -Naur orig-vidalia/src/vidalia/config/vidaliasettings.cpp mod-vidalia/src/vidalia/config/vidaliasettings.cpp
+--- orig-vidalia/src/vidalia/config/vidaliasettings.cpp	2009-01-03 20:10:16.806554000 +0000
++++ mod-vidalia/src/vidalia/config/vidaliasettings.cpp	2009-01-26 10:54:13.761942984 +0000
+@@ -70,9 +70,16 @@
+   setDefault(SETTING_SHOW_MAINWINDOW_AT_START, true);
+   setDefault(SETTING_BROWSER_EXECUTABLE, "");
+   setDefault(SETTING_IM_EXECUTABLE, "");
+-  setDefault(SETTING_RUN_PROXY_AT_START, false);
+-  setDefault(SETTING_PROXY_EXECUTABLE, "");
+-  setDefault(SETTING_PROXY_EXECUTABLE_ARGUMENTS, QStringList());
++  setDefault(SETTING_RUN_PROXY_AT_START, true);
++#if defined(Q_WS_WIN)
++  QString programFiles = win32_program_files_folder();
++  QString appData = win32_app_data_folder();
++  setDefault(SETTING_PROXY_EXECUTABLE, programFiles + "\\Polipo\\polipo.exe");
++  setDefault(SETTING_PROXY_EXECUTABLE_ARGUMENTS, QString("-c polipocfg.txt").split(" "));
++#else
++  setDefault(SETTING_PROXY_EXECUTABLE, "polipo.exe");
++  setDefault(SETTING_PROXY_EXECUTABLE_ARGUMENTS, QString("-c polipo.conf").split(" "));
++#endif
+ #if defined(Q_WS_WIN)
+   setDefault(SETTING_CHECK_FOR_UPDATES, true);
+ #else
+diff -Naur orig-vidalia/src/vidalia/network/geoipresolver.cpp mod-vidalia/src/vidalia/network/geoipresolver.cpp
+--- orig-vidalia/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
++++ mod-vidalia/src/vidalia/network/geoipresolver.cpp	2009-01-26 10:56:39.915724232 +0000
+@@ -24,13 +24,13 @@
+ #endif
+ 
+ /** Host for the geo ip information. */ 
+-#define GEOIP_HOST    "geoip.vidalia-project.net"
++#define GEOIP_HOST    "data.peertech.org"
+ /** The non-encrypted GeoIP service lives on port 80. */
+ #define GEOIP_PORT      80
+ /** The SSL GeoIP service runs on port 1443 (443 was taken). */
+-#define GEOIP_SSL_PORT  1443
++#define GEOIP_SSL_PORT  443
+ /** Page that we request the geo ip information from. */
+-#define GEOIP_PAGE    "/cgi-bin/geoip"
++#define GEOIP_PAGE    "/geoip"
+ 
+ 
+ /** Default constructor. */
+@@ -42,7 +42,13 @@
+ #if defined(USE_QSSLSOCKET)
+   QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
+   if (! QSslSocket::addDefaultCaCertificates(":/geoip/cacert_root.crt"))
+-    vWarn("Failed to add the GeoIP CA certificate to the default CA "
++    vWarn("Failed to add the CACert root certificate to the default CA "
++          "certificate database.");
++  if (! QSslSocket::addDefaultCaCertificates(":/geoip/gd-class2-root.crt"))
++    vWarn("Failed to add the GoDaddy Class2 root certificate to the default CA "
++          "certificate database.");
++  if (! QSslSocket::addDefaultCaCertificates(":/geoip/entrust-secure-server-root.crt"))
++    vWarn("Failed to add the Entrust Secure Server root certificate to the default CA "
+           "certificate database.");
+ #endif
+ }
+diff -Naur orig-vidalia/src/vidalia/res/entrust-secure-server-root.crt mod-vidalia/src/vidalia/res/entrust-secure-server-root.crt
+--- orig-vidalia/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
++++ mod-vidalia/src/vidalia/res/entrust-secure-server-root.crt	2009-01-26 10:56:56.637182184 +0000
+@@ -0,0 +1,30 @@
++-----BEGIN CERTIFICATE-----
++MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UE
++BhMCVVMxFDASBgNVBAoTC0VudHJ1c3QubmV0MTswOQYDVQQLEzJ3d3cuZW50
++cnVzdC5uZXQvQ1BTIGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTEl
++MCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDE6MDgGA1UE
++AxMxRW50cnVzdC5uZXQgU2VjdXJlIFNlcnZlciBDZXJ0aWZpY2F0aW9uIEF1
++dGhvcml0eTAeFw05OTA1MjUxNjA5NDBaFw0xOTA1MjUxNjM5NDBaMIHDMQsw
++CQYDVQQGEwJVUzEUMBIGA1UEChMLRW50cnVzdC5uZXQxOzA5BgNVBAsTMnd3
++dy5lbnRydXN0Lm5ldC9DUFMgaW5jb3JwLiBieSByZWYuIChsaW1pdHMgbGlh
++Yi4pMSUwIwYDVQQLExwoYykgMTk5OSBFbnRydXN0Lm5ldCBMaW1pdGVkMTow
++OAYDVQQDEzFFbnRydXN0Lm5ldCBTZWN1cmUgU2VydmVyIENlcnRpZmljYXRp
++b24gQXV0aG9yaXR5MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQDNKIM0
++VBuJ8w+vN5Ex/68xYMmo6LIQaO2f55M28Qpku0f1BBc/I0dNxScZgSYMVHIN
++iC3ZH5oSn7yzcdOAGT9HZnuMNSjSuQrfJNqc1lB5gXpa0zf3wkrYKZImZNHk
++mGw6AIr1NJtl+O3jEP/9uElY3KDegjlrgbEWGWG5VLbmQwIBA6OCAdcwggHT
++MBEGCWCGSAGG+EIBAQQEAwIABzCCARkGA1UdHwSCARAwggEMMIHeoIHboIHY
++pIHVMIHSMQswCQYDVQQGEwJVUzEUMBIGA1UEChMLRW50cnVzdC5uZXQxOzA5
++BgNVBAsTMnd3dy5lbnRydXN0Lm5ldC9DUFMgaW5jb3JwLiBieSByZWYuIChs
++aW1pdHMgbGlhYi4pMSUwIwYDVQQLExwoYykgMTk5OSBFbnRydXN0Lm5ldCBM
++aW1pdGVkMTowOAYDVQQDEzFFbnRydXN0Lm5ldCBTZWN1cmUgU2VydmVyIENl
++cnRpZmljYXRpb24gQXV0aG9yaXR5MQ0wCwYDVQQDEwRDUkwxMCmgJ6AlhiNo
++dHRwOi8vd3d3LmVudHJ1c3QubmV0L0NSTC9uZXQxLmNybDArBgNVHRAEJDAi
++gA8xOTk5MDUyNTE2MDk0MFqBDzIwMTkwNTI1MTYwOTQwWjALBgNVHQ8EBAMC
++AQYwHwYDVR0jBBgwFoAU8BdiE1U9s/8KAGv7UISX8+1i0BowHQYDVR0OBBYE
++FPAXYhNVPbP/CgBr+1CEl/PtYtAaMAwGA1UdEwQFMAMBAf8wGQYJKoZIhvZ9
++B0EABAwwChsEVjQuMAMCBJAwDQYJKoZIhvcNAQEFBQADgYEAkNwwAvpkdMKn
++CqV8IY00F6j7Rw7/JXyNEwr75Ji174z4xRAN95K+8cPV1ZVqBLssziY2Zcgx
++xufuP+NXdYR6Ee9GTxj005i7qIcyunL2POI9n9cd2cNgQ4xYDiKWL2KjLB+6
++rQXvqzJ4h6BUcxm1XAX5Uj5tLUUL9wqT6u0G+bI=
++-----END CERTIFICATE-----
+diff -Naur orig-vidalia/src/vidalia/res/gd-class2-root.crt mod-vidalia/src/vidalia/res/gd-class2-root.crt
+--- orig-vidalia/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
++++ mod-vidalia/src/vidalia/res/gd-class2-root.crt	2009-01-26 10:57:05.420846864 +0000
+@@ -0,0 +1,24 @@
++-----BEGIN CERTIFICATE-----
++MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh
++MB8GA1UEChMYVGhlIEdvIERhZGR5IEdyb3VwLCBJbmMuMTEwLwYDVQQLEyhHbyBE
++YWRkeSBDbGFzcyAyIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTA0MDYyOTE3
++MDYyMFoXDTM0MDYyOTE3MDYyMFowYzELMAkGA1UEBhMCVVMxITAfBgNVBAoTGFRo
++ZSBHbyBEYWRkeSBHcm91cCwgSW5jLjExMC8GA1UECxMoR28gRGFkZHkgQ2xhc3Mg
++MiBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTCCASAwDQYJKoZIhvcNAQEBBQADggEN
++ADCCAQgCggEBAN6d1+pXGEmhW+vXX0iG6r7d/+TvZxz0ZWizV3GgXne77ZtJ6XCA
++PVYYYwhv2vLM0D9/AlQiVBDYsoHUwHU9S3/Hd8M+eKsaA7Ugay9qK7HFiH7Eux6w
++wdhFJ2+qN1j3hybX2C32qRe3H3I2TqYXP2WYktsqbl2i/ojgC95/5Y0V4evLOtXi
++EqITLdiOr18SPaAIBQi2XKVlOARFmR6jYGB0xUGlcmIbYsUfb18aQr4CUWWoriMY
++avx4A6lNf4DD+qta/KFApMoZFv6yyO9ecw3ud72a9nmYvLEHZ6IVDd2gWMZEewo+
++YihfukEHU1jPEX44dMX4/7VpkI+EdOqXG68CAQOjgcAwgb0wHQYDVR0OBBYEFNLE
++sNKR1EwRcbNhyz2h/t2oatTjMIGNBgNVHSMEgYUwgYKAFNLEsNKR1EwRcbNhyz2h
++/t2oatTjoWekZTBjMQswCQYDVQQGEwJVUzEhMB8GA1UEChMYVGhlIEdvIERhZGR5
++IEdyb3VwLCBJbmMuMTEwLwYDVQQLEyhHbyBEYWRkeSBDbGFzcyAyIENlcnRpZmlj
++YXRpb24gQXV0aG9yaXR5ggEAMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQAD
++ggEBADJL87LKPpH8EsahB4yOd6AzBhRckB4Y9wimPQoZ+YeAEW5p5JYXMP80kWNy
++OO7MHAGjHZQopDH2esRU1/blMVgDoszOYtuURXO1v0XJJLXVggKtI3lpjbi2Tc7P
++TMozI+gciKqdi0FuFskg5YmezTvacPd+mSYgFFQlq25zheabIZ0KbIIOqPjCDPoQ
++HmyW74cNxA9hi63ugyuV+I6ShHI56yDqg+2DzZduCLzrTia2cyvk0/ZM/iZx4mER
++dEr/VxqHD3VILs9RaRegAhJhldXRQLIQTO7ErBBDpqWeCtWVYpoNz4iCxTIM5Cuf
++ReYNnyicsbkqWletNw+vHX/bvZ8=
++-----END CERTIFICATE-----
+diff -Naur orig-vidalia/src/vidalia/res/vidalia.qrc mod-vidalia/src/vidalia/res/vidalia.qrc
+--- orig-vidalia/src/vidalia/res/vidalia.qrc	2009-01-03 20:10:16.806554000 +0000
++++ mod-vidalia/src/vidalia/res/vidalia.qrc	2009-01-26 10:57:41.105421984 +0000
+@@ -285,5 +285,7 @@
+     </qresource>
+     <qresource prefix="/geoip">
+         <file>cacert_root.crt</file>
++        <file>gd-class2-root.crt</file>
++        <file>entrust-secure-server-root.crt</file>
+     </qresource>
+ </RCC>
+diff -Naur orig-vidalia/src/vidalia/updateprocess.cpp mod-vidalia/src/vidalia/updateprocess.cpp
+--- orig-vidalia/src/vidalia/updateprocess.cpp	2009-01-03 20:10:16.806554000 +0000
++++ mod-vidalia/src/vidalia/updateprocess.cpp	2009-01-26 10:59:07.190335088 +0000
+@@ -234,13 +234,23 @@
+ QString
+ UpdateProcess::updateExecutable()
+ {
+-  return "thandy.exe";
++#if defined(Q_OS_WIN32)
++  QString programFiles = win32_program_files_folder();
++  return programFiles + "\\Thandy\\thandy.exe";
++#else
++  return "thandy-client";
++#endif
+ }
+ 
+ QString
+ UpdateProcess::updateRepositoryDir()
+ {
++#if defined(Q_OS_WIN32)
++  QString appData = win32_app_data_folder();
++  return appData + "\\Thandy\\Tor Updates";
++#else
+   return QDir::convertSeparators(Vidalia::dataDirectory() + "/updates");
++#endif
+ }
+ 
+ QString

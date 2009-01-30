@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="Windows-1252" ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?define ThisProductVersion="0.0.2" ?>
+  <?define ThisProductVersionDisp="0.0.2" ?>
+  <?define UpgradeCode="3f874171-34a0-4af8-8c66-27a681ac5fb6" ?>
+  
+  <?define CurrProductGUID="8b88858f-1d36-461c-9541-e6ffddeb8e69" ?>
+  <?define CurrExecutableGUID="f41f7690-d4e6-4c14-a754-fde93b98bb7b" ?>
+  <?define CurrQemuGUID="9a986ae8-1c05-41f8-bd26-4e3d951dc446" ?>
+  <?define CurrBiosGUID="1671260a-0b61-4351-ba93-556fddefd4ce" ?>
+  <?define CurrPThreadLibsGUID="c5960568-ffc8-4c5c-8253-9954d095afdc" ?>
+  <?define CurrDiskImageGUID="72e2fe60-9aac-473b-890e-07ea827b42ce" ?>
+  <?define CurrDocumentsGUID="1163f2e3-a0d0-4f6c-a412-dc27f8e9b338" ?>
+  <?define CurrConfigFileGUID="cd65d655-faba-46d5-b9a8-3958335e9e08" ?>
+  <?define CurrStartMenuGUID="928c4898-19e4-4b7a-ad02-95aadb80d3ba" ?>
+  <?define CurrDesktopGUID="cc7b92b8-45a5-4958-b530-5e10a2582902" ?>
+  <?define CurrDocsOnDesktopGUID="e032e77d-dbfe-4fe8-a2a4-84b5ff20e6af" ?>
+  <?define CurrStartupGUID="37319e3d-57e4-4c06-860b-a0bc2a305963" ?>
+
+  <Product Name="Tor VM $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
+           Language="1033" Codepage="1252"
+           Version="$(var.ThisProductVersion)"
+           Manufacturer="vidalia-project.net"
+           UpgradeCode="$(var.UpgradeCode)">
+    
+    <Package Id="*" Keywords="Installer"
+             Description="Tor VM $(var.ThisProductVersionDisp) Installer"
+             Manufacturer="vidalia-project.net"
+             InstallerVersion="100" Compressed="yes"
+             Languages="1033"  SummaryCodepage="1252"
+             InstallPrivileges="elevated" />
+
+    <Media Id="1" Cabinet="TorVM.cab" CompressionLevel="high"
+           EmbedCab="yes" DiskPrompt="CD-ROM #1" />
+    <Property Id="DiskPrompt" Value="Tor VM $(var.ThisProductVersionDisp) Installation Volume [1]" />
+    <Property Id="ALLUSERS" Secure="yes"/>
+    <Property Id="ReinstallModeText">omus</Property>
+
+    <!-- Associate this package with the upgrade code for this series
+    to ensure that upgrade installations by Thandy or other means work
+    as expected.
+    The OnlyDetect option must be false to ensure that existing files
+    from an older version are removed and replaced with current files.
+      -->
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion
+        Property="UPGRADEFOUND"
+        OnlyDetect="no"
+        Minimum="0.0.1"
+        IncludeMinimum="yes"
+        Maximum="$(var.ThisProductVersion)"
+        IncludeMaximum="no"
+      />
+    </Upgrade>
+
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder" Name="ProgramFiles">
+       <Directory Id="ProgramsInstDir" Name="Tor VM">
+
+        <!-- Main Tor VM application files -->
+        <Component Id="TorVMExecutable" Guid="$(var.CurrExecutableGUID)">
+          <CreateFolder/>
+          <RemoveFolder Id="RemoveProgramsInstDir" On="uninstall" />
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="Version" Value="$(var.ThisProductVersionDisp)" Type="string" KeyPath="yes" />
+          </RegistryKey>
+          <File Id="TorVMExe" DiskId="1"
+                Name="torvm.exe" Source="Tor_VM\torvm.exe" />
+        </Component>
+
+        <!-- Qemu-related files -->
+        <Component Id="Qemu" Guid="$(var.CurrQemuGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="Qemu" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <File Id="QemuEXE" DiskId="1"
+                Name="qemu.exe" Source="Tor_VM/bin/qemu.exe" />
+          <File Id="DevconEXE" DiskId="1"
+                Name="devcon.exe" Source="Tor_VM/bin/devcon.exe" />
+          <File Id="SDLDll" DiskId="1"
+                Name="SDL.dll" Source="Tor_VM/lib/SDL.dll" />
+          <File Id="NPFDriver" DiskId="1"
+                Name="tornpf.sys" Source="Tor_VM/lib/tornpf.sys" />
+          <File Id="PcapDll" DiskId="1"
+                Name="torpcap.dll" Source="Tor_VM/lib/torpcap.dll" />
+          <File Id="PacketDll" DiskId="1"
+                Name="torpkt.dll" Source="Tor_VM/lib/torpkt.dll" />
+          <File Id="TapInf" DiskId="1"
+                Name="tortap91.inf" Source="Tor_VM/lib/tortap91.inf" />
+          <File Id="TapDriver" DiskId="1"
+                Name="tortap91.sys" Source="Tor_VM/lib/tortap91.sys" />
+        </Component>
+
+        <!-- pthread library files -->
+        <Component Id="PThreadLibrary" Guid="$(var.CurrPThreadLibsGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="PThreadLibrary" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <File Id="pthreadsDll" DiskId="1"
+                Name="pthreadGC2.dll" Source="Tor_VM/lib/pthreadGC2.dll" />
+        </Component>
+
+        <!-- Qemu BIOS files -->
+        <Component Id="Bios" Guid="$(var.CurrBiosGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="Bios" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <File Id="zlibdll" DiskId="1"
+                Name="zlib1.dll" Source="bin\zlib1.dll" />
+        </Component>
+
+        <Component Id="DiskImage" Guid="$(var.CurrDiskImageGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="DiskImageFile" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <File
+            Id="DiskImageFile"
+            Name="hdd.img"
+            Source="Tor_VM/lib/hdd.img"
+            Vital="yes"
+            ReadOnly="no"
+            DiskId="1"
+          /> 
+        </Component>
+
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+        <Directory Id="ShortcutFolder" Name="Tor VM">
+          <Component Id="AddTorVMToStartMenu" Guid="$(var.CurrStartMenuGUID)">
+            <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+              <RegistryValue Name="StartMenuShortcut" Value="1" Type="integer" KeyPath="yes" />
+            </RegistryKey>
+            <Shortcut Id="TorVMStartMenuShortcut"
+                      Name="Tor VM" Target="[ProgramsInstDir]torvm.exe"
+                      Directory="ShortcutFolder" WorkingDirectory="ProgramsInstDir"
+                      Icon="torvm.ico" IconIndex="0" />
+            <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="AddTorVMToDesktop" Guid="$(var.CurrDesktopGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <Shortcut Id="TorVMDesktopShortcut"
+                    Name="Tor VM" Target="[ProgramsInstDir]torvm.exe"
+                    Directory="DesktopFolder" WorkingDirectory="ProgramsInstDir"
+                    Icon="torvm.ico" IconIndex="0" />
+        </Component>
+      </Directory>
+
+      <Component Id="AddToStartupItems" Guid="$(var.CurrStartupGUID)">
+        <RegistryKey Root="HKCU"
+                     Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                     Action="createAndRemoveOnUninstall">
+          <RegistryValue Name="Tor VM" Value='"[ProgramsInstDir]vidalia.exe"' Type="string" />
+        </RegistryKey>
+      </Component>
+    </Directory>
+
+    <!-- Build up the feature hierarchy -->
+    <Feature Id="Complete" Title="Tor VM"
+             Level="1" Display="expand"
+             Description="Tor VM is an experimental virtual machine implementation of Tor for Windows.">
+      <Feature Id="MainApplication" Title="Tor VM $(var.ThisProductVersionDisp)"
+               AllowAdvertise="no" Absent="disallow" Level="1"
+               Description="Main application">
+        <ComponentRef Id="TorVMExecutable" />
+        <ComponentRef Id="Qemu" />
+        <ComponentRef Id="PThreadLibrary" />
+        <ComponentRef Id="Bios" />
+        <ComponentRef Id="DiskImage" />
+      </Feature>
+      <Feature Id="Shortcuts" Title="Shortcuts"
+               AllowAdvertise="no" Absent="allow" Level="1"
+               Description="Add a shortcut to Tor VM to your Start menu or Desktop.">
+        <Feature Id="StartMenuShortcuts" Title="Add to Start menu"
+                 AllowAdvertise="no" Absent="allow" Level="1"
+                 Description="Add Tor VM to your Start menu">
+          <ComponentRef Id="AddTorVMToStartMenu" />
+        </Feature>
+        <Feature Id="DesktopShortcuts" Title="Add to Desktop"
+                 AllowAdvertise="no" Absent="allow" Level="1"
+                 Description="Add Tor VM to your Desktop">
+          <ComponentRef Id="AddTorVMToDesktop" />
+        </Feature>
+        <Feature Id="RunAtStartup" Title="Run at Startup"
+                 AllowAdvertise="no" Absent="allow" Level="1"
+                 Description="Run Tor VM automatically when your system starts">
+          <ComponentRef Id="AddToStartupItems" />
+        </Feature>
+      </Feature>
+    </Feature>
+
+    <!-- Upgrade installation sequence. -->
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallValidate" />
+    </InstallExecuteSequence>
+
+    <!-- Set the UI options -->
+    <UIRef Id="WixUI_Tor" />
+    <Icon Id="torvm.ico" SourceFile="torvm.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="header.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="welcome.bmp" />
+  </Product>
+</Wix>

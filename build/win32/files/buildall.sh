@@ -1,10 +1,14 @@
 #!/bin/bash
-export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/c/WINDOWS/system32:/c/WINDOWS:/c/WINDOWS/System32/Wbem
+export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec:/c/WINDOWS/system32:/c/WINDOWS:/c/WINDOWS/System32/Wbem
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 export ddir=/c/Tor_VM
 export libdir="${ddir}/lib"
 export bindir="${ddir}/bin"
 export statedir="${ddir}/state"
+export brootdir=/c/Tor_Win32
+export instdir=$broot/Installer
+export thandir=$broot/Thandy
+export bundledir=$broot/Bundle
 
 export ZLIB_VER="1.2.3"
 export ZLIB_DIR="zlib-${ZLIB_VER}"
@@ -14,6 +18,61 @@ export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
 export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
 export WPCAP_LDFLAGS="-L${WPCAP_DIR}/wpcap/PRJ -L${WPCAP_DIR}/packetNtx/Dll/Project"
 
+export TORSVN_DIR="tor-latest"
+export TORSVN_FILE="tor-latest.tar.gz"
+
+
+export OPENSSL_VER="0.9.8i"
+export OPENSSL_DIR="openssl-${OPENSSL_VER}"
+export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
+
+export GROFF_VER="1.19.2"
+export GROFF_DIR="groff-${GROFF_VER}"
+export GROFF_FILE="groff-${GROFF_VER}.tar.gz"
+
+export CMAKE_VER="2.6.2"
+export CMAKE_DIR="cmake-${CMAKE_VER}"
+export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
+export CMAKEBIN="/c/Program\ Files/CMake/bin"
+export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
+
+export QT_VER="4.4.3"
+export QT_DIR="qt-${QT_VER}"
+export QT_FILE="qt-${QT_VER}.tgz"
+export QT_ROOT="/c/Qt/${QT_VER}"
+export QT_BIN="${QT_ROOT}/bin"
+export QTDIR="C:\Qt\4.4.3"
+export QMAKESPEC=win32-g++
+export PATH="$PATH:$QT_BIN:$QTDIR\bin"
+
+export PYTHON_ROOT=/c/Python26
+export PATH=$PATH:$PYTHON_ROOT
+
+export VIDALIA_FILE=vidalia-latest.tar.gz
+export VIDALIA_DIR=vidalia-latest
+
+export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
+export GNURX_DIR=mingw-libgnurx-2.5.1
+
+export POLIPO_FILE=polipo-20080907.tar.gz
+export POLIPO_DIR=polipo-20080907
+
+export TORBUTTON_FILE=torbutton-1.2.0.xpi
+
+export NSIS_DIR=nsis-2.42
+export 7ZIP_DIR="/c/Program Files/7-Zip"
+export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin:${7ZIP_DIR}"
+
+if [ -d "$VS80COMNTOOLS" ]; then
+  export VSTOOLSDIR="$VS80COMNTOOLS"
+  export VSTOOLSENV="$VS80COMNTOOLS\vsvars32.bat"
+elif [ -d "$VS90COMNTOOLS" ]; then
+  export VSTOOLSDIR="$VS90COMNTOOLS"
+  export VSTOOLSENV="$VS90COMNTOOLS\vsvars32.bat"
+else
+  unset VSTOOLSDIR
+  unset VSTOOLSENV
+fi
 
 if [ -f ~/.ssh/user ]; then
   export BUILD_SCP_USER=`cat ~/.ssh/user`
@@ -50,9 +109,9 @@ if [[ "$1" != "dobuild" ]]; then
   fi
 else
 
-for dir in $ddir $libdir $bindir $statedir; do
+for dir in $ddir $libdir $bindir $statedir $brootdir $instdir $thandir $bundledir; do
   if [ ! -d $dir ]; then
-    mkdir $dir
+    mkdir -p $dir
   fi
 done
 
@@ -320,6 +379,313 @@ if [[ "$DEBUG_NO_STRIP" == "" ]]; then
   strip $bindir/*.exe
   strip $bindir/*.dll
   strip $ddir/*.exe
+fi
+
+echo "Building groff ..."
+cd /usr/src
+tar zxvf $GROFF_FILE
+cd $GROFF_DIR
+./configure --prefix=/usr
+if (( $? != 0 )); then
+  echo "ERROR: groff configure failed." >&2
+  exit 1
+fi
+for DEP in src/include src/libs/libgroff src/libs/libdriver src/preproc/soelim src/preproc/html src/devices/grotty src/devices/grops src/devices/grohtml src/roff/groff src/roff/troff font/devps font/devascii font/devhtml tmac; do
+  make $DEP
+  if (( $? != 0 )); then
+    echo "ERROR: groff build for DEP $DEP failed." >&2
+    exit 1
+  fi 
+done
+cp src/preproc/soelim/soelim.exe src/preproc/html/pre-grohtml.exe src/roff/groff/groff.exe src/devices/grohtml/post-grohtml.exe src/devices/grotty/grotty.exe src/devices/grops/grops.exe src/roff/troff/troff.exe /bin/
+cp -a font/devascii /share/
+cp -a font/devhtml /share/
+cp -a font/devps /share/
+cp -a tmac /share/
+  
+
+echo "Building openssl ..."
+cd /usr/src
+tar zxvf $OPENSSL_FILE
+cd $OPENSSL_DIR
+patch -p1 < ../openssl-0.9.8i-mingw-shared.patch
+./Configure --prefix=/usr no-idea no-rc5 no-mdc2 no-hw no-sse2 zlib-dynamic threads shared mingw
+if (( $? != 0 )); then
+  echo "ERROR: openssl configure failed." >&2
+  exit 1
+fi
+echo "Configuring OpenSSL header files for build ..."
+find crypto -name "*.h" -exec cp {} include/openssl/ \;
+find ssl -name "*.h" -exec cp {} include/openssl/ \;
+cp *.h include/openssl/
+make
+if (( $? != 0 )); then
+  cp *.a /lib
+  find crypto -name "*.h" -exec cp {} include/openssl/ \;
+  find ssl -name "*.h" -exec cp {} include/openssl/ \;
+  cp *.h include/openssl/
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: openssl build failed." >&2
+    exit 1
+  fi
+fi
+cp -f *.dll /lib/
+cp *.a /lib/
+cp -a include/openssl /usr/include/
+
+echo "Extracting sources for Tor from svn ..."
+cd /usr/src
+tar zxvf $TORSVN_FILE
+  
+# Microsoft Installer package build
+TOR_WXS=tor.wxs
+TORUI_WXS=WixUI_Tor.wxs
+TOR_WXS_DIR=contrib
+TOR_MSI=tor.msi
+WIX_UI=/wix/WixUIExtension.dll
+
+echo "Building PyCrypto ..."
+cd /usr/src
+tar zxvf pycrypto-latest.tar.gz
+cd pycrypto-latest
+python setup.py build
+if (( $? != 0 )); then
+  echo "ERROR: PyCrypto build failed."
+  exit 1
+fi
+python setup.py install
+if (( $? != 0 )); then
+  echo "ERROR: PyCrypto install failed."
+  exit 1
+fi
+
+echo "Building py2exe ..."
+cd /py2exe
+python setup.py build
+if (( $? != 0 )); then
+  echo "ERROR: Thandy build failed."
+  exit 1
+fi
+python setup.py install
+if (( $? != 0 )); then 
+  echo "ERROR: Thandy install failed."
+  exit 1
+fi
+
+echo "Building Thandy ..."
+cd /usr/src
+tar zxvf thandy-latest.tar.gz
+cd thandy-latest
+echo "Starting build..."
+python setup.py build
+if (( $? != 0 )); then
+  echo "ERROR: Thandy build failed."
+  exit 1 
+fi 
+python setup.py py2exe
+if (( $? != 0 )); then
+  echo "ERROR: Thandy install failed."
+  exit 1
+fi
+mv dist/ClientCLI.exe $thandir/Thandy.exe
+
+echo "Building CMake ..."
+cd /usr/src
+tar zxvf $CMAKE_FILE
+cd $CMAKE_DIR
+./bootstrap --no-qt-gui
+if (( $? != 0 )); then
+  echo "ERROR: CMake bootstrap / configure failed."
+#  exit 1
+fi
+make
+if (( $? != 0 )); then
+  echo "ERROR: CMake build failed."
+#  exit 1
+fi 
+make install
+if (( $? != 0 )); then
+  echo "ERROR: CMake install failed."
+#  exit 1
+fi
+
+echo "Building Qt ..."
+cd /usr/src
+mkdir /c/Qt
+tar zxvf $QT_FILE
+mv $QT_DIR /c/Qt/$QT_VER
+cd /c/Qt/$QT_VER
+if [ -f /src/qt-mingwssl.patch ]; then
+  patch -p1 < /src/qt-mingwssl.patch
+fi 
+./configure.exe -confirm-license -release -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns -no-sse2 -no-3dnow -qt-style-windowsxp -qt-style-windowsvista -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc -no-fast -openssl
+echo "QT_BUILD_PARTS -= examples" >> .qmake.cache
+echo "QT_BUILD_PARTS -= demos" >> .qmake.cache
+echo "QT_BUILD_PARTS -= docs" >> .qmake.cache
+unix2dos .qmake.cache
+make
+if (( $? != 0 )); then
+  # seems to run out of memory???
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: Qt build failed."
+  fi
+fi
+
+echo "Building GNU regex ..."
+cd /usr/src
+tar zxvf $GNURX_FILE
+cd $GNURX_DIR
+./configure --prefix=/usr
+if (( $? != 0 )); then
+  echo "ERROR: GNU regex configure failed."
+fi
+make
+if (( $? != 0 )); then
+  echo "ERROR: GNU regex build failed."
+fi
+make install
+if (( $? != 0 )); then
+  echo "ERROR: GNU regex install failed."
+fi
+
+echo "Building polipo ..."
+cd /usr/src
+tar zxvf $POLIPO_FILE
+cd $POLIPO_DIR
+if [ -f ../polipo-mingw.patch ]; then
+  echo "Patching polipo sources ..."
+  patch -p1 < ../polipo-mingw.patch
+fi
+make
+if (( $? != 0 )); then
+  echo "ERROR: polipo build failed."
+fi
+
+echo "Expanding package dir ..."
+cd /usr/src
+tar zxvf pkg.tgz
+
+echo "Building Vidalia ..."
+cd /usr/src
+tar zxvf $VIDALIA_FILE
+cd $VIDALIA_DIR
+if [ -f ../vidalia-torvm.patch ]; then
+  echo "Applying torvm patch to sources ..."
+  patch -p1 < ../vidalia-torvm.patch
+fi
+cmake -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -DCMAKE_BUILD_TYPE=release -G "MSYS Makefiles" .
+if [ ! -f Makefile ]; then
+  echo "ERROR: Vidalia cmake failed."
+fi
+make
+if (( $? != 0 )); then
+  echo "ERROR: Vidalia build failed."
+fi
+if [ -f src/vidalia/vidalia.exe ]; then
+  strip src/vidalia/vidalia.exe
+  ls -l src/vidalia/vidalia.exe
+  mkdir bin
+  for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do
+    cp /c/Qt/$QT_VER/bin/$FILE bin/
+  done
+  cp /bin/mingwm10.dll bin/
+  cp /src/$OPENSSL_DIR/ssleay32-0.9.8.dll bin/
+  cp /src/$OPENSSL_DIR/cryptoeay32-0.9.8.dll bin/
+  cp /src/$ZLIB_DIR/*.dll bin/
+  cp /bin/pthreadGC2.dll bin/
+  cp /bin/libgnurx-0.dll bin/
+  cp /src/$POLIPO_DIR/polipo.exe bin/
+  cp pkg/win32/polipo.conf bin/
+  strip bin/*.dll
+  strip bin/*.exe
+
+  candle.exe pkg/win32/*.wxs
+  light.exe -out vidalia.msi vidalia.wixobj WixUI_Tor.wixobj -ext $WIX_UI
+  if [ -f vidalia.msi ]; then
+    cp vidalia.msi $bundledir
+    cp vidalia.msi ../pkg/
+    cp -a bin ../pkg/
+    ls -l vidalia.msi
+  else
+    echo "ERROR: unable to build vidalia MSI installer."
+  fi
+fi
+
+echo "Building bundle packages ..."
+cd /usr/src/pkg
+# DONT STRIP PY2EXEs!
+cp $thandir/Thandy.exe bin/
+cp /src/$TORSVN_DIR/contrib/*.wxs ./
+cp -a $ddir ./
+if [ -f /src/$TORBUTTON_FILE ]; then
+  cp /src/$TORBUTTON_FILE bin/torbutton.xpi
+fi
+
+cp /src/$TORBUTTON_FILE ./torbutton.xpi
+touch tbcheck.bat
+touch uninstall.bat
+candle.exe *.wxs
+
+light.exe -out torvm.msi WixUI_Tor.wixobj torvm.wixobj -ext $WIX_UI
+if [ -f torvm.msi ]; then
+  cp torvm.msi $bundledir
+  ls -l torvm.msi
+else
+  echo "ERROR: unable to build Tor VM MSI installer."
+fi
+
+light.exe -out polipo.msi WixUI_Tor.wixobj polipo.wixobj -ext $WIX_UI
+if [ -f polipo.msi ]; then
+  cp polipo.msi $bundledir
+  ls -l polipo.msi
+else
+  echo "ERROR: unable to build polipo MSI installer."
+fi
+
+light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
+if [ -f torbutton.msi ]; then
+  cp torbutton.msi $bundledir
+  ls -l torbutton.msi
+else
+  echo "ERROR: unable to build torbutton MSI installer."
+fi
+
+light.exe -out thandy.msi WixUI_Tor.wixobj thandy.wixobj -ext $WIX_UI
+if [ -f thandy.msi ]; then
+  cp thandy.msi $bundledir
+  ls -l thandy.msi
+else
+  echo "ERROR: unable to build Thandy MSI installer."
+fi
+
+makensis.exe bundle.nsi
+if [ -f TorVMBundle.exe ]; then
+  cp TorVMBundle.exe $bundledir
+  ls -l TorVMBundle.exe
+else
+  echo "ERROR: unable to build Tor VM executable bundle installer."
+fi
+
+makensis.exe netinst.nsi
+if [ -f TorVMNetInstaller.exe ]; then
+  cp TorVMNetInstaller.exe $bundledir
+  ls -l TorVMNetInstaller.exe
+else
+  echo "ERROR: unable to build Tor VM executable network installer."
+fi
+
+export exename=Tor_VM.exe
+if [ -f $exename ]; then
+  rm -f $exename
+fi
+7z.exe a -sfx7z.sfx $exename Tor_VM
+if [ -f $exename ]; then
+  cp $exename $bundledir
+  ls -l $exename
+else
+  echo "ERROR: unable to build self extracting Tor VM archive."
 fi
 
 if [[ "$BUILD_SCP_USER" != "" ]]; then

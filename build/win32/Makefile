@@ -1,4 +1,4 @@
-# Copyright (C) 2008  The Tor Project, Inc.
+# Copyright (C) 2009  The Tor Project, Inc.
 # See LICENSE file for rights and terms.
 
 SHELL=/bin/bash
@@ -122,6 +122,75 @@ PERL_F=perl-5.6.1-MSYS-1.0.11-1.tar.bz2
 PERL_URL=http://downloads.sourceforge.net/mingw/perl-5.6.1-MSYS-1.0.11-1.tar.bz2?modtime=1206455338&big_mirror=1
 PERL_SUM=ff1f07a061c7958bc9043f0085a55ff0101b1be4
 
+GROFF_F=groff-1.19.2.tar.gz
+GROFF_URL=http://ftp.gnu.org/gnu/groff/groff-1.19.2.tar.gz
+GROFF_SUM=cfad99a5c52933a6a9180e394bd94fbaec0ac956
+
+CMAKE_F=cmake-2.6.2.tar.gz
+CMAKE_URL=http://www.cmake.org/files/v2.6/cmake-2.6.2.tar.gz
+CMAKE_SUM=48d33afaf23d40f2ea9aa2f5018c7213983222c2
+
+SSLSRC_F=openssl-0.9.8i.tar.gz
+SSLSRC_URL=http://www.openssl.org/source/openssl-0.9.8i.tar.gz
+SSLSRC_SUM=b2e029cfb68bf32eae997d60317a40945db5a65f
+
+PY2EXE_F=py2exe-0.6.9.zip
+PY2EXE_TGZ=py2exe.tar.gz
+PY2EXE_URL=http://downloads.sourceforge.net/py2exe/py2exe-0.6.9.zip?modtime=1226789941&big_mirror=1
+PY2EXE_SUM=f1a2cdfbf6d142f6ff54edfcf9d127e2d07169d5
+
+WIX_F=wix3.0.4721.0-binaries.zip
+WIX_TGZ=wix.tar.gz
+WIX_URL=http://downloads.sourceforge.net/wix/wix3.0.4721.0-binaries.zip?modtime=1227270606&big_mirror=1
+WIX_SUM=3035442aeab28a01f1cb032c610f375f763a0f88
+
+GNURX_F=mingw-libgnurx-2.5.1-src.tar.gz
+GNURX_URL=http://downloads.sourceforge.net/mingw/mingw-libgnurx-2.5.1-src.tar.gz?modtime=1178542293&big_mirror=1
+GNURX_SUM=f1e4af2541645dac82362b618aaa849658cd4988
+
+NSIS_VER=2.42
+NSIS_F=nsis-$(NSIS_VER).zip
+NSIS_URL=http://downloads.sourceforge.net/nsis/nsis-2.42.zip?modtime=1229784735&big_mirror=1
+NSIS_SUM=a1aef12a33f16273ac9109fde28713399f6a8016
+NSIS_TGZ=nsis-2.42.tar.gz
+
+7ZIP_VER=464
+7ZIP_F=7z464.msi
+7ZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?modtime=1230949842&big_mirror=1
+7ZIP_SUM=19a06e188a83452dc9273290dbef71220686c4c1
+7ZIP_NAME=7zip.msi
+
+QT_VER=4.4.3
+QT_F=qt-win-opensource-src-$(QT_VER).zip
+QT_TGZ=qt-$(QT_VER).tgz
+QT_URL=ftp://ftp.trolltech.com/qt/source/qt-win-opensource-src-$(QT_VER).zip
+QT_SUM=669d494b9c37353f87c13765ed9f3ea97c0fa9e0
+
+VIDALIA_NAME=vidalia-latest
+VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
+VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/trunk/
+
+POLIPO_F=polipo-20080907.tar.gz
+POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/polipo-20080907.tar.gz
+POLIPO_SUM=dda211e3027310891fb555c1fe5fa2f5b274aa0f
+
+# for package resources
+TORSVN_NAME=tor-latest
+TORSVN_TGZ=$(TORSVN_NAME).tar.gz
+TORSVN_SVN=https://tor-svn.freehaven.net/svn/tor/trunk
+
+TORBUTTON_NAME=torbutton-latest
+TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
+TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/trunk
+
+PYCRYPTO_NAME=pycrypto-latest
+PYCRYPTO_TGZ=$(PYCRYPTO_NAME).tar.gz
+PYCRYPTO_GIT=git://git.pycrypto.org:9419/crypto/pycrypto-2.x.git
+
+THANDY_NAME=thandy-latest
+THANDY_TGZ=$(THANDY_NAME).tar.gz
+THANDY_GIT=git://git.torproject.org/git/thandy
+
 SDL_F=SDL-1.2.13.tar.gz
 SDL_URL=http://www.libsdl.org/release/SDL-1.2.13.tar.gz
 SDL_SUM=51fcaa3e1d5c01fd813ea08688780f86b19cf539
@@ -142,7 +211,7 @@ WINDDK_F=1830_usa_ddk.iso
 WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
 WINDDK_SUM=0d2154d88a5ee252cc908630c77863bb42777387
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(7ZIP_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
 
 default all: downloads extract buildiso runinstall
 
@@ -175,6 +244,16 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(ACONF_F) ]; then $(DLCMD) "$(ACONF_URL)" $(ACONF_SUM) "$(WDLDIR)/$(ACONF_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(AMAKE_F) ]; then $(DLCMD) "$(AMAKE_URL)" $(AMAKE_SUM) "$(WDLDIR)/$(AMAKE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PERL_F) ]; then $(DLCMD) "$(PERL_URL)" $(PERL_SUM) "$(WDLDIR)/$(PERL_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(GROFF_F) ]; then $(DLCMD) "$(GROFF_URL)" $(GROFF_SUM) "$(WDLDIR)/$(GROFF_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(CMAKE_F) ]; then $(DLCMD) "$(CMAKE_URL)" $(CMAKE_SUM) "$(WDLDIR)/$(CMAKE_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(QT_F) ]; then $(DLCMD) "$(QT_URL)" $(QT_SUM) "$(WDLDIR)/$(QT_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(NSIS_F) ]; then $(DLCMD) "$(NSIS_URL)" $(NSIS_SUM) "$(WDLDIR)/$(NSIS_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(7ZIP_F) ]; then $(DLCMD) "$(7ZIP_URL)" $(7ZIP_SUM) "$(WDLDIR)/$(7ZIP_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(SSLSRC_F) ]; then $(DLCMD) "$(SSLSRC_URL)" $(SSLSRC_SUM) "$(WDLDIR)/$(SSLSRC_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(PY2EXE_F) ]; then $(DLCMD) "$(PY2EXE_URL)" $(PY2EXE_SUM) "$(WDLDIR)/$(PY2EXE_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(WIX_F) ]; then $(DLCMD) "$(WIX_URL)" $(WIX_SUM) "$(WDLDIR)/$(WIX_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(GNURX_F) ]; then $(DLCMD) "$(GNURX_URL)" $(GNURX_SUM) "$(WDLDIR)/$(GNURX_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(POLIPO_F) ]; then $(DLCMD) "$(POLIPO_URL)" $(POLIPO_SUM) "$(WDLDIR)/$(POLIPO_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SDL_F) ]; then $(DLCMD) "$(SDL_URL)" $(SDL_SUM) "$(WDLDIR)/$(SDL_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
@@ -210,20 +289,43 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \
 	cp patches/* $(ISODIR)/dl/src; \
+	cp $(WDLDIR)/$(7ZIP_F) $(ISODIR)/dl/$(7ZIP_NAME); \
 	unzip $(WDLDIR)/$(ZLIB_F) -d $(ISODIR)/ bin/zlib1.dll; \
 	unzip $(WDLDIR)/$(GZIP_F) -d $(ISODIR)/ bin/gzip.exe; \
 	unzip $(WDLDIR)/$(BZIP2_F) -d $(ISODIR)/ bin/bzip2.exe bin/bzip2.dll; \
 	tar jxf $(WDLDIR)/$(BASH_F) bin/bash.exe bin/sh.exe; mv bin/* $(ISODIR)/bin/;rmdir bin; \
 	tar jxf $(WDLDIR)/$(MSYS_F) bin/msys-1.0.dll bin/mount.exe bin/ps.exe; mv bin/* $(ISODIR)/bin/;rmdir bin; \
+	tar jxf $(WDLDIR)/$(MSYSZLIB_F) bin/msys-z.dll; mv bin/* $(ISODIR)/bin/;rmdir bin; \
 	unzip $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	cp $(addprefix $(WDLDIR)/, $(ALLFILES)) $(ISODIR)/dl/; \
 	unzip $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_4_1_beta4; tar cf $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar WpcapSrc_4_1_beta4; gzip -9 $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar; rm -rf WpcapSrc_4_1_beta4; \
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(GROFF_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(CMAKE_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(SSLSRC_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(GNURX_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(POLIPO_F) $(ISODIR)/dl/src/; \
+	unzip $(WDLDIR)/$(PY2EXE_F) -d tmp; mv tmp/py2exe* py2exe;rmdir tmp; tar zcf $(ISODIR)/dl/$(PY2EXE_TGZ) py2exe; rm -rf py2exe; \
+	unzip $(WDLDIR)/$(NSIS_F); tar zcf $(ISODIR)/dl/$(NSIS_TGZ) nsis-$(NSIS_VER); rm -rf nsis-$(NSIS_VER) ; \
+	unzip $(WDLDIR)/$(WIX_F) -d wix; tar zcf $(ISODIR)/dl/$(WIX_TGZ) wix; rm -rf wix; \
+	unzip $(WDLDIR)/$(QT_F) -d qt-$(QT_VER); mv qt-$(QT_VER)/qt-*/* qt-$(QT_VER)/; rm -rf qt-$(QT_VER)/qt-*; tar zcf $(ISODIR)/dl/src/$(QT_TGZ) qt-$(QT_VER); rm -rf qt-$(QT_VER); \
+	rm -rf $(PYCRYPTO_NAME); git clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME) ; \
+	find $(PYCRYPTO_NAME) -name '\.git' -exec rm -rf {} \; ; \
+	tar zcf $(ISODIR)/dl/src/$(PYCRYPTO_TGZ) $(PYCRYPTO_NAME); rm -rf $(PYCRYPTO_NAME); \
+	rm -rf $(VIDALIA_NAME); svn export $(VIDALIA_SVN) $(VIDALIA_NAME) ; \
+	tar zcf $(ISODIR)/dl/src/$(VIDALIA_TGZ) $(VIDALIA_NAME); rm -rf $(VIDALIA_NAME); \
+	rm -rf $(THANDY_NAME); git clone $(THANDY_GIT) $(THANDY_NAME) ; \
+	tar zcf $(ISODIR)/dl/src/$(THANDY_TGZ) $(THANDY_NAME); rm -rf $(THANDY_NAME); \
+	rm -rf $(TORSVN_NAME); svn export $(TORSVN_SVN) $(TORSVN_NAME) ; \
+	tar zcf $(ISODIR)/dl/src/$(TORSVN_TGZ) $(TORSVN_NAME); rm -rf $(TORSVN_NAME); \
+	rm -rf $(TORBUTTON_NAME); svn export $(TORBUTTON_SVN) $(TORBUTTON_NAME) ; cd $(TORBUTTON_NAME) ; bash makexpi.sh ; cd .. ; \
+	mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/ ; rm -rf $(TORSVN_NAME); \
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(OVPN_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
+	( cd src && tar zcf ../$(ISODIR)/dl/src/pkg.tgz pkg ); \
 	touch $(ISODIR)/VMDEVISO.TXT
 
 buildiso: extract
