@@ -1,4 +1,4 @@
-# Copyright (C) 2009  The Tor Project, Inc.
+# Copyright (C) 2008-2009  The Tor Project, Inc.
 # See LICENSE file for rights and terms.
 
 SHELL=/bin/bash
