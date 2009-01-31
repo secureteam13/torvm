@@ -408,7 +408,11 @@ echo "Building openssl ..."
 cd /usr/src
 tar zxvf $OPENSSL_FILE
 cd $OPENSSL_DIR
-patch -p1 < ../openssl-0.9.8i-mingw-shared.patch
+# XXX there should be a way to do this without patching despite recursive make invocations.
+if [ -f ../openssl-0.9.8-mingw-shared.patch ]; then
+  echo "Patching openssl for shared mingw builds"
+  patch -p1 < ../openssl-0.9.8-mingw-shared.patch
+fi
 ./Configure --prefix=/usr no-idea no-rc5 no-mdc2 no-hw no-sse2 zlib-dynamic threads shared mingw
 if (( $? != 0 )); then
   echo "ERROR: openssl configure failed." >&2
