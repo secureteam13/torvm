@@ -60,8 +60,8 @@ export POLIPO_DIR=polipo-20080907
 export TORBUTTON_FILE=torbutton-1.2.0.xpi
 
 export NSIS_DIR=nsis-2.42
-export 7ZIP_DIR="/c/Program Files/7-Zip"
-export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin:${7ZIP_DIR}"
+export SEVENZIP_DIR=7-Zip
+export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin:/${SEVENZIP_DIR}"
 
 if [ -d "$VS80COMNTOOLS" ]; then
   export VSTOOLSDIR="$VS80COMNTOOLS"
@@ -417,12 +417,15 @@ fi
 echo "Configuring OpenSSL header files for build ..."
 find crypto -name "*.h" -exec cp {} include/openssl/ \;
 find ssl -name "*.h" -exec cp {} include/openssl/ \;
+find fips -name "*.h" -exec cp {} include/openssl/ \;
 cp *.h include/openssl/
 make
 if (( $? != 0 )); then
+  # XXX Poor workaround for initial pass missing DLL dependencies during linkage
   cp *.a /lib
   find crypto -name "*.h" -exec cp {} include/openssl/ \;
   find ssl -name "*.h" -exec cp {} include/openssl/ \;
+  find fips -name "*.h" -exec cp {} include/openssl/ \;
   cp *.h include/openssl/
   make
   if (( $? != 0 )); then

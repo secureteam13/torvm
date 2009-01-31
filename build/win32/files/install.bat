@@ -34,9 +34,9 @@ cd /d %DDRV%
 cd %MDIR%\%MVER%\dl\
 bzip2 -d *.bz2
 gzip -d *.gz
-IF NOT EXIST "%PROGRAMFILES%\7-Zip" (
+IF NOT EXIST "%DDRV%%MDIR%\%MVER%\7-Zip" (
 IF EXIST 7zip.msi (
-  msiexec /i 7zip.msi /QN
+  msiexec /i 7zip.msi INSTALLDIR="%DDRV%%MDIR%\%MVER%\7-Zip" /QN
 )
 )
 cd /d %DDRV%
@@ -80,7 +80,7 @@ set PATH=%WD%;%PATH%
 
 %WD%bash --login %BUILDER%
 ECHO "Build completed."
-GOTO DONE
+GOTO CLEANUP
 
 :NOINSTALL
 ECHO "Found existing install directories.  Delete any previous install targets and try again."
@@ -88,6 +88,15 @@ GOTO DONE
 
 :FAILED
 ECHO "Unable to locate a functional installer CDROM with win32 build image."
-GOTO DONE
+GOTO CLEANUP
+
+:CLEANUP
+ECHO "Cleaning up after build..."
+cd %MDIR%\%MVER%\dl\
+IF EXIST "%DDRV%%MDIR%\%MVER%\7-Zip" (
+IF EXIST 7zip.msi (
+  msiexec /x 7zip.msi /QN
+)
+)
 
 :DONE
