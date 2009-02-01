@@ -1,7 +1,7 @@
-diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Makefile
---- orig-kamikaze/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/Makefile	2009-01-10 22:57:00.000000000 +0000
-@@ -0,0 +1,111 @@
+diff -Naur a/package/tor/Makefile b/package/tor/Makefile
+--- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
++++ b/package/tor/Makefile	2009-02-01 09:59:07.191839112 +0000
+@@ -0,0 +1,112 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
 +#
@@ -14,13 +14,14 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.10-alpha
++PKG_VERSION:=0.2.1.11-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=53efb30f66bd13b07776fcb9b98bf3eb
++PKG_MD5SUM:=c8477aef2c874c7bfd5a1cd6a9e08ade
++# XXX MD5 must die ... maybe time for debian embedded
 +
 +include $(INCLUDE_DIR)/package.mk
 +
@@ -113,9 +114,9 @@ diff -Naur orig-kamikaze/package/tor/Makefile mod-torpkg-kamikaze/package/tor/Ma
 +endef
 +
 +$(eval $(call BuildPackage,tor))
-diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/tor/files/tor.init
---- orig-kamikaze/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/files/tor.init	2008-10-16 03:58:30.534196384 +0000
+diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
+--- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
++++ b/package/tor/files/tor.init	2009-02-01 09:56:07.585143480 +0000
 @@ -0,0 +1,113 @@
 +#!/bin/sh 
 +
@@ -230,9 +231,9 @@ diff -Naur orig-kamikaze/package/tor/files/tor.init mod-torpkg-kamikaze/package/
 +	exit 1
 +fi
 +exit 0
-diff -Naur orig-kamikaze/package/tor/files/torrc mod-torpkg-kamikaze/package/tor/files/torrc
---- orig-kamikaze/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
-+++ mod-torpkg-kamikaze/package/tor/files/torrc	2008-10-01 21:23:43.794191444 +0000
+diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
+--- a/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
++++ b/package/tor/files/torrc	2009-02-01 09:56:07.586143328 +0000
 @@ -0,0 +1,24 @@
 +# Configuration for Tor VM
 +RunAsDaemon 1
