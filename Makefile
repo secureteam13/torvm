@@ -27,7 +27,7 @@ override DLDIR:=$(realpath $(DLDIR))
 override WDLDIR:=$(realpath $(WDLDIR))
 
 # OpenWRT version for build
-override CVER:=11833
+override CVER:=14298
 
 export BUSER
 export BGROUP
