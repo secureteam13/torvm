@@ -1,7 +1,7 @@
-diff -Naur x86-uclibc-orig/package/libevent/Makefile x86-uclibc-torvm/package/libevent/Makefile
---- x86-uclibc-orig/package/libevent/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ x86-uclibc-torvm/package/libevent/Makefile	2008-07-09 05:12:44.000000000 +0000
-@@ -0,0 +1,65 @@
+diff -Naur a/package/libevent/Makefile b/package/libevent/Makefile
+--- a/package/libevent/Makefile	1970-01-01 00:00:00.000000000 +0000
++++ b/package/libevent/Makefile	2009-02-01 10:05:07.224105888 +0000
+@@ -0,0 +1,66 @@
 +# 
 +# Copyright (C) 2006 OpenWrt.org
 +#
@@ -13,13 +13,14 @@ diff -Naur x86-uclibc-orig/package/libevent/Makefile x86-uclibc-torvm/package/li
 +include $(TOPDIR)/rules.mk
 +
 +PKG_NAME:=libevent
-+PKG_VERSION:=1.4.5-stable
++PKG_VERSION:=1.4.9-stable
 +PKG_RELEASE:=1
 +
 +PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.monkey.org/~provos/
-+PKG_MD5SUM:=efd44048cc890ad11f7099bc01e43e4a
++PKG_MD5SUM:=5154fd4582d64077d6b17851f04d6957
++# XXX MD5 must die.  fix before Jacob demonstrates proof of concept first-preimage attack
 +
 +PKG_INSTALL_DIR:=$(PKG_BUILD_DIR)/ipkg-install
 +
