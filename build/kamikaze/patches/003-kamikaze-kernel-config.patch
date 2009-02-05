@@ -19,7 +19,7 @@ diff -Naur a/target/linux/x86/Makefile b/target/linux/x86/Makefile
  
 diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 --- a/target/linux/x86/config-2.6.27	2008-12-10 01:39:29.530827000 +0000
-+++ b/target/linux/x86/config-2.6.27	2009-02-04 10:34:23.510720272 +0000
++++ b/target/linux/x86/config-2.6.27	2009-02-05 08:35:46.531869024 +0000
 @@ -1,8 +1,9 @@
 +# CONFIG_BSD_PROCESS_ACCT is not set
  # CONFIG_3C515 is not set
@@ -177,7 +177,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_I6300ESB_WDT is not set
  # CONFIG_I82365 is not set
  # CONFIG_I8K is not set
-@@ -184,15 +165,10 @@
+@@ -184,15 +165,9 @@
  CONFIG_IDE_GENERIC=y
  # CONFIG_IDE_PROC_FS is not set
  CONFIG_IDE_TIMINGS=y
@@ -190,11 +190,10 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 -CONFIG_INPUT_MOUSEDEV_PSAUX=y
 -CONFIG_INPUT_MOUSEDEV_SCREEN_X=1024
 -CONFIG_INPUT_MOUSEDEV_SCREEN_Y=768
-+# CONFIG_INPUT_MOUSE is not set
  # CONFIG_IOMMU_HELPER is not set
  CONFIG_IO_DELAY_0X80=y
  # CONFIG_IO_DELAY_0XED is not set
-@@ -210,19 +186,19 @@
+@@ -210,19 +185,19 @@
  # CONFIG_IT8712F_WDT is not set
  # CONFIG_ITCO_WDT is not set
  CONFIG_KALLSYMS=y
@@ -217,7 +216,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_LEDS_WRAP is not set
  CONFIG_LOCK_KERNEL=y
  CONFIG_M386=y
-@@ -239,35 +215,28 @@
+@@ -239,35 +214,32 @@
  # CONFIG_MCRUSOE is not set
  # CONFIG_MCYRIXIII is not set
  # CONFIG_MDA_CONSOLE is not set
@@ -252,6 +251,10 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_MK6 is not set
  # CONFIG_MK7 is not set
  # CONFIG_MK8 is not set
++# CONFIG_INPUT_MOUSE is not set
++# CONFIG_INPUT_MOUSEDEV_PSAUX is not set
++CONFIG_INPUT_MOUSEDEV_SCREEN_X=1024
++CONFIG_INPUT_MOUSEDEV_SCREEN_Y=768
  # CONFIG_MOUSE_BCM5974 is not set
 -CONFIG_MOUSE_PS2=y
 -CONFIG_MOUSE_PS2_ALPS=y
@@ -264,7 +267,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_MOUSE_SERIAL is not set
  # CONFIG_MOUSE_VSXXXAA is not set
  # CONFIG_MPENTIUM4 is not set
-@@ -315,24 +284,24 @@
+@@ -315,24 +287,24 @@
  # CONFIG_MWINCHIP3D is not set
  # CONFIG_MWINCHIPC6 is not set
  CONFIG_NAMESPACES=y
@@ -296,7 +299,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_PCI=y
  # CONFIG_PCIEPORTBUS is not set
  CONFIG_PCI_BIOS=y
-@@ -343,11 +312,11 @@
+@@ -343,11 +315,11 @@
  # CONFIG_PCI_GODIRECT is not set
  # CONFIG_PCI_GOMMCONFIG is not set
  # CONFIG_PCI_GOOLPC is not set
@@ -313,7 +316,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_PCSPKR_PLATFORM=y
  # CONFIG_PCWATCHDOG is not set
  CONFIG_PHYSICAL_ALIGN=0x100000
-@@ -362,28 +331,28 @@
+@@ -362,28 +334,28 @@
  # CONFIG_RELOCATABLE is not set
  CONFIG_RFKILL_LEDS=y
  CONFIG_RTC=y
@@ -352,7 +355,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_SERIAL_8250_CS is not set
  # CONFIG_SERIAL_8250_EXTENDED is not set
  CONFIG_SERIAL_8250_PCI=y
-@@ -395,11 +364,17 @@
+@@ -395,11 +367,17 @@
  # CONFIG_SERIO_PCIPS2 is not set
  # CONFIG_SERIO_RAW is not set
  CONFIG_SERIO_SERPORT=y
@@ -373,7 +376,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_SONYPI is not set
  CONFIG_SPARSEMEM_STATIC=y
  # CONFIG_SPARSEMEM_VMEMMAP_ENABLE is not set
-@@ -414,65 +389,52 @@
+@@ -414,65 +392,52 @@
  # CONFIG_TOSHIBA is not set
  # CONFIG_TYPHOON is not set
  CONFIG_UID16=y
@@ -454,7 +457,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_X86_PC=y
  # CONFIG_X86_POWERNOW_K6 is not set
  # CONFIG_X86_POWERNOW_K7 is not set
-@@ -481,18 +443,209 @@
+@@ -481,18 +446,209 @@
  # CONFIG_X86_RDC321X is not set
  # CONFIG_X86_REBOOTFIXUPS is not set
  CONFIG_X86_RESERVE_LOW_64K=y
