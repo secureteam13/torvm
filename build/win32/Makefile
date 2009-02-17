@@ -299,6 +299,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 		echo "$(BUILD_SCP_USER)" > $(ISODIR)/ssh/user; \
 		echo "$(BUILD_SCP_HOST)" > $(ISODIR)/ssh/host; \
 		echo "$(BUILD_SCP_DIR)" > $(ISODIR)/ssh/dest; \
+		echo "export BUILD_SCP_NOSUBDIR=$(BUILD_SCP_NOSUBDIR)" >> $(ISODIR)/bldopts; \
 	fi; \
 	if [[ "$(AUTO_SHUTDOWN)" != "" ]]; then \
 		echo "export AUTO_SHUTDOWN=$(AUTO_SHUTDOWN)" >> $(ISODIR)/bldopts; \

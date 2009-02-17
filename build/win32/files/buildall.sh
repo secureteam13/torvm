@@ -105,6 +105,14 @@ if [ -f "$VSTOOLSENV" ]; then
   echo "Using new PATH=$PATH"
 fi
 
+# always set these since we may need to copy over failure logs
+# and don't have a proper login shell env
+if [ -f ~/.ssh/user ]; then
+  export BUILD_SCP_USER=`cat ~/.ssh/user`
+  export BUILD_SCP_HOST=`cat ~/.ssh/host`
+  export BUILD_SCP_DIR=`cat ~/.ssh/dest`
+fi
+
 # wrap the actual build process so we capture stdout/stderr
 # and also transfer over the build log and shutdown, if needed.
 if [[ "$1" != "dobuild" ]]; then
@@ -119,10 +127,17 @@ if [[ "$1" != "dobuild" ]]; then
   else
     echo "BUILD_COMPLETE" >> build.log
   fi
+  if [[ "$bld_dsub" == "" ]]; then
+    export bld_dsub="${BUILD_SCP_DIR}/${build_date}"
+    if [[ "$BUILD_SCP_NOSUBDIR" == "TRUE" ]]; then
+      # dont include the date subdir in any copied destinations...
+      export bld_dsub="${BUILD_SCP_DIR}"
+    fi
+  fi
   if [[ "$BUILD_SCP_USER" != "" ]]; then
-    echo "Transferring build to destination ${BUILD_SCP_HOST}:${BUILD_SCP_DIR} ..."
+    echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_sub} ..."
     scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/${build_date}/win32build.log"
+        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_sub}/win32build.log"
   fi
   if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
     echo "Invoking automated shutdown ..."
@@ -133,9 +148,6 @@ else
 if [[ "$MSYS_SETUP" != "yes" ]]; then
   echo "Setting up MSYS build environment..."
   if [ -f ~/.ssh/user ]; then
-    export BUILD_SCP_USER=`cat ~/.ssh/user`
-    export BUILD_SCP_HOST=`cat ~/.ssh/host`
-    export BUILD_SCP_DIR=`cat ~/.ssh/dest`
     chmod 700 ~/.ssh >/dev/null 2>&1
     if [ ! -f ~/.ssh/id_rsa ]; then
       # if the identity key has a prefix, remove it
@@ -833,9 +845,9 @@ fi
 
 
 if [[ "$BUILD_SCP_USER" != "" ]]; then
-  echo "Transferring build to destination ${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/${build_date} ..."
+  echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_sub} ..."
   scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-      -r $ddir $brootdir "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${BUILD_SCP_DIR}/${build_date}/"
+      -r $ddir $brootdir "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_sub}/"
 fi
 
 echo "DONE."
