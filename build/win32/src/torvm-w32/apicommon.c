@@ -289,15 +289,18 @@ BOOL base16encode(LPBYTE   data,
                   char **  hexstr)
 {
   BOOL retval = FALSE;
-  DWORD olen = 0;
+  int olen = 0;
   *hexstr = NULL;
   DWORD i;
-  if (len >= (DWORD)(float)(olen-1)/2) {
-    lerror ("Bogus call to base16encode with length: %ld.", len);
+  /* sanity check long before we need to worry about int overflow... */
+#define BASE16BUF_MAXSIZE (1024*1024)
+  if ((unsigned long)len > BASE16BUF_MAXSIZE) {
+    lerror ("Bogus call to base16encode with length: %ld. Over sanity limit of %ld", len, BASE16BUF_MAXSIZE);
     return FALSE;
   }
   olen = len * 2 + 1;
-  if (! *hexstr = malloc(olen)) {
+  *hexstr = malloc(olen);
+  if (NULL == *hexstr) {
     lerror ("base16encode malloc failed with length: %ld.", olen);
     return FALSE;
   }
