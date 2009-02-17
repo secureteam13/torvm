@@ -73,6 +73,11 @@ else
   unset VSTOOLSDIR
   unset VSTOOLSENV
 fi
+if [ -f "$VSTOOLSENV" ]; then
+  echo "Using VisualStudio environment script at $VSTOOLSENV."
+  export PATH="$PATH:$VSTOOLSDIR:$VSTOOLSDIR\Bin:$VSTOOLSDIR\VC\bin:$VSTOOLSDIR\Common7\IDE:$VSTOOLSDIR\SDK\v2.0\bin"
+  echo "Using new PATH=$PATH"
+fi
 
 if [ -f ~/.ssh/user ]; then
   export BUILD_SCP_USER=`cat ~/.ssh/user`
@@ -153,7 +158,10 @@ if (( $? != 0 )); then
   echo "ERROR: pthreads-32 build failed." >&2
   exit 1
 fi
-cp pthreadGC2.dll $libdir/
+# make install not quite sane yet ...
+cp *.a /lib/
+cp *.dll /bin/
+cp *.h /usr/include/
 
 
 echo "Building zlib ..."
@@ -622,6 +630,7 @@ fi
 
 echo "Building bundle packages ..."
 cd /usr/src/pkg
+cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
 # DONT STRIP PY2EXEs!
 cp $thandir/Thandy.exe bin/
 cp /src/$TORSVN_DIR/contrib/*.wxs ./
@@ -629,12 +638,12 @@ cp -a $ddir ./
 if [ -f /src/$TORBUTTON_FILE ]; then
   cp /src/$TORBUTTON_FILE bin/torbutton.xpi
 fi
-
-cp /src/$TORBUTTON_FILE ./torbutton.xpi
+# XXX replace this with Matt's torbutton NSIS magic
 touch tbcheck.bat
 touch uninstall.bat
 candle.exe *.wxs
 
+echo "Linking torvm MSI installer package ..."
 light.exe -out torvm.msi WixUI_Tor.wixobj torvm.wixobj -ext $WIX_UI
 if [ -f torvm.msi ]; then
   cp torvm.msi $bundledir
@@ -643,6 +652,7 @@ else
   echo "ERROR: unable to build Tor VM MSI installer."
 fi
 
+echo "Linking polipo MSI installer package ..."
 light.exe -out polipo.msi WixUI_Tor.wixobj polipo.wixobj -ext $WIX_UI
 if [ -f polipo.msi ]; then
   cp polipo.msi $bundledir
@@ -651,6 +661,7 @@ else
   echo "ERROR: unable to build polipo MSI installer."
 fi
 
+echo "Linking torbutton MSI installer package ..."
 light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
 if [ -f torbutton.msi ]; then
   cp torbutton.msi $bundledir
@@ -659,6 +670,7 @@ else
   echo "ERROR: unable to build torbutton MSI installer."
 fi
 
+echo "Linking thandy MSI installer package ..."
 light.exe -out thandy.msi WixUI_Tor.wixobj thandy.wixobj -ext $WIX_UI
 if [ -f thandy.msi ]; then
   cp thandy.msi $bundledir
@@ -667,6 +679,7 @@ else
   echo "ERROR: unable to build Thandy MSI installer."
 fi
 
+echo "Creating Tor VM bundle installer executable ..."
 makensis.exe bundle.nsi
 if [ -f TorVMBundle.exe ]; then
   cp TorVMBundle.exe $bundledir
@@ -675,6 +688,7 @@ else
   echo "ERROR: unable to build Tor VM executable bundle installer."
 fi
 
+echo "Creating Tor VM network installer executable ..."
 makensis.exe netinst.nsi
 if [ -f TorVMNetInstaller.exe ]; then
   cp TorVMNetInstaller.exe $bundledir
@@ -683,6 +697,7 @@ else
   echo "ERROR: unable to build Tor VM executable network installer."
 fi
 
+echo "Creating self-extracting Tor VM archive ..."
 export exename=Tor_VM.exe
 if [ -f $exename ]; then
   rm -f $exename

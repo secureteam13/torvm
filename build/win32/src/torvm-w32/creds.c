@@ -282,3 +282,8 @@ BOOL haveadminrights (void)
   return isadmin;
 }
 
+BOOL entropy (LPBYTE buf,
+              DWORD  len)
+{
+}
+

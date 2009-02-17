@@ -1,6 +1,6 @@
-diff -Naur orig-vidalia/cmake/FindOpenSSL.cmake mod-vidalia/cmake/FindOpenSSL.cmake
---- orig-vidalia/cmake/FindOpenSSL.cmake	2008-04-02 02:00:24.794800000 +0000
-+++ mod-vidalia/cmake/FindOpenSSL.cmake	2009-01-26 10:46:24.132337536 +0000
+diff -Naur a/cmake/FindOpenSSL.cmake b/cmake/FindOpenSSL.cmake
+--- a/cmake/FindOpenSSL.cmake	2008-04-02 02:00:24.794800000 +0000
++++ b/cmake/FindOpenSSL.cmake	2009-02-15 14:46:02.122270032 +0000
 @@ -96,8 +96,8 @@
    mark_as_advanced(OPENSSL_LIBSSL_DEBUG   OPENSSL_LIBCRYPTO_DEBUG
                     OPENSSL_LIBSSL_RELEASE OPENSSL_LIBCRYPTO_RELEASE)
@@ -12,9 +12,9 @@ diff -Naur orig-vidalia/cmake/FindOpenSSL.cmake mod-vidalia/cmake/FindOpenSSL.cm
  endif(MSVC)
  
  
-diff -Naur orig-vidalia/pkg/build-geoip-cache.sh mod-vidalia/pkg/build-geoip-cache.sh
---- orig-vidalia/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
-+++ mod-vidalia/pkg/build-geoip-cache.sh	2009-01-26 10:47:18.600057184 +0000
+diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
+--- a/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
++++ b/pkg/build-geoip-cache.sh	2009-02-15 14:46:02.122270032 +0000
 @@ -13,7 +13,7 @@
  
  
@@ -24,9 +24,9 @@ diff -Naur orig-vidalia/pkg/build-geoip-cache.sh mod-vidalia/pkg/build-geoip-cac
  CACHEFILE="geoip-cache"
  
  if [ "$1" == "-notimestamp" -o "$1" == "--notimestamp" ]; then
-diff -Naur orig-vidalia/pkg/win32/WixUI_Tor.wxs mod-vidalia/pkg/win32/WixUI_Tor.wxs
---- orig-vidalia/pkg/win32/WixUI_Tor.wxs	1970-01-01 00:00:00.000000000 +0000
-+++ mod-vidalia/pkg/win32/WixUI_Tor.wxs	2009-01-26 10:47:34.940573048 +0000
+diff -Naur a/pkg/win32/WixUI_Tor.wxs b/pkg/win32/WixUI_Tor.wxs
+--- a/pkg/win32/WixUI_Tor.wxs	1970-01-01 00:00:00.000000000 +0000
++++ b/pkg/win32/WixUI_Tor.wxs	2009-02-15 14:46:02.123269880 +0000
 @@ -0,0 +1,62 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<!--
@@ -90,9 +90,9 @@ diff -Naur orig-vidalia/pkg/win32/WixUI_Tor.wxs mod-vidalia/pkg/win32/WixUI_Tor.
 +        <UIRef Id="WixUI_Common" />
 +    </Fragment>
 +</Wix>
-diff -Naur orig-vidalia/pkg/win32/polipo.conf mod-vidalia/pkg/win32/polipo.conf
---- orig-vidalia/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
-+++ mod-vidalia/pkg/win32/polipo.conf	2009-01-26 10:49:35.056312680 +0000
+diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
+--- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
++++ b/pkg/win32/polipo.conf	2009-02-15 14:46:02.124269728 +0000
 @@ -36,8 +36,9 @@
  
  # Uncomment this if you want to use a parent SOCKS proxy:
@@ -125,13 +125,13 @@ diff -Naur orig-vidalia/pkg/win32/polipo.conf mod-vidalia/pkg/win32/polipo.conf
  
  
  ### HTTP
-diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.wxs.in
---- orig-vidalia/pkg/win32/vidalia.wxs.in	2008-12-09 23:53:31.956238000 +0000
-+++ mod-vidalia/pkg/win32/vidalia.wxs.in	2009-01-26 03:37:43.609451352 +0000
-@@ -1,89 +1,198 @@
+diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
+--- a/pkg/win32/vidalia.wxs.in	2009-01-31 04:32:04.562803000 +0000
++++ b/pkg/win32/vidalia.wxs.in	2009-02-15 14:54:33.517526136 +0000
+@@ -1,221 +1,198 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
--  $Id: vidalia.wxs.in 3377 2008-12-09 23:53:31Z edmanm $
+-  $Id: vidalia.wxs.in 3486 2009-01-31 04:32:04Z edmanm $
 +  $Id: vidalia.wxs.in 3329 2008-11-21 02:04:34Z edmanm $
 +
 +  This file is part of Vidalia, and is subject to the license terms in the
@@ -216,12 +216,36 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
 +    </Upgrade>
 +
  
+-    <!-- Define the target installation directory hierarchy -->
      <Directory Id="TARGETDIR" Name="SourceDir">
 -      <Directory Id="ProgramFilesFolder" Name="ProgramFilesDir">
 -        <Directory Id="INSTALLDIR" Name="Vidalia">
+-          <Directory Id="MarblePluginsDir" Name="plugins" />
+-          <Directory Id="MarbleDataDir" Name="data">
+-            <Directory Id="MarbleMapsDir" Name="maps">
+-              <Directory Id="MarbleEarthMapsDir" Name="earth">
+-                <Directory Id="MarbleBlueMarbleDataDir" Name="bluemarble" />
+-                <Directory Id="MarbleCityLightsDataDir" Name="citylights" />
+-                <Directory Id="MarbleSrtmDataDir" Name="srtm" />
+-              </Directory>
+-            </Directory>
+-            <Directory Id="MarbleMwdbiiDir" Name="mwdbii" />
+-            <Directory Id="MarblePlacemarkDataDir" Name="placemarks" />
+-            <Directory Id="MarbleStarsDataDir" Name="stars" />
+-            <Directory Id="MarbleSvgDataDir" Name="svg" />
+-          </Directory>
+-        </Directory>
+-      </Directory>
+-    </Directory>
 +      <Directory Id="LocalAppDataFolder" Name="LocalAppData">
 +       <Directory Id="LocalProgramsFolder" Name="Programs">
-+
+ 
+-    <DirectoryRef Id="INSTALLDIR">
+-      <!-- Main Vidalia application files -->
+-      <Component Id="VidaliaExecutable" Guid="*">
+-        <File Id="VidaliaExe" DiskId="1"
+-              Name="vidalia.exe" Source="@Vidalia_BINARY_DIR@\src\vidalia\vidalia.exe" />
+-      </Component>
 +         <!-- Until proper support for per-user installs is available we manage Programs folder.
 +         Note that this directory will be left in place if it is in use by any other app.
 +           -->
@@ -234,90 +258,212 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
 +         </Component>
 +
 +         <Directory Id="LocalProgramsInstDir" Name="Vidalia">
- 
-           <!-- Main Vidalia application files -->
--          <Component Id="VidaliaExecutable" Guid="*">
++
++          <!-- Main Vidalia application files -->
 +          <Component Id="VidaliaExecutable" Guid="$(var.CurrExecutableGUID)">
 +            <CreateFolder/>
 +            <RemoveFolder Id="RemoveLocalProgramsInstDir" On="uninstall" />
 +            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
 +              <RegistryValue Name="Version" Value="$(var.ThisProductVersion)" Type="string" KeyPath="yes" />
 +            </RegistryKey>
-             <File Id="VidaliaExe" DiskId="1"
--                  Name="vidalia.exe" Source="@Vidalia_BINARY_DIR@\src\vidalia\vidalia.exe" />
--          </Component>
--
--          <!-- Vidalia-related documents -->
--          <Component Id="VidaliaDocuments" Guid="6A51C86C-A7D4-407f-9B84-7ADCE016E939">
--            <File Id="VidaliaReadme" DiskId="1"
--                  Name="README" Source="@Vidalia_SOURCE_DIR@\README" />
--            <File Id="VidaliaCredits" DiskId="1"
--                  Name="CREDITS" Source="@Vidalia_SOURCE_DIR@\CREDITS" />
--            <File Id="VidaliaChangeLog" DiskId="1"
--                  Name="CHANGELOG" Source="@Vidalia_SOURCE_DIR@\CHANGELOG" />
--            <File Id="VidaliaLicense" DiskId="1"
--                  Name="LICENSE" Source="@Vidalia_SOURCE_DIR@\LICENSE" />
--            <File Id="VidaliaLicenseGplV2" DiskId="1"
--                  Name="LICENSE-GPLV2" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV2" />
--            <File Id="VidaliaLicenseGplV3" DiskId="1"
--                  Name="LICENSE-GPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV3" />
--            <File Id="VidaliaLicenseLgplV3" DiskId="1"
--                  Name="LICENSE-LGPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-LGPLV3" />
--            <File Id="VidaliaLicenseOpenSSL" DiskId="1"
--                  Name="LICENSE-OPENSSL" Source="@Vidalia_SOURCE_DIR@\LICENSE-OPENSSL" />
++            <File Id="VidaliaExe" DiskId="1"
 +                  Name="vidalia.exe" Source="src\vidalia\vidalia.exe" />
-           </Component>
++          </Component>
  
-           <!-- Qt-related library files -->
--          <Component Id="QtLibrary" Guid="00F354CB-B313-4100-8900-11293A66B385">
+-      <!-- Vidalia-related documents -->
+-      <Component Id="VidaliaDocuments" Guid="6A51C86C-A7D4-407f-9B84-7ADCE016E939">
+-        <File Id="VidaliaReadme" DiskId="1"
+-              Name="README" Source="@Vidalia_SOURCE_DIR@\README" />
+-        <File Id="VidaliaCredits" DiskId="1"
+-              Name="CREDITS" Source="@Vidalia_SOURCE_DIR@\CREDITS" />
+-        <File Id="VidaliaChangeLog" DiskId="1"
+-              Name="CHANGELOG" Source="@Vidalia_SOURCE_DIR@\CHANGELOG" />
+-        <File Id="VidaliaLicense" DiskId="1"
+-              Name="LICENSE" Source="@Vidalia_SOURCE_DIR@\LICENSE" />
+-        <File Id="VidaliaLicenseGplV2" DiskId="1"
+-              Name="LICENSE-GPLV2" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV2" />
+-        <File Id="VidaliaLicenseGplV3" DiskId="1"
+-              Name="LICENSE-GPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-GPLV3" />
+-        <File Id="VidaliaLicenseLgplV3" DiskId="1"
+-              Name="LICENSE-LGPLV3" Source="@Vidalia_SOURCE_DIR@\LICENSE-LGPLV3" />
+-        <File Id="VidaliaLicenseOpenSSL" DiskId="1"
+-              Name="LICENSE-OPENSSL" Source="@Vidalia_SOURCE_DIR@\LICENSE-OPENSSL" />
+-      </Component>
++          <!-- Qt-related library files -->
 +          <Component Id="QtLibrary" Guid="$(var.CurrQtLibsGUID)">
 +            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
 +              <RegistryValue Name="QtLibrary" Value="1" Type="integer" KeyPath="yes" />
 +            </RegistryKey>
-             <File Id="QtCore4Dll" DiskId="1"
--                  Name="QtCore4.dll" Source="@QT_BINARY_DIR@\QtCore4.dll" />
++            <File Id="QtCore4Dll" DiskId="1"
 +                  Name="QtCore4.dll" Source="bin\QtCore4.dll" />
-             <File Id="QtGui4Dll" DiskId="1"
--                  Name="QtGui4.dll" Source="@QT_BINARY_DIR@\QtGui4.dll" />
++            <File Id="QtGui4Dll" DiskId="1"
 +                  Name="QtGui4.dll" Source="bin\QtGui4.dll" />
-             <File Id="QtNetwork4Dll" DiskId="1"
--                  Name="QtNetwork4.dll" Source="@QT_BINARY_DIR@\QtNetwork4.dll" />
++            <File Id="QtNetwork4Dll" DiskId="1"
 +                  Name="QtNetwork4.dll" Source="bin\QtNetwork4.dll" />
-             <File Id="QtXml4Dll" DiskId="1"
--                  Name="QtXml4.dll" Source="@QT_BINARY_DIR@\QtXml4.dll" />
++            <File Id="QtXml4Dll" DiskId="1"
 +                  Name="QtXml4.dll" Source="bin\QtXml4.dll" />
 +            <File Id="QtSvg4Dll" DiskId="1"
 +                  Name="QtSvg4.dll" Source="bin\QtSvg4.dll" />
-           </Component>
++          </Component>
  
-           <!-- MinGW-related library files -->
--          <Component Id="MinGWLibrary" Guid="2287E844-F9CD-4129-8BD0-50D071698194">
+-      <!-- Qt-related library files -->
+-      <Component Id="QtLibrary" Guid="00F354CB-B313-4100-8900-11293A66B385">
+-        <File Id="QtCore4Dll" DiskId="1"
+-              Name="QtCore4.dll" Source="@QT_BINARY_DIR@\QtCore4.dll" />
+-        <File Id="QtGui4Dll" DiskId="1"
+-              Name="QtGui4.dll" Source="@QT_BINARY_DIR@\QtGui4.dll" />
+-        <File Id="QtNetwork4Dll" DiskId="1"
+-              Name="QtNetwork4.dll" Source="@QT_BINARY_DIR@\QtNetwork4.dll" />
+-        <File Id="QtXml4Dll" DiskId="1"
+-              Name="QtXml4.dll" Source="@QT_BINARY_DIR@\QtXml4.dll" />
+-        <File Id="QtSvg4Dll" DiskId="1"
+-              Name="QtSvg4.dll" Source="@QT_BINARY_DIR@\QtSvg4.dll" />
+-      </Component>
++          <!-- MinGW-related library files -->
 +          <Component Id="MinGWLibrary" Guid="$(var.CurrMingwLibsGUID)">
 +            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
 +              <RegistryValue Name="MinGWLibrary" Value="1" Type="integer" KeyPath="yes" />
 +            </RegistryKey>
-             <File Id="MinGWDll" DiskId="1"
--                  Name="mingwm10.dll" Source="@MINGW_BINARY_DIR@\mingwm10.dll" />
++            <File Id="MinGWDll" DiskId="1"
 +                  Name="mingwm10.dll" Source="bin\mingwm10.dll" />
 +            <File Id="gnurxdll" DiskId="1"
 +                  Name="libgnurx-0.dll" Source="bin\libgnurx-0.dll" />
-           </Component>
++          </Component>
  
-           <!-- OpenSSL-related library files -->
--          <Component Id="OpenSSLLibrary" Guid="C3EDC2EC-D0B1-452a-83A6-85B0BC94735B">
+-      <!-- MinGW-related library files -->
+-      <Component Id="MinGWLibrary" Guid="2287E844-F9CD-4129-8BD0-50D071698194">
+-        <File Id="MinGWDll" DiskId="1"
+-              Name="mingwm10.dll" Source="@MINGW_BINARY_DIR@\mingwm10.dll" />
+-      </Component>
++          <!-- OpenSSL-related library files -->
 +          <Component Id="OpenSSLLibrary" Guid="$(var.CurrCryptoLibsGUID)">
 +            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
 +              <RegistryValue Name="OpenSSLLibrary" Value="1" Type="integer" KeyPath="yes" />
 +            </RegistryKey>
-             <File Id="ssleay32dll" DiskId="1"
--                  Name="ssleay32.dll" Source="@OPENSSL_BINARY_DIR@\ssleay32.dll" />
++            <File Id="ssleay32dll" DiskId="1"
 +                  Name="ssleay32-0.9.8.dll" Source="bin\ssleay32-0.9.8.dll" />
 +            <File Id="cryptoeay32dll" DiskId="1"
 +                  Name="cryptoeay32-0.9.8.dll" Source="bin\cryptoeay32-0.9.8.dll" />
 +            <File Id="zlibdll" DiskId="1"
 +                  Name="zlib1.dll" Source="bin\zlib1.dll" />
 +          </Component>
-+
+ 
+-      <!-- OpenSSL-related library files -->
+-      <Component Id="OpenSSLLibrary" Guid="C3EDC2EC-D0B1-452a-83A6-85B0BC94735B">
+-        <File Id="ssleay32dll" DiskId="1"
+-              Name="ssleay32.dll" Source="@OPENSSL_BINARY_DIR@\ssleay32.dll" />
+-      </Component>
+-      
+-      <!-- Marble-related library files -->
+-      <Component Id="MarbleWidgetLibrary" Guid="A2968B8D-0E23-4649-B8F3-A988A04F823C">
+-        <File Id="MarbleWidgetDll" DiskId="1"
+-              Name="libmarblewidget.dll" Source="@MARBLEWIDGET_LIBRARY@" />
+-      </Component>
+-    </DirectoryRef>
+-    
+-    <!-- Marble-related plugin files -->
+-    <DirectoryRef Id="MarblePluginsDir">
+-      <Component Id="MarblePlugins" Guid="B4665EC1-3082-4fca-AA7E-60512ED62EF6">
+-        <File Id="MarbleOverviewMapPlugin" DiskId="1"
+-              Name="libMarbleOverviewMap.dll" Source="@MARBLE_OVERVIEWMAP_PLUGIN@" />
+-        <File Id="MarbleStarsPlugin" DiskId="1"
+-              Name="libMarbleStarsPlugin.dll" Source="@MARBLE_STARS_PLUGIN@" />
+-      </Component>
+-    </DirectoryRef>
+-          
+-    <!-- Marble-related data files -->
+-    <DirectoryRef Id="MarbleDataDir">
+-      <Component Id="MarbleLegendsData" Guid="FA6F733F-8249-4b2b-B978-2AA04E06F5D5">
+-        <File Id="LandColorsLegend" DiskId="1"
+-              Name="landcolors.leg" Source="@MARBLE_DATA_DIR@\landcolors.leg" />
+-        <File Id="SeaColorsLegend" DiskId="1"
+-              Name="seacolors.leg" Source="@MARBLE_DATA_DIR@\seacolors.leg" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleBlueMarbleDataDir">
+-      <Component Id="MarbleBlueMarbleData" Guid="392FEE6B-374A-447a-AECC-0422915305DB">
+-        <File Id="MarbleBlueMarbleDgml" DiskId="1"
+-              Name="bluemarble.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\bluemarble\bluemarble.dgml" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleCityLightsDataDir">
+-      <Component Id="MarbleCityLightsData" Guid="DBF9FBE7-012D-4457-ABB4-9085F7E784F8">
+-        <File Id="MarbleCityLightsDgml" DiskId="1"
+-              Name="citylights.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\citylights\citylights.dgml" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleSrtmDataDir">
+-      <Component Id="MarbleSrtmData" Guid="2C3A9C67-92CB-4fc6-A2F6-AD9118AFD58C">
+-        <File Id="MarbleSrtmDgml" DiskId="1"
+-              Name="srtm.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.dgml" />
+-        <File Id="MarbleSrtmJpg" DiskId="1"
+-              Name="srtm.jpg" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.jpg" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleMwdbiiDir">
+-      <Component Id="MarbleMwdbiiData" Guid="56ACE658-6892-408a-91E5-7B5BD23D8829">
+-        <File Id="DatelinePnt" DiskId="1"
+-              Name="DATELINE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\DATELINE.PNT" />
+-        <File Id="PAustPnt" DiskId="1"
+-              Name="PAUST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PAUST.PNT" />
+-        <File Id="PBorderPnt" DiskId="1"
+-              Name="PBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PBORDER.PNT" />
+-        <File Id="PCanProvPnt" DiskId="1"
+-              Name="PCANPROV.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCANPROV.PNT" />
+-        <File Id="PCoastPnt" DiskId="1"
+-              Name="PCOAST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCOAST.PNT" />
+-        <File Id="PDiffBorderPnt" DiskId="1"
+-              Name="PDIFFBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PDIFFBORDER.PNT" />
+-        <File Id="PGlacierPnt" DiskId="1"
+-              Name="PGLACIER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PGLACIER.PNT" />
+-        <File Id="PIslandPnt" DiskId="1"
+-              Name="PISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PISLAND.PNT" />
+-        <File Id="PLakePnt" DiskId="1"
+-              Name="PLAKE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKE.PNT" />
+-        <File Id="PLakeIslandPnt" DiskId="1"
+-              Name="PLAKEISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKEISLAND.PNT" />
+-        <File Id="PMexicoPnt" DiskId="1"
+-              Name="PMEXICO.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PMEXICO.PNT" />
+-        <File Id="PUsa48DiffPnt" DiskId="1"
+-              Name="PUSA48.DIFF.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.DIFF.PNT" />
+-        <File Id="PUsa48Pnt" DiskId="1"
+-              Name="PUSA48.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.PNT" />
+-        <File Id="RiverPnt" DiskId="1"
+-              Name="RIVER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\RIVER.PNT" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarblePlacemarkDataDir">
+-      <Component Id="MarblePlacemarkData" Guid="27D54547-A819-435b-9A0C-13284169A9D9">
+-        <File Id="BasePlacemarksCache" DiskId="1"
+-              Name="baseplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\baseplacemarks.cache" />
+-        <File Id="BoundaryPlacemarksCache" DiskId="1"
+-              Name="boundaryplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\boundaryplacemarks.cache" />
+-        <File Id="ElevPlacemarksCache" DiskId="1"
+-              Name="elevplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\elevplacemarks.cache" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleStarsDataDir">
+-      <Component Id="MarbleStarsData" Guid="8C5C3F32-67E6-4a4a-9B6C-6D67A6D44D67">
+-        <File Id="StarsDat" DiskId="1"
+-              Name="stars.dat" Source="@MARBLE_DATA_DIR@\stars\stars.dat" />
+-      </Component>
+-    </DirectoryRef>
+-    <DirectoryRef Id="MarbleSvgDataDir">
+-      <Component Id="MarbleSvgData" Guid="03E25BCA-4C58-4571-9F17-061D52877714">
+-        <File Id="WorldMapSvg" DiskId="1"
+-              Name="worldmap.svg" Source="@MARBLE_DATA_DIR@\svg\worldmap.svg" />
+-      </Component>
+-    </DirectoryRef>
+-    <ComponentGroup Id="MarbleData">
+-      <ComponentRef Id="MarbleLegendsData" />
+-      <ComponentRef Id="MarbleBlueMarbleData" />
+-      <ComponentRef Id="MarbleCityLightsData" />
+-      <ComponentRef Id="MarbleSrtmData" />
+-      <ComponentRef Id="MarbleMwdbiiData" />
+-      <ComponentRef Id="MarblePlacemarkData" />
+-      <ComponentRef Id="MarbleStarsData" />
+-      <ComponentRef Id="MarbleSvgData" />
+-    </ComponentGroup>
 +          <!-- Place this here until argument parsing with quoted escapes works as expected. -->
 +          <Component Id="PolipoConfig" Guid="$(var.CurrPolipoConfigGUID)">
 +            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
@@ -350,10 +496,12 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
 +              ReadOnly="no"
 +              DiskId="1"
 +            /> 
-           </Component>
-         </Directory>
-       </Directory>
++          </Component>
++        </Directory>
++      </Directory>
  
+-    <!-- Application shortcuts and menu items -->
+-    <DirectoryRef Id="TARGETDIR">
        <Directory Id="ProgramMenuFolder" Name="Programs">
          <Directory Id="ShortcutFolder" Name="Vidalia">
 -          <Component Id="AddVidaliaToStartMenu" Guid="0F2CEE2C-8730-432e-8A8F-E49AF78AF28C">
@@ -370,7 +518,7 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
                        Icon="vidalia.ico" IconIndex="0" />
              <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
            </Component>
-@@ -91,22 +200,24 @@
+@@ -223,41 +200,42 @@
        </Directory>
  
        <Directory Id="DesktopFolder" Name="Desktop">
@@ -399,8 +547,10 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
 +          <RegistryValue Name="Vidalia" Value='"[LocalProgramsInstDir]vidalia.exe"' Type="string" />
          </RegistryKey>
        </Component>
-     </Directory>
-@@ -115,14 +226,16 @@
+-    </DirectoryRef>
++    </Directory>
+ 
+     <!-- Build up the feature hierarchy -->
      <Feature Id="Complete" Title="Vidalia"
               Level="1" Display="expand" ConfigurableDirectory="INSTALLDIR"
               Description="Vidalia is application that helps you control, monitor, and configure the Tor software.">
@@ -414,12 +564,15 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
          <ComponentRef Id="QtLibrary" />
          <ComponentRef Id="MinGWLibrary" />
          <ComponentRef Id="OpenSSLLibrary" />
+-        <ComponentRef Id="MarbleWidgetLibrary" />
+-        <ComponentRef Id="MarblePlugins" />
+-        <ComponentGroupRef Id="MarbleData"/>
 +        <ComponentRef Id="GeoIPCache" />
 +        <ComponentRef Id="PolipoConfig" />
        </Feature>
        <Feature Id="Shortcuts" Title="Shortcuts"
                 AllowAdvertise="no" Absent="allow" Level="1"
-@@ -145,10 +258,15 @@
+@@ -280,10 +258,15 @@
        </Feature>
      </Feature>
  
@@ -439,9 +592,9 @@ diff -Naur orig-vidalia/pkg/win32/vidalia.wxs.in mod-vidalia/pkg/win32/vidalia.w
 +    <WixVariable Id="WixUIDialogBmp" Value="pkg\win32\msi-welcome.bmp" />
    </Product>
  </Wix>
-diff -Naur orig-vidalia/src/common/win32.cpp mod-vidalia/src/common/win32.cpp
---- orig-vidalia/src/common/win32.cpp	2008-02-29 04:30:11.928307000 +0000
-+++ mod-vidalia/src/common/win32.cpp	2009-01-26 10:50:51.146745176 +0000
+diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
+--- a/src/common/win32.cpp	2008-02-29 04:30:11.928307000 +0000
++++ b/src/common/win32.cpp	2009-02-15 14:46:02.246251184 +0000
 @@ -67,16 +67,20 @@
  QString
  win32_program_files_folder()
@@ -467,10 +620,10 @@ diff -Naur orig-vidalia/src/common/win32.cpp mod-vidalia/src/common/win32.cpp
  }
  
  /** Returns the value in keyName at keyLocation. 
-diff -Naur orig-vidalia/src/vidalia/config/torsettings.cpp mod-vidalia/src/vidalia/config/torsettings.cpp
---- orig-vidalia/src/vidalia/config/torsettings.cpp	2008-11-10 01:10:01.532843000 +0000
-+++ mod-vidalia/src/vidalia/config/torsettings.cpp	2009-01-26 10:53:08.283897160 +0000
-@@ -59,6 +59,7 @@
+diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
+--- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
++++ b/src/vidalia/config/torsettings.cpp	2009-02-15 14:46:02.247251032 +0000
+@@ -61,6 +61,7 @@
  {
  #if defined(Q_OS_WIN32)
    QString programFiles = win32_program_files_folder();
@@ -478,7 +631,7 @@ diff -Naur orig-vidalia/src/vidalia/config/torsettings.cpp mod-vidalia/src/vidal
    if (QFileInfo(programFiles + "\\Vidalia Bundle\\Tor\\tor.exe").exists())
      setDefault(SETTING_TOR_EXECUTABLE,
                 programFiles + "\\Vidalia Bundle\\Tor\\tor.exe");
-@@ -68,7 +69,14 @@
+@@ -70,7 +71,14 @@
    setDefault(SETTING_TOR_EXECUTABLE, "tor");
  #endif
  
@@ -494,10 +647,10 @@ diff -Naur orig-vidalia/src/vidalia/config/torsettings.cpp mod-vidalia/src/vidal
    setDefault(SETTING_CONTROL_ADDR,  "127.0.0.1");
    setDefault(SETTING_CONTROL_PORT,  9051);
    setDefault(SETTING_AUTH_METHOD,   toString(DEFAULT_AUTH_METHOD));
-diff -Naur orig-vidalia/src/vidalia/config/vidaliasettings.cpp mod-vidalia/src/vidalia/config/vidaliasettings.cpp
---- orig-vidalia/src/vidalia/config/vidaliasettings.cpp	2009-01-03 20:10:16.806554000 +0000
-+++ mod-vidalia/src/vidalia/config/vidaliasettings.cpp	2009-01-26 10:54:13.761942984 +0000
-@@ -70,9 +70,16 @@
+diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidaliasettings.cpp
+--- a/src/vidalia/config/vidaliasettings.cpp	2009-02-03 02:09:39.844750000 +0000
++++ b/src/vidalia/config/vidaliasettings.cpp	2009-02-15 14:46:02.248250880 +0000
+@@ -71,9 +71,16 @@
    setDefault(SETTING_SHOW_MAINWINDOW_AT_START, true);
    setDefault(SETTING_BROWSER_EXECUTABLE, "");
    setDefault(SETTING_IM_EXECUTABLE, "");
@@ -517,9 +670,9 @@ diff -Naur orig-vidalia/src/vidalia/config/vidaliasettings.cpp mod-vidalia/src/v
  #if defined(Q_WS_WIN)
    setDefault(SETTING_CHECK_FOR_UPDATES, true);
  #else
-diff -Naur orig-vidalia/src/vidalia/network/geoipresolver.cpp mod-vidalia/src/vidalia/network/geoipresolver.cpp
---- orig-vidalia/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
-+++ mod-vidalia/src/vidalia/network/geoipresolver.cpp	2009-01-26 10:56:39.915724232 +0000
+diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
+--- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
++++ b/src/vidalia/network/geoipresolver.cpp	2009-02-15 14:46:02.249250728 +0000
 @@ -24,13 +24,13 @@
  #endif
  
@@ -552,9 +705,9 @@ diff -Naur orig-vidalia/src/vidalia/network/geoipresolver.cpp mod-vidalia/src/vi
            "certificate database.");
  #endif
  }
-diff -Naur orig-vidalia/src/vidalia/res/entrust-secure-server-root.crt mod-vidalia/src/vidalia/res/entrust-secure-server-root.crt
---- orig-vidalia/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ mod-vidalia/src/vidalia/res/entrust-secure-server-root.crt	2009-01-26 10:56:56.637182184 +0000
+diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/entrust-secure-server-root.crt
+--- a/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
++++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-02-15 14:46:02.250250576 +0000
 @@ -0,0 +1,30 @@
 +-----BEGIN CERTIFICATE-----
 +MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UE
@@ -586,9 +739,9 @@ diff -Naur orig-vidalia/src/vidalia/res/entrust-secure-server-root.crt mod-vidal
 +xufuP+NXdYR6Ee9GTxj005i7qIcyunL2POI9n9cd2cNgQ4xYDiKWL2KjLB+6
 +rQXvqzJ4h6BUcxm1XAX5Uj5tLUUL9wqT6u0G+bI=
 +-----END CERTIFICATE-----
-diff -Naur orig-vidalia/src/vidalia/res/gd-class2-root.crt mod-vidalia/src/vidalia/res/gd-class2-root.crt
---- orig-vidalia/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ mod-vidalia/src/vidalia/res/gd-class2-root.crt	2009-01-26 10:57:05.420846864 +0000
+diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root.crt
+--- a/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
++++ b/src/vidalia/res/gd-class2-root.crt	2009-02-15 14:46:02.250250576 +0000
 @@ -0,0 +1,24 @@
 +-----BEGIN CERTIFICATE-----
 +MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh
@@ -614,10 +767,10 @@ diff -Naur orig-vidalia/src/vidalia/res/gd-class2-root.crt mod-vidalia/src/vidal
 +dEr/VxqHD3VILs9RaRegAhJhldXRQLIQTO7ErBBDpqWeCtWVYpoNz4iCxTIM5Cuf
 +ReYNnyicsbkqWletNw+vHX/bvZ8=
 +-----END CERTIFICATE-----
-diff -Naur orig-vidalia/src/vidalia/res/vidalia.qrc mod-vidalia/src/vidalia/res/vidalia.qrc
---- orig-vidalia/src/vidalia/res/vidalia.qrc	2009-01-03 20:10:16.806554000 +0000
-+++ mod-vidalia/src/vidalia/res/vidalia.qrc	2009-01-26 10:57:41.105421984 +0000
-@@ -285,5 +285,7 @@
+diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
+--- a/src/vidalia/res/vidalia.qrc	2009-02-01 00:34:33.066938000 +0000
++++ b/src/vidalia/res/vidalia.qrc	2009-02-15 14:46:02.251250424 +0000
+@@ -290,5 +290,7 @@
      </qresource>
      <qresource prefix="/geoip">
          <file>cacert_root.crt</file>
@@ -625,9 +778,9 @@ diff -Naur orig-vidalia/src/vidalia/res/vidalia.qrc mod-vidalia/src/vidalia/res/
 +        <file>entrust-secure-server-root.crt</file>
      </qresource>
  </RCC>
-diff -Naur orig-vidalia/src/vidalia/updateprocess.cpp mod-vidalia/src/vidalia/updateprocess.cpp
---- orig-vidalia/src/vidalia/updateprocess.cpp	2009-01-03 20:10:16.806554000 +0000
-+++ mod-vidalia/src/vidalia/updateprocess.cpp	2009-01-26 10:59:07.190335088 +0000
+diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
+--- a/src/vidalia/updateprocess.cpp	2009-01-03 20:10:16.806554000 +0000
++++ b/src/vidalia/updateprocess.cpp	2009-02-15 14:46:02.251250424 +0000
 @@ -234,13 +234,23 @@
  QString
  UpdateProcess::updateExecutable()

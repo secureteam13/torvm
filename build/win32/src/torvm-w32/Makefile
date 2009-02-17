@@ -10,7 +10,7 @@ LDFLAGS += -lws2_32 -liphlpapi
 
 all: torvm$(EXESUF)
 
-OBJS+=torvm.o torvmrc.o apicommon.o creds.o thrpool.o
+OBJS+=torvm.o torvmrc.o apicommon.o creds.o thr.o
 
 torvm$(EXESUF): $(OBJS) vmconfig.h
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
@@ -27,7 +27,7 @@ apicommon.o: apicommon.c
 creds.o: creds.c
 	$(CC) $(CPPFLAGS) -c -o $@ $<
 
-thrpool.o: thrpool.c
+thr.o: thr.c
 	$(CC) $(CPPFLAGS) -c -o $@ $<
 
 vmconfig.h: vmconfig.h.in

@@ -1,4 +1,4 @@
-/* Copyright (C) 2008  The Tor Project, Inc.
+/* Copyright (C) 2008-2009  The Tor Project, Inc.
  * See LICENSE file for rights and terms.
  */
 
@@ -284,4 +284,27 @@ BOOL isconnected(const char *  devguid)
   return retval;
 }
 
+BOOL base16encode(LPBYTE   data,
+                  DWORD    len,
+                  char **  hexstr)
+{
+  BOOL retval = FALSE;
+  DWORD olen = 0;
+  *hexstr = NULL;
+  DWORD i;
+  if (len >= (DWORD)(float)(olen-1)/2) {
+    lerror ("Bogus call to base16encode with length: %ld.", len);
+    return FALSE;
+  }
+  olen = len * 2 + 1;
+  if (! *hexstr = malloc(olen)) {
+    lerror ("base16encode malloc failed with length: %ld.", olen);
+    return FALSE;
+  }
+  for (i = 0; i < len; i++) {
+    snprintf(*hexstr[i * 2], 3, "%02hhx", data[i]);
+  }
+  *hexstr[i] = NULL;
+  return retval;
+}
 

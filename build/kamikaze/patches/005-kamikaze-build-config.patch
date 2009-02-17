@@ -1,11 +1,11 @@
 diff -Naur a/.config b/.config
 --- a/.config	1970-01-01 00:00:00.000000000 +0000
-+++ b/.config	2009-02-05 11:58:02.098982400 +0000
-@@ -0,0 +1,1312 @@
++++ b/.config	2009-02-08 15:23:46.594944296 +0000
+@@ -0,0 +1,1311 @@
 +#
 +# Automatically generated make config: don't edit
 +# OpenWrt version: Kamikaze (unknown)
-+# Thu Feb  5 03:57:41 2009
++# Sun Feb  8 07:23:11 2009
 +#
 +CONFIG_HAVE_DOT_CONFIG=y
 +# CONFIG_TARGET_ppc40x is not set
@@ -178,7 +178,6 @@ diff -Naur a/.config b/.config
 +CONFIG_LINUX_2_6=y
 +CONFIG_DISPLAY_SUPPORT=y
 +CONFIG_PCI_SUPPORT=y
-+CONFIG_PCMCIA_SUPPORT=y
 +CONFIG_USES_EXT2=y
 +CONFIG_i386=y
 +CONFIG_ARCH="i386"
@@ -623,7 +622,8 @@ diff -Naur a/.config b/.config
 +#
 +CONFIG_BUSYBOX_CONFIG_INIT=y
 +# CONFIG_BUSYBOX_CONFIG_DEBUG_INIT is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_USE_INITTAB is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_USE_INITTAB=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_KILL_REMOVED is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_KILL_DELAY=0
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_INIT_SCTTY is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_INIT_SYSLOG is not set
@@ -724,7 +724,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_FAKE is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_VERBOSE is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_HELPERS is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_LABEL=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_LABEL is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_NFS is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_CIFS is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_FLAGS=y
@@ -1205,7 +1205,6 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-mmc is not set
 +# CONFIG_PACKAGE_kmod-mmc-spi is not set
 +# CONFIG_PACKAGE_kmod-nsc-gpio is not set
-+# CONFIG_PACKAGE_kmod-pcmcia-core is not set
 +# CONFIG_PACKAGE_kmod-sc520-wdt is not set
 +# CONFIG_PACKAGE_kmod-scx200-gpio is not set
 +# CONFIG_PACKAGE_kmod-scx200-wdt is not set

@@ -1,12 +1,12 @@
-/* Copyright (C) 2008  The Tor Project, Inc.
+/* Copyright (C) 2008-2009  The Tor Project, Inc.
  * See LICENSE file for rights and terms.
  */
 #ifndef __apicommon_h__
 #define __apicommon_h__
 
 /* enable certain parts of the win32 API for process / system functions
- * default to win2k.
- * other versions:
+ * default to win2k.  2K is minimum supported due to Crypto API dependencies
+ * and other linkage.  other possible versions to enforce:
  *   0x0501 = XP / Server2003
  *   0x0502 = XP SP2 / Server2003 SP1
  *   0x0600 = Vista / Server2008
@@ -87,5 +87,12 @@ void bgstartupinfo (STARTUPINFO *si);
 BOOL getmacaddr(const char *  devguid,
                 char **       mac);
 BOOL isconnected(const char *  devguid);
+
+/* Caller is responsible for free'ing hexstr.  Note that it will be exactly
+ * twice as long plus 1 (null terminated) as the input buffer.
+ */
+BOOL base16encode(LPBYTE   data,
+                  DWORD    len,
+                  char **  hexstr);
 
 #endif /* apicommon_h */
