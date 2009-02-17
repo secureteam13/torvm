@@ -7,9 +7,8 @@ DLCMD=scripts/download.sh
 
 ifeq (,$(ISODIR))
 	ISODIR=iso
-else
-	override ISODIR:=$(realpath $(ISODIR))
 endif
+override ISODIR:=$(realpath $(ISODIR))
 override UNZIP:=unzip -qq
 
 # various utilities are downloaded and packaged into an ISO image
