@@ -372,7 +372,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	rm -rf $(THANDY_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(THANDY_NAME) $(THANDY_NAME) ; \
 	( cd $(THANDY_NAME); $(GITCMD) checkout $(THANDY_VER); ); \
 	tar zcf $(ISODIR)/dl/src/$(THANDY_TGZ) $(THANDY_NAME); rm -rf $(THANDY_NAME); \
-	echo "--- Exporting Tor version ($TORSVN_VER) from local mirror ..."; \
+	echo "--- Exporting Tor version $(TORSVN_VER) from local mirror ..."; \
 	rm -rf $(TORSVN_NAME); $(SVNCMD) export --revision $(TORSVN_VER) $(SDLDIR)/$(TORSVN_NAME) $(TORSVN_NAME) ; \
 	tar zcf $(ISODIR)/dl/src/$(TORSVN_TGZ) $(TORSVN_NAME); rm -rf $(TORSVN_NAME); \
 	echo "--- Exporting PyCrypto version $(PYCRYPTO_VER) from local mirror ..."; \
