@@ -1,14 +1,25 @@
 #!/bin/bash
-export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec:/c/WINDOWS/system32:/c/WINDOWS:/c/WINDOWS/System32/Wbem
+export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 
-# set ddir and brootdir in parent env if needed.
+# set sysdrive, ddir, and brootdir in parent env if needed.
+if [[ "$sysdrive" == "" ]]; then
+  sysdrive=`echo $SYSTEMDRIVE | sed 's/:.*//'`
+  if [ ! -d /$sysdrive ]; then
+    # msys not happy about whatever odd location windows installed into...
+    sysdrive=c
+  fi
+fi
+export sysdrive
 if [[ "$ddir" == "" ]]; then
-  export ddir=/c/Tor_VM
+  export ddir=/$sysdrive/Tor_VM
 fi
 if [[ "$brootdir" == "" ]]; then
-  export brootdir=/c/Tor_Win32
+  export brootdir=/$sysdrive/Tor_Win32
 fi
+
+# make sure some default windows paths are available too
+export PATH=$PATH:/$sysdrive/WINDOWS/system32:/$sysdrive/WINDOWS:/$sysdrive/WINDOWS/System32/Wbem
 
 # the build state file is solely used to toggle targets on or off
 # intended to be used when developing or automated via buildbot, etc.
@@ -32,6 +43,14 @@ export statedir="${ddir}/state"
 export instdir=$broot/Installer
 export thandir=$broot/Thandy
 export bundledir=$broot/Bundle
+
+if [[ "$SEVNZIP_INST_DIR" == "" ]]; then
+  SEVNZIP_INST_DIR=
+fi
+SEVNZIP_DEF_INSTPATH="/$sysdrive/Program Files\7-Zip"
+if [ -d "$SEVNZIP_DEF_INSTPATH" ]; then
+  export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
+fi
 
 export ZLIB_VER="1.2.3"
 export ZLIB_DIR="zlib-${ZLIB_VER}"
@@ -59,19 +78,19 @@ export GROFF_FILE="groff-${GROFF_VER}.tar.gz"
 export CMAKE_VER="2.6.2"
 export CMAKE_DIR="cmake-${CMAKE_VER}"
 export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
-export CMAKEBIN="/c/Program\ Files/CMake/bin"
+export CMAKEBIN="/$sysdrive/Program\ Files/CMake/bin"
 export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
 
 export QT_VER="4.4.3"
 export QT_DIR="qt-${QT_VER}"
 export QT_FILE="qt-${QT_VER}.tgz"
-export QT_ROOT="/c/Qt/${QT_VER}"
+export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
 export QT_BIN="${QT_ROOT}/bin"
-export QTDIR="C:\Qt\4.4.3"
+export QTDIR="${sysdrive}:\Qt\4.4.3"
 export QMAKESPEC=win32-g++
 export PATH="$PATH:$QT_BIN:$QTDIR\bin"
 
-export PYTHON_ROOT=/c/Python26
+export PYTHON_ROOT=/$sysdrive/Python26
 export PATH=$PATH:$PYTHON_ROOT
 
 export VIDALIA_FILE=vidalia-latest.tar.gz
@@ -86,8 +105,7 @@ export POLIPO_DIR=polipo-20080907
 export TORBUTTON_FILE=torbutton-1.2.0.xpi
 
 export NSIS_DIR=nsis-2.42
-export SEVENZIP_DIR=7-Zip
-export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin:/${SEVENZIP_DIR}"
+export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
 
 if [ -d "$VS80COMNTOOLS" ]; then
   export VSTOOLSDIR="$VS80COMNTOOLS"
@@ -190,6 +208,24 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
   rm -f /include/zlib.h /include/zconf.h /lib/libz.a /lib/libz.dll.a 
 
   pkgbuilt MSYS_SETUP
+fi
+
+if [[ "$PKGS_INSTALLED" != "yes" ]]; then
+  anyfail=0
+  echo "Checking for any packages to install..."
+  if [[ "$SEVNZIP_INST" == "true" ]]; then
+    if [ ! -f "/${SEVNZIP_PKG}" ]; then
+      echo "ERROR: Unable to locate expected 7zip package for install at location: /${SEVNZIP_PKG}"
+      anyfail=1
+    fi
+    else
+      $COMSPEC /k "msiexec /i ${MSYSROOT}\${SEVNZIP_PKG} /qn" < /dev/null
+      # XXX need to check for failure to install properly via exit code and package status.
+    fi
+  fi
+  if (( $anyfail == 0 )); then
+    pkgbuilt PKGS_INSTALLED
+  fi
 fi
 
 if [[ "$IGNORE_DDK" != "yes" ]]; then
@@ -342,7 +378,7 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   echo "cd \"$BPATH\"" >> dobuild.bat
   echo "build -cef" >> dobuild.bat
   echo "exit" >> dobuild.bat
-  cmd.exe /k dobuild.bat
+  $COMSPEC /k dobuild.bat
   TAPDRVN=tortap91
   if [ ! -f i386/${TAPDRVN}.sys ]; then
     echo "ERROR: openvpn tap-win32 driver build failed." >&2
@@ -369,7 +405,7 @@ if [[ "$WINPCAP_BUILT" != "yes" ]]; then
   echo "cd \"$BPATH\"" >> dobuild.bat
   echo "call CompileDriver" >> dobuild.bat
   echo "exit" >> dobuild.bat
-  cmd.exe /k dobuild.bat
+  $COMSPEC /k dobuild.bat
   if [ ! -f driver/bin/2k/i386/npf.sys ]; then
     echo "ERROR: WinPcap NPF.sys driver build failed." >&2
     exit 1
@@ -610,10 +646,10 @@ fi
 if [[ "$QT_BUILT" != "yes" ]]; then
   echo "Building Qt ..."
   cd /usr/src
-  mkdir /c/Qt
+  mkdir /$sysdrive/Qt
   tar zxvf $QT_FILE
-  mv $QT_DIR /c/Qt/$QT_VER
-  cd /c/Qt/$QT_VER
+  mv $QT_DIR /$sysdrive/Qt/$QT_VER
+  cd /$sysdrive/Qt/$QT_VER
   if [ -f /src/qt-mingwssl.patch ]; then
     patch -p1 < /src/qt-mingwssl.patch
   fi 
@@ -734,7 +770,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     ls -l src/vidalia/vidalia.exe
     mkdir bin
     for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do
-      cp /c/Qt/$QT_VER/bin/$FILE bin/
+      cp /$sysdrive/Qt/$QT_VER/bin/$FILE bin/
     done
     cp /bin/mingwm10.dll bin/
     cp /src/$OPENSSL_DIR/ssleay32-0.9.8.dll bin/

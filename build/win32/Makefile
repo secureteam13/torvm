@@ -156,11 +156,14 @@ NSIS_URL=http://downloads.sourceforge.net/nsis/nsis-2.42.zip?modtime=1229784735&
 NSIS_SUM=a1aef12a33f16273ac9109fde28713399f6a8016
 NSIS_TGZ=nsis-2.42.tar.gz
 
-7ZIP_VER=464
-7ZIP_F=7z464.msi
-7ZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?modtime=1230949842&big_mirror=1
-7ZIP_SUM=19a06e188a83452dc9273290dbef71220686c4c1
-7ZIP_NAME=7zip.msi
+# 7zip is a weird one; use MSI to silently install if needed via install.bat helper
+SEVNZIP_DL=true
+SEVNZIP_INST=true
+SEVNZIP_VER=464
+SEVNZIP_F=7z464.msi
+SEVNZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?modtime=1230949842&big_mirror=1
+SEVNZIP_SUM=19a06e188a83452dc9273290dbef71220686c4c1
+SEVNZIP_NAME=7zip.msi
 
 SDL_F=SDL-1.2.13.tar.gz
 SDL_URL=http://www.libsdl.org/release/SDL-1.2.13.tar.gz
@@ -232,7 +235,18 @@ THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 # buildscripts need some dire clean up...
 OK:=echo -n
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(7ZIP_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+
+# adjust if we're dealing with non source, zip or tar archives for a package
+SEVNZIP_OPT_DL=
+SEVNZIP_OPT_PKG=
+ifeq (true,$(SEVNZIP_DL))
+  ALLFILES+=$(SEVNZIP_F)
+  SEVNZIP_OPT_DL=if [ ! -e $(WDLDIR)/$(SEVNZIP_F) ]; then $(DLCMD) "$(SEVNZIP_URL)" $(SEVNZIP_SUM) "$(WDLDIR)/$(SEVNZIP_F)"; fi
+  ifeq (true,$(SEVNZIP_INST))
+    SEVNZIP_OPT_PKG=dl/$(SEVNZIP_F)
+  endif
+endif
 
 default all: downloads extract buildiso runinstall
 
@@ -269,7 +283,6 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(CMAKE_F) ]; then $(DLCMD) "$(CMAKE_URL)" $(CMAKE_SUM) "$(WDLDIR)/$(CMAKE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QT_F) ]; then $(DLCMD) "$(QT_URL)" $(QT_SUM) "$(WDLDIR)/$(QT_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(NSIS_F) ]; then $(DLCMD) "$(NSIS_URL)" $(NSIS_SUM) "$(WDLDIR)/$(NSIS_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(7ZIP_F) ]; then $(DLCMD) "$(7ZIP_URL)" $(7ZIP_SUM) "$(WDLDIR)/$(7ZIP_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SSLSRC_F) ]; then $(DLCMD) "$(SSLSRC_URL)" $(SSLSRC_SUM) "$(WDLDIR)/$(SSLSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PY2EXE_F) ]; then $(DLCMD) "$(PY2EXE_URL)" $(PY2EXE_SUM) "$(WDLDIR)/$(PY2EXE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WIX_F) ]; then $(DLCMD) "$(WIX_URL)" $(WIX_SUM) "$(WDLDIR)/$(WIX_F)"; fi
@@ -279,6 +292,7 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
+	@$(SEVNZIP_OPT_DL); $(OK)
 	@( export ddir=`pwd`/iso; if [ ! -f $ddir ]; then export ddir="$(ISODIR)"; fi; cd $(SDLDIR); if [ -d $(TORSVN_NAME) ]; then cd $(TORSVN_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORSVN_SVN)$(TORSVN_BR)" $(TORSVN_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(VIDALIA_NAME) ]; then cd $(VIDALIA_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(VIDALIA_SVN)$(VIDALIA_BR)" $(VIDALIA_NAME) ; fi )
@@ -311,6 +325,8 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	if [[ "$(DEBUG_NO_STRIP)" != "" ]]; then \
 		echo "export DEBUG_NO_STRIP=$(DEBUG_NO_STRIP)" >> $(ISODIR)/bldopts; \
 	fi; \
+	echo "export SEVNZIP_INST=$(SEVNZIP_INST)" >> $(ISODIR)/bldopts; \
+	echo "export SEVNZIP_PKG=$(SEVNZIP_OPT_PKG)" >> $(ISODIR)/bldopts; \
 	echo "--- Copying packages for ISO image file system ..."; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
