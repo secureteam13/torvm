@@ -8,8 +8,10 @@ DLCMD=scripts/download.sh
 ifeq (,$(ISODIR))
 	ISODIR=iso
 endif
-override ISODIR:=$(realpath $(ISODIR))
-override UNZIP:=unzip -qq
+UNZIP:=unzip -qq
+SVNCMD:=svn -q
+GITCMD:=git 
+LOCALGITOPT:=--local --bare -n
 
 # various utilities are downloaded and packaged into an ISO image
 # with an autorun.inf that launches a build of all the win32 parts.
@@ -215,13 +217,16 @@ TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
 TORBUTTON_VER=18548
 
+# XXX add / switch to signed tags one key mgmt resolved
 PYCRYPTO_NAME=pycrypto-latest
 PYCRYPTO_TGZ=$(PYCRYPTO_NAME).tar.gz
 PYCRYPTO_GIT=git://git.pycrypto.org:9419/crypto/pycrypto-2.x.git
+PYCRYPTO_VER=d1c4875e1f220652fe7ff8358f56dee3b2aba31b
 
 THANDY_NAME=thandy-latest
 THANDY_TGZ=$(THANDY_NAME).tar.gz
 THANDY_GIT=git://git.torproject.org/git/thandy
+THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 
 # XXX: tmp equivalent of exit 0 when chaining cmds
 # buildscripts need some dire clean up...
@@ -274,12 +279,12 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
-	@( cd $(SDLDIR); if [ -d $(TORSVN_NAME) ]; then cd $(TORSVN_NAME); svn up; $(OK); else svn co "$(TORSVN_SVN)$(TORSVN_BR)" $(TORSVN_NAME) ; fi )
-	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); svn up; $(OK); else svn co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
-	@( cd $(SDLDIR); if [ -d $(VIDALIA_NAME) ]; then cd $(VIDALIA_NAME); svn up; $(OK); else svn co "$(VIDALIA_SVN)$(VIDALIA_BR)" $(VIDALIA_NAME) ; fi )
-	@( cd $(SDLDIR); if [ -d $(MARBLE_NAME) ]; then cd $(MARBLE_NAME); svn up; $(OK); else svn co "$(MARBLE_SVN)$(MARBLE_BR)" $(MARBLE_NAME) ; fi )
-	@( cd $(SDLDIR); if [ -d $(THANDY_NAME) ]; then cd $(THANDY_NAME); git pull; $(OK); else git clone $(THANDY_GIT) $(THANDY_NAME); fi ) 
-	@( cd $(SDLDIR); if [ -d $(PYCRYPTO_NAME) ]; then cd $(PYCRYPTO_NAME); git pull; $(OK); else git clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME); fi ) 
+	@( export ddir=`pwd`/iso; if [ ! -f $ddir ]; then export ddir="$(ISODIR)"; fi; cd $(SDLDIR); if [ -d $(TORSVN_NAME) ]; then cd $(TORSVN_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORSVN_SVN)$(TORSVN_BR)" $(TORSVN_NAME) ; fi )
+	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
+	@( cd $(SDLDIR); if [ -d $(VIDALIA_NAME) ]; then cd $(VIDALIA_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(VIDALIA_SVN)$(VIDALIA_BR)" $(VIDALIA_NAME) ; fi )
+	@( cd $(SDLDIR); if [ -d $(MARBLE_NAME) ]; then cd $(MARBLE_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(MARBLE_SVN)$(MARBLE_BR)" $(MARBLE_NAME) ; fi )
+	@( cd $(SDLDIR); if [ -d $(THANDY_NAME) ]; then cd $(THANDY_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(THANDY_GIT) $(THANDY_NAME); fi ) 
+	@( cd $(SDLDIR); if [ -d $(PYCRYPTO_NAME) ]; then cd $(PYCRYPTO_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME); fi ) 
 
 extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	@if [ -d $(ISODIR) ]; then \
@@ -341,19 +346,23 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	$(UNZIP) $(WDLDIR)/$(WIX_F) -d wix; tar zcf $(ISODIR)/dl/$(WIX_TGZ) wix; rm -rf wix $(ISODIR)/dl/$(WIX_F); \
 	echo "--- Repacking Qt archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(QT_F) -d qt-$(QT_VER); mv qt-$(QT_VER)/qt-*/* qt-$(QT_VER)/; rm -rf qt-$(QT_VER)/qt-*; tar zcf $(ISODIR)/dl/src/$(QT_TGZ) qt-$(QT_VER); rm -rf qt-$(QT_VER) $(ISODIR)/dl/$(QT_F); \
-	echo "--- Exporting Vidalia from local mirror ..."; \
-	rm -rf $(VIDALIA_NAME); svn export --revision $(VIDALIA_VER) $(SDLDIR)/$(VIDALIA_NAME) $(VIDALIA_NAME); \
+	echo "--- Exporting Vidalia version $(VIDALIA_VER) from local mirror ..."; \
+	rm -rf $(VIDALIA_NAME); $(SVNCMD) export --revision $(VIDALIA_VER) $(SDLDIR)/$(VIDALIA_NAME) $(VIDALIA_NAME); \
 	tar zcf $(ISODIR)/dl/src/$(VIDALIA_TGZ) $(VIDALIA_NAME); rm -rf $(VIDALIA_NAME); \
-	echo "--- Exporting Marble from local mirror ..."; \
-	rm -rf $(MARBLE_NAME); svn export --revision $(MARBLE_VER) $(SDLDIR)/$(MARBLE_NAME) $(MARBLE_NAME) ; \
+	echo "--- Exporting Marble revision $(MARBLE_VER) from local mirror ..."; \
+	rm -rf $(MARBLE_NAME); $(SVNCMD) export --revision $(MARBLE_VER) $(SDLDIR)/$(MARBLE_NAME) $(MARBLE_NAME) ; \
 	tar zcf $(ISODIR)/dl/src/$(MARBLE_TGZ) $(MARBLE_NAME); rm -rf $(MARBLE_NAME); \
-	echo "--- Exporting Thandy from local mirror ..."; \
-	( cd $(SDLDIR); tar zcf $(ISODIR)/dl/src/$(THANDY_TGZ) $(THANDY_NAME) ); \
-	echo "--- Exporting Tor from local mirror ..."; \
-	rm -rf $(TORSVN_NAME); svn export --revision $(TORSVN_VER) $(SDLDIR)/$(TORSVN_NAME) $(TORSVN_NAME) ; \
+	echo "--- Exporting Thandy version $(THANDY_VER) from local mirror ..."; \
+	rm -rf $(THANDY_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(THANDY_NAME) $(THANDY_NAME) ; \
+	( cd $(THANDY_NAME); $(GITCMD) checkout $(THANDY_VER); ); \
+	tar zcf $(ISODIR)/dl/src/$(THANDY_TGZ) $(THANDY_NAME); rm -rf $(THANDY_NAME); \
+	echo "--- Exporting Tor version ($TORSVN_VER) from local mirror ..."; \
+	rm -rf $(TORSVN_NAME); $(SVNCMD) export --revision $(TORSVN_VER) $(SDLDIR)/$(TORSVN_NAME) $(TORSVN_NAME) ; \
 	tar zcf $(ISODIR)/dl/src/$(TORSVN_TGZ) $(TORSVN_NAME); rm -rf $(TORSVN_NAME); \
-	echo "--- Exporting PyCrypto from local mirror ..."; \
-	( cd $(SDLDIR); tar zcf $(ISODIR)/dl/src/$(PYCRYPTO_TGZ) $(PYCRYPTO_NAME) ); \
+	echo "--- Exporting PyCrypto version $(PYCRYPTO_VER) from local mirror ..."; \
+	rm -rf $(PYCRYPTO_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(PYCRYPTO_NAME) $(PYCRYPTO_NAME) ; \
+	( cd $(PYCRYPTO_NAME); $(GITCMD) checkout $(PYCRYPTO_VER); ); \
+	tar zcf $(ISODIR)/dl/src/$(PYCRYPTO_TGZ) $(PYCRYPTO_NAME); rm -rf $(PYCRYPTO_NAME); \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/pkg.tgz pkg ); \
