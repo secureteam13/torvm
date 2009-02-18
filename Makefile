@@ -139,7 +139,7 @@ buildtree: import
 
 buildkern: buildtree
 	@cd build/kamikaze/$(TGTNAME); \
-	time su $(BUSER) -c "( $(MAKE) V=99 oldconfig && $(MAKE) V=99 world )"; \
+	time su $(BUSER) -c "( $(MAKE) V=99 oldconfig && $(MAKE) world )"; \
 	if (( $$? != 0 )); then \
 		echo "ERROR: OpenWRT kernel build failed.  Check log for details." >&2; \
 		exit 1; \

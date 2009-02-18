@@ -44,6 +44,9 @@ export instdir=$broot/Installer
 export thandir=$broot/Thandy
 export bundledir=$broot/Bundle
 
+if [[ "$SEVNZIP_INST" == "" ]]; then
+  export SEVNZIP_INST=yes
+fi
 if [[ "$SEVNZIP_INST_DIR" == "" ]]; then
   SEVNZIP_INST_DIR=
 fi
@@ -93,8 +96,15 @@ export PATH="$PATH:$QT_BIN:$QTDIR\bin"
 export PYTHON_ROOT=/$sysdrive/Python26
 export PATH=$PATH:$PYTHON_ROOT
 
+export MARBLE_DIR=marble-latest
+export MARBLE_FILE="${MARBLE_DIR}.tar.gz"
+export MARBLE_DEST=/marble
+export MARBLE_OPTS="-DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_ROOT_PREFIX=${MARBLE_DEST} -DMARBLE_DATA_PATH=marble"
+
 export VIDALIA_FILE=vidalia-latest.tar.gz
 export VIDALIA_DIR=vidalia-latest
+# XXX need to resolve why this wont build against the installed marble, only the build tree
+export VIDALIA_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
 
 export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
 export GNURX_DIR=mingw-libgnurx-2.5.1
@@ -153,9 +163,9 @@ if [[ "$1" != "dobuild" ]]; then
     fi
   fi
   if [[ "$BUILD_SCP_USER" != "" ]]; then
-    echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_sub} ..."
+    echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_dsub} ..."
     scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_sub}/win32build.log"
+        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_dsub}/win32build.log"
   fi
   if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
     echo "Invoking automated shutdown ..."
@@ -219,6 +229,7 @@ if [[ "$PKGS_INSTALLED" != "yes" ]]; then
       anyfail=1
     fi
     else
+      echo "Attempting to install /${SEVNZIP_PKG} ..."
       $COMSPEC /k "msiexec /i ${MSYSROOT}\${SEVNZIP_PKG} /qn" < /dev/null
       # XXX need to check for failure to install properly via exit code and package status.
     fi
@@ -280,7 +291,7 @@ fi
 if [[ "$PTHREADS_BUILT" != "yes" ]]; then
   echo "Building pthreads-w32 ..."
   cd /usr/src
-  tar zxvf $PTHREAD_FILE
+  tar zxf $PTHREAD_FILE
   cd $PTHREAD_DIR
   make GC
   if (( $? != 0 )); then
@@ -291,6 +302,7 @@ if [[ "$PTHREADS_BUILT" != "yes" ]]; then
   cp *.a /lib/
   cp *.dll /bin/
   cp *.h /usr/include/
+  cp pthreadGC2.dll $libdir/
 
   pkgbuilt PTHREADS_BUILT
 fi
@@ -299,7 +311,7 @@ fi
 if [[ "$ZLIB_BUILT" != "yes" ]]; then
   echo "Building zlib ..."
   cd /usr/src
-  tar zxvf $ZLIB_FILE
+  tar zxf $ZLIB_FILE
   cd $ZLIB_DIR
   ./configure --prefix=/usr --enable-shared
   if (( $? != 0 )); then
@@ -329,7 +341,7 @@ fi
 if [[ "$SDL_BUILT" != "yes" ]]; then
   echo "Building SDL library ..."
   cd /usr/src
-  tar zxvf SDL-1.2.13.tar.gz
+  tar zxf SDL-1.2.13.tar.gz
   mv SDL-1.2.13 SDL
   cd SDL
   ./configure --prefix=/usr
@@ -352,7 +364,7 @@ fi
 if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   echo "Building openvpn tap-win32 driver ..."
   cd /usr/src
-  tar zxvf openvpn-2.1_rc10.tar.gz
+  tar zxf openvpn-2.1_rc10.tar.gz
   cd openvpn-2.1_rc10
   patch -p1 < ../openvpn-tor-tap-win32-driver.patch 2>/dev/null
   aclocal -I . && autoheader && autoconf && automake --add-missing --copy
@@ -394,7 +406,7 @@ fi
 if [[ "$WINPCAP_BUILT" != "yes" ]]; then
   echo "Building WinPcap ..."
   cd /usr/src
-  tar zxvf WpcapSrc_4_1_beta4.tar.gz
+  tar zxf WpcapSrc_4_1_beta4.tar.gz
   cd WpcapSrc_4_1_beta4
   wpbase=`pwd`
   patch -p1 < ../winpcap-tor-device-mods.patch 2>/dev/null
@@ -434,7 +446,7 @@ fi
 if [[ "$QEMU_BUILT" != "yes" ]]; then
   echo "Building qemu ..."
   cd /usr/src
-  tar zxvf qemu-0.9.1.tar.gz
+  tar zxf qemu-0.9.1.tar.gz
   cd qemu-0.9.1
   patch -p1 < ../qemu-kernel-cmdline-from-stdin.patch 2> /dev/null
   if (( $? != 0 )); then
@@ -476,7 +488,7 @@ fi
 if [[ "$W32CTL_BUILT" != "yes" ]]; then
   echo "Building torvm-w32 controller ..."
   cd /usr/src
-  tar zxvf torvm-w32.tgz
+  tar zxf torvm-w32.tgz
   cd torvm-w32
   make
   if (( $? != 0 )); then
@@ -492,7 +504,7 @@ fi
 if [[ "$GROFF_BUILT" != "yes" ]]; then
   echo "Building groff ..."
   cd /usr/src
-  tar zxvf $GROFF_FILE
+  tar zxf $GROFF_FILE
   cd $GROFF_DIR
   ./configure --prefix=/usr
   if (( $? != 0 )); then
@@ -519,7 +531,7 @@ fi
 if [[ "$OPENSSL_BUILT" != "yes" ]]; then
   echo "Building openssl ..."
   cd /usr/src
-  tar zxvf $OPENSSL_FILE
+  tar zxf $OPENSSL_FILE
   cd $OPENSSL_DIR
   # XXX there should be a way to do this without patching despite recursive make invocations.
   if [ -f ../openssl-0.9.8-mingw-shared.patch ]; then
@@ -561,7 +573,7 @@ fi
 if [[ "$PYCRYPTO_BUILT" != "yes" ]]; then
   echo "Building PyCrypto ..."
   cd /usr/src
-  tar zxvf pycrypto-latest.tar.gz
+  tar zxf pycrypto-latest.tar.gz
   cd pycrypto-latest
   python setup.py build
   if (( $? != 0 )); then
@@ -599,7 +611,7 @@ fi
 if [[ "$THANDY_BUILT" != "yes" ]]; then
   echo "Building Thandy ..."
   cd /usr/src
-  tar zxvf thandy-latest.tar.gz
+  tar zxf thandy-latest.tar.gz
   cd thandy-latest
   echo "Starting build..."
   python setup.py build
@@ -621,7 +633,7 @@ fi
 if [[ "$CMAKE_BUILT" != "yes" ]]; then
   echo "Building CMake ..."
   cd /usr/src
-  tar zxvf $CMAKE_FILE
+  tar zxf $CMAKE_FILE
   cd $CMAKE_DIR
   ./bootstrap --no-qt-gui
   if (( $? != 0 )); then
@@ -647,7 +659,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   echo "Building Qt ..."
   cd /usr/src
   mkdir /$sysdrive/Qt
-  tar zxvf $QT_FILE
+  tar zxf $QT_FILE
   mv $QT_DIR /$sysdrive/Qt/$QT_VER
   cd /$sysdrive/Qt/$QT_VER
   if [ -f /src/qt-mingwssl.patch ]; then
@@ -674,7 +686,7 @@ fi
 if [[ "$GNUREGEX_BUILT" != "yes" ]]; then
   echo "Building GNU regex ..."
   cd /usr/src
-  tar zxvf $GNURX_FILE
+  tar zxf $GNURX_FILE
   cd $GNURX_DIR
   ./configure --prefix=/usr
   if (( $? != 0 )); then
@@ -696,7 +708,7 @@ fi
 if [[ "$POLIPO_BUILT" != "yes" ]]; then
   echo "Building polipo ..."
   cd /usr/src
-  tar zxvf $POLIPO_FILE
+  tar zxf $POLIPO_FILE
   cd $POLIPO_DIR
   if [ -f ../polipo-mingw.patch ]; then
     echo "Patching polipo sources ..."
@@ -711,16 +723,38 @@ if [[ "$POLIPO_BUILT" != "yes" ]]; then
 fi
 
 
+if [[ "$MARBLE_BUILT" != "yes" ]]; then
+  echo "Building Marble widget for Qt ..."
+  cd /usr/src
+  tar zxf $MARBLE_FILE
+  cd $MARBLE_DIR
+  cmake $MARBLE_OPTS -G "MSYS Makefiles" .
+  if [ ! -f Makefile ]; then
+    echo "ERROR: Marble cmake failed."
+  fi
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: Marble build failed."
+  fi
+  make install
+  if (( $? != 0 )); then
+    echo "ERROR: Marble build failed."
+  fi
+
+  pkgbuilt MARBLE_BUILT
+fi
+
+
 if [[ "$VIDALIA_BUILT" != "yes" ]]; then
   echo "Building Vidalia ..."
   cd /usr/src
-  tar zxvf $VIDALIA_FILE
+  tar zxf $VIDALIA_FILE
   cd $VIDALIA_DIR
   if [ -f ../vidalia-torvm.patch ]; then
     echo "Applying torvm patch to sources ..."
     patch -p1 < ../vidalia-torvm.patch
   fi
-  cmake -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -DCMAKE_BUILD_TYPE=release -G "MSYS Makefiles" .
+  cmake $VIDALIA_OPTS -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -DCMAKE_BUILD_TYPE=release -G "MSYS Makefiles" .
   if [ ! -f Makefile ]; then
     echo "ERROR: Vidalia cmake failed."
   fi
@@ -741,7 +775,6 @@ if [[ "$DEBUG_NO_STRIP" == "" ]]; then
   echo "Stripping debug symbols from binaries and libraries ..."
   strip $libdir/*.dll
   strip $bindir/*.exe
-  strip $bindir/*.dll
   strip $ddir/*.exe
 fi
 
@@ -757,12 +790,12 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [[ "$TORSVN_EXTR" != "yes" ]]; then
     echo "Extracting sources for Tor from svn ..."
     cd /usr/src
-    tar zxvf $TORSVN_FILE
+    tar zxf $TORSVN_FILE
     pkgbuilt TORSVN_EXTR
   fi
   echo "Expanding package dir ..."
   cd /usr/src
-  tar zxvf pkg.tgz
+  tar zxf pkg.tgz
   if [ -f /usr/src/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
     echo "Creating Vidalia MSI package ..."
     cd /usr/src/$VIDALIA_DIR
@@ -881,9 +914,9 @@ fi
 
 
 if [[ "$BUILD_SCP_USER" != "" ]]; then
-  echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_sub} ..."
+  echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_dsub} ..."
   scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-      -r $ddir $brootdir "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_sub}/"
+      -r $ddir $brootdir "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_dsub}/"
 fi
 
 echo "DONE."

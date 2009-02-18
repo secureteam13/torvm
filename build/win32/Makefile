@@ -379,6 +379,10 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	rm -rf $(PYCRYPTO_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(PYCRYPTO_NAME) $(PYCRYPTO_NAME) ; \
 	( cd $(PYCRYPTO_NAME); $(GITCMD) checkout $(PYCRYPTO_VER); ); \
 	tar zcf $(ISODIR)/dl/src/$(PYCRYPTO_TGZ) $(PYCRYPTO_NAME); rm -rf $(PYCRYPTO_NAME); \
+	echo "--- Exporting and archiving Tor Button version $(TORBUTTON_VER) from local mirror ..."; \
+	rm -rf $(TORBUTTON_NAME); $(SVNCMD) export --revision $(TORBUTTON_VER) $(SDLDIR)/$(TORBUTTON_NAME) $(TORBUTTON_NAME) ; \
+	( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
+	mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/ ; rm -rf $(TORSVN_NAME); \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/pkg.tgz pkg ); \
