@@ -2,6 +2,9 @@
 export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
 
+export KERNEL_IMAGE=/src/add/vmlinuz
+export VMHDD_IMAGE=/src/add/hdd.img
+
 # set sysdrive, ddir, and brootdir in parent env if needed.
 if [[ "$sysdrive" == "" ]]; then
   sysdrive=`echo $SYSTEMDRIVE | sed 's/:.*//'`
@@ -10,6 +13,20 @@ if [[ "$sysdrive" == "" ]]; then
     sysdrive=c
   fi
 fi
+# make sure we express sys drive as lower case because of msys pedantic'ness
+# or that of the sub scripts and whatever else get confused...
+# boy, wouldn't tr be nice? tr -t '[:upper:]' '[:lower:]'
+for DL in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
+  echo $sysdrive | grep -i "^[${DL}]" >/dev/null
+  if (( $? == 0 )); then
+    sysdrive=$DL
+  fi
+done
+if [ ! -d /$sysdrive ]; then
+  echo "Bogus sysdrive Windows root set: $sysdrive , using defaults..."
+  sysdrive=c
+fi
+echo "Using Windows system drive root /$sysdrive , ${sysdrive}:\\"
 export sysdrive
 if [[ "$ddir" == "" ]]; then
   export ddir=/$sysdrive/Tor_VM
@@ -104,7 +121,8 @@ export MARBLE_OPTS="-DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_
 export VIDALIA_FILE=vidalia-latest.tar.gz
 export VIDALIA_DIR=vidalia-latest
 # XXX need to resolve why this wont build against the installed marble, only the build tree
-export VIDALIA_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
+export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release"
+export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
 
 export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
 export GNURX_DIR=mingw-libgnurx-2.5.1
@@ -665,7 +683,12 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   if [ -f /src/qt-mingwssl.patch ]; then
     patch -p1 < /src/qt-mingwssl.patch
   fi 
-  ./configure.exe -confirm-license -release -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns -no-sse2 -no-3dnow -qt-style-windowsxp -qt-style-windowsvista -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc -no-fast -openssl
+  QT_CONF="-confirm-license -release -shared"
+  QT_CONF="$QT_CONF -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns"
+  QT_CONF="$QT_CONF -qt-style-windowsxp -qt-style-windowsvista"
+  QT_CONF="$QT_CONF -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc"
+  QT_CONF="$QT_CONF -no-fast -openssl -no-libmng -no-libtiff -qt-libpng -qt-libjpeg -qt-gif"
+  ./configure.exe "$QT_CONF"
   echo "QT_BUILD_PARTS -= examples" >> .qmake.cache
   echo "QT_BUILD_PARTS -= demos" >> .qmake.cache
   echo "QT_BUILD_PARTS -= docs" >> .qmake.cache
@@ -754,7 +777,14 @@ if [[ "$VIDALIA_BUILT" != "yes" ]]; then
     echo "Applying torvm patch to sources ..."
     patch -p1 < ../vidalia-torvm.patch
   fi
-  cmake $VIDALIA_OPTS -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -DCMAKE_BUILD_TYPE=release -G "MSYS Makefiles" .
+  if [ ! -d bin ]; then
+    mkdir bin
+  fi
+  VIDALIA_EXE=src/vidalia/vidalia.exe
+
+  # build one vidalia with the old 2D interface ...
+  echo "Building Vidalia with standard 2D map widget support ..."
+  cmake $VIDALIA_OPTS -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -G "MSYS Makefiles" .
   if [ ! -f Makefile ]; then
     echo "ERROR: Vidalia cmake failed."
   fi
@@ -762,21 +792,32 @@ if [[ "$VIDALIA_BUILT" != "yes" ]]; then
   if (( $? != 0 )); then
     echo "ERROR: Vidalia build failed."
   fi
+  if [ -f $VIDALIA_EXE ]; then
+    cp $VIDALIA_EXE bin/vidalia-2d.exe
+  fi
+
+  # and another with the new Marble UI
+  echo "Building Vidalia with new 3D Marble map support ..."
+  make clean >/dev/null 2>/dev/null
+  cmake $VIDALIA_OPTS $VIDALIA_MARBLE_OPTS -DOPENSSL_LIBRARY_DIR=/src/$OPENSSL_DIR -G "MSYS Makefiles" .
+  if [ ! -f Makefile ]; then
+    echo "ERROR: Vidalia cmake failed."
+  fi
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: Vidalia build failed."
+  fi
+  if [ -f $VIDALIA_EXE ]; then
+    cp $VIDALIA_EXE bin/vidalia-marble.exe
+  fi
 
   pkgbuilt VIDALIA_BUILT
 fi
 
 
 # don't forget the kernel and virtual disk
-cp /usr/src/add/vmlinuz $libdir/
-cp /usr/src/add/hdd.img $libdir/
-
-if [[ "$DEBUG_NO_STRIP" == "" ]]; then
-  echo "Stripping debug symbols from binaries and libraries ..."
-  strip $libdir/*.dll
-  strip $bindir/*.exe
-  strip $ddir/*.exe
-fi
+cp $KERNEL_IMAGE $libdir/
+cp $VMHDD_IMAGE $libdir/
 
 
 # Microsoft Installer package build
@@ -799,7 +840,6 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f /usr/src/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
     echo "Creating Vidalia MSI package ..."
     cd /usr/src/$VIDALIA_DIR
-    strip src/vidalia/vidalia.exe
     ls -l src/vidalia/vidalia.exe
     mkdir bin
     for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do
@@ -813,8 +853,19 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     cp /bin/libgnurx-0.dll bin/
     cp /src/$POLIPO_DIR/polipo.exe bin/
     cp pkg/win32/polipo.conf bin/
-    strip bin/*.dll
-    strip bin/*.exe
+    if [ -d $MARBLE_DEST ]; then
+      cp $MARBLE_DEST/libmarblewidget.dll bin/
+      cp $MARBLE_DEST/plugins/*.dll bin/
+    fi
+    if [[ "$DEBUG_NO_STRIP" == "" ]]; then
+      echo "Stripping debug symbols from binaries and libraries ..."
+      strip $libdir/*.dll
+      strip $bindir/*.exe
+      strip $ddir/*.exe
+      strip bin/*.dll
+      strip bin/*.exe
+    fi
+
 
     candle.exe pkg/win32/*.wxs
     light.exe -out vidalia.msi vidalia.wixobj WixUI_Tor.wixobj -ext $WIX_UI
@@ -834,12 +885,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp $thandir/Thandy.exe bin/
   cp /src/$TORSVN_DIR/contrib/*.wxs ./
   cp -a $ddir ./
-  if [ -f /src/$TORBUTTON_FILE ]; then
-    cp /src/$TORBUTTON_FILE bin/torbutton.xpi
-  fi
   # XXX replace this with Matt's torbutton NSIS magic
-  touch tbcheck.bat
-  touch uninstall.bat
   candle.exe *.wxs
 
   echo "Linking torvm MSI installer package ..."
@@ -860,13 +906,16 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build polipo MSI installer."
   fi
 
-  echo "Linking torbutton MSI installer package ..."
-  light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
-  if [ -f torbutton.msi ]; then
-    cp torbutton.msi $bundledir
-    ls -l torbutton.msi
-  else
-    echo "ERROR: unable to build torbutton MSI installer."
+  if [ -f /src/$TORBUTTON_FILE ]; then
+    cp /src/$TORBUTTON_FILE bin/torbutton.xpi
+    echo "Linking torbutton MSI installer package ..."
+    light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
+    if [ -f torbutton.msi ]; then
+      cp torbutton.msi $bundledir
+      ls -l torbutton.msi
+    else
+      echo "ERROR: unable to build torbutton MSI installer."
+    fi
   fi
 
   echo "Linking thandy MSI installer package ..."
@@ -908,6 +957,25 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   else
     echo "ERROR: unable to build self extracting Tor VM archive."
   fi
+
+  echo "Creating vidalia exe self-extracting archive ..."
+  mkdir vidalia-exes
+  cp bin/vidalia-2d.exe vidalia-exes/
+  cp bin/vidalia-marble.exe vidalia-exes/
+  export exename=VidaliaExes.exe
+  if [ -f $exename ]; then
+    rm -f $exename
+  fi
+  7z.exe a -sfx7z.sfx $exename vidalia-exes
+  if [ -f $exename ]; then
+    cp $exename $bundledir
+    ls -l $exename
+  else
+    echo "ERROR: unable to build self extracting Tor VM archive."
+  fi
+
+  echo "Creating vidalia exe self-extracting archive ..."
+  
 
   pkgbuilt PACKAGES_BUILT
 fi
