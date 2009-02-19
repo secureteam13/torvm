@@ -688,7 +688,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   QT_CONF="$QT_CONF -qt-style-windowsxp -qt-style-windowsvista"
   QT_CONF="$QT_CONF -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc"
   QT_CONF="$QT_CONF -no-fast -openssl -no-libmng -no-libtiff -qt-libpng -qt-libjpeg -qt-gif"
-  ./configure.exe "$QT_CONF"
+  ./configure.exe $QT_CONF
   echo "QT_BUILD_PARTS -= examples" >> .qmake.cache
   echo "QT_BUILD_PARTS -= demos" >> .qmake.cache
   echo "QT_BUILD_PARTS -= docs" >> .qmake.cache
