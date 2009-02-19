@@ -170,19 +170,19 @@ if [[ "$1" != "dobuild" ]]; then
     exec /bin/bash -l
   fi
   export build_date=`date +%s`
-  cd /usr/src
-  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
-  if (( $? != 0 )); then
-    echo "BUILD_FAILED" >> build.log
-  else
-    echo "BUILD_COMPLETE" >> build.log
-  fi
   if [[ "$bld_dsub" == "" ]]; then
     export bld_dsub="${BUILD_SCP_DIR}/${build_date}"
     if [[ "$BUILD_SCP_NOSUBDIR" == "TRUE" ]]; then
       # dont include the date subdir in any copied destinations...
       export bld_dsub="${BUILD_SCP_DIR}"
     fi
+  fi
+  cd /usr/src
+  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
+  if (( $? != 0 )); then
+    echo "BUILD_FAILED" >> build.log
+  else
+    echo "BUILD_COMPLETE" >> build.log
   fi
   if [[ "$BUILD_SCP_USER" != "" ]]; then
     echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_dsub} ..."
@@ -249,7 +249,6 @@ if [[ "$PKGS_INSTALLED" != "yes" ]]; then
     if [ ! -f "/${SEVNZIP_PKG}" ]; then
       echo "ERROR: Unable to locate expected 7zip package for install at location: /${SEVNZIP_PKG}"
       anyfail=1
-    fi
     else
       echo "Attempting to install /${SEVNZIP_PKG} ..."
       $COMSPEC /k "msiexec /i ${MSYSROOT}\${SEVNZIP_PKG} /qn" < /dev/null
@@ -335,26 +334,30 @@ if [[ "$ZLIB_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $ZLIB_FILE
   cd $ZLIB_DIR
-  ./configure --prefix=/usr --enable-shared
-  if (( $? != 0 )); then
-    echo "ERROR: zlib configure failed." >&2
-    exit 1
-  fi
-  make
-  if (( $? != 0 )); then
-    echo "ERROR: zlib build failed." >&2
-    exit 1
-  fi
-  make install
-  if (( $? != 0 )); then
-    echo "ERROR: zlib install failed." >&2
-    exit 1
-  fi
-  make -f win32/Makefile.gcc
-  if (( $? != 0 )); then
-    echo "ERROR: zlib dynamic build failed." >&2
-    exit 1
-  fi
+  (
+    # LIBZ configure is odd... perhaps these should be renamed
+    unset libdir
+    ./configure --prefix=/usr --enable-shared
+    if (( $? != 0 )); then
+      echo "ERROR: zlib configure failed." >&2
+      exit 1
+    fi
+    make
+    if (( $? != 0 )); then
+      echo "ERROR: zlib build failed." >&2
+      exit 1
+    fi
+    make install
+    if (( $? != 0 )); then
+      echo "ERROR: zlib install failed." >&2
+      exit 1
+    fi
+    make -f win32/Makefile.gcc
+    if (( $? != 0 )); then
+      echo "ERROR: zlib dynamic build failed." >&2
+      exit 1
+    fi
+  )
 
   pkgbuilt ZLIB_BUILT
 fi
@@ -919,7 +922,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   if [ -f /src/$TORBUTTON_FILE ]; then
-    cp /src/$TORBUTTON_FILE bin/torbutton.xpi
+    cp /src/$TORBUTTON_FILE torbutton.xpi
     echo "Linking torbutton MSI installer package ..."
     light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
     if [ -f torbutton.msi ]; then
