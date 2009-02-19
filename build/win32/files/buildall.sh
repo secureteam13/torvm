@@ -29,11 +29,15 @@ fi
 echo "Using Windows system drive root /$sysdrive , ${sysdrive}:\\"
 export sysdrive
 if [[ "$ddir" == "" ]]; then
-  export ddir=/$sysdrive/Tor_VM
+  ddir=/$sysdrive/Tor_VM
 fi
 if [[ "$brootdir" == "" ]]; then
-  export brootdir=/$sysdrive/Tor_Win32
+  brootdir=/$sysdrive/Tor_Win32
 fi
+echo "Using Tor VM destination folder: $ddir"
+echo "Using Bundle destination folder: $brootdir"
+export ddir
+export brootdir
 
 # make sure some default windows paths are available too
 export PATH=$PATH:/$sysdrive/WINDOWS/system32:/$sysdrive/WINDOWS:/$sysdrive/WINDOWS/System32/Wbem
@@ -57,9 +61,9 @@ function pkgbuilt () {
 export libdir="${ddir}/lib"
 export bindir="${ddir}/bin"
 export statedir="${ddir}/state"
-export instdir=$broot/Installer
-export thandir=$broot/Thandy
-export bundledir=$broot/Bundle
+export instdir="${brootdir}/Installer"
+export thandir="${brootdir}/Thandy"
+export bundledir="${brootdir}/Bundle"
 
 if [[ "$SEVNZIP_INST" == "" ]]; then
   export SEVNZIP_INST=true
@@ -701,6 +705,14 @@ if [[ "$QT_BUILT" != "yes" ]]; then
       echo "ERROR: Qt build failed."
     fi
   fi
+
+  # so it seems some things (marble) want to try and load
+  # image plugins that are not plugins, namely the .a libtool
+  # hooks for linking DLL's in mingw.  this is a hammer to
+  # prevent such mistakes that will halt an automated build with
+  # "Error not a library" warning when they try to OpenLibrary
+  # XXX Marble just needs a patch or config tweak to not do this.
+  find plugins/imageformats -name \*.a -exec rm {} \;
 
   pkgbuilt QT_BUILT
 fi
