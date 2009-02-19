@@ -62,7 +62,7 @@ export thandir=$broot/Thandy
 export bundledir=$broot/Bundle
 
 if [[ "$SEVNZIP_INST" == "" ]]; then
-  export SEVNZIP_INST=yes
+  export SEVNZIP_INST=true
 fi
 if [[ "$SEVNZIP_INST_DIR" == "" ]]; then
   SEVNZIP_INST_DIR=
