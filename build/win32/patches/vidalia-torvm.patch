@@ -1,32 +1,6 @@
-diff -Naur a/cmake/FindOpenSSL.cmake b/cmake/FindOpenSSL.cmake
---- a/cmake/FindOpenSSL.cmake	2008-04-02 02:00:24.794800000 +0000
-+++ b/cmake/FindOpenSSL.cmake	2009-02-15 14:46:02.122270032 +0000
-@@ -96,8 +96,8 @@
-   mark_as_advanced(OPENSSL_LIBSSL_DEBUG   OPENSSL_LIBCRYPTO_DEBUG
-                    OPENSSL_LIBSSL_RELEASE OPENSSL_LIBCRYPTO_RELEASE)
- else(MSVC)
--  find_library(OPENSSL_LIBSSL NAMES ssl ssleay32)
--  find_library(OPENSSL_LIBCRYPTO NAMES crypto libeay32)
-+  find_library(OPENSSL_LIBSSL NAMES ssleay32-0.9.8 ssl ssleay32)
-+  find_library(OPENSSL_LIBCRYPTO NAMES cryptoeay32-0.9.8 crypto libeay32)
- endif(MSVC)
- 
- 
-diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
---- a/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
-+++ b/pkg/build-geoip-cache.sh	2009-02-15 14:46:02.122270032 +0000
-@@ -13,7 +13,7 @@
- 
- 
- DIRURL="http://tor.noreply.org/tor/status/all"
--GEOIPURL="http://geoip.vidalia-project.net/cgi-bin/geoip"
-+GEOIPURL="http://peertech.org/geoip"
- CACHEFILE="geoip-cache"
- 
- if [ "$1" == "-notimestamp" -o "$1" == "--notimestamp" ]; then
 diff -Naur a/pkg/win32/WixUI_Tor.wxs b/pkg/win32/WixUI_Tor.wxs
 --- a/pkg/win32/WixUI_Tor.wxs	1970-01-01 00:00:00.000000000 +0000
-+++ b/pkg/win32/WixUI_Tor.wxs	2009-02-15 14:46:02.123269880 +0000
++++ b/pkg/win32/WixUI_Tor.wxs	2009-02-20 06:33:55.000000000 +0000
 @@ -0,0 +1,62 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<!--
@@ -92,7 +66,7 @@ diff -Naur a/pkg/win32/WixUI_Tor.wxs b/pkg/win32/WixUI_Tor.wxs
 +</Wix>
 diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
 --- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
-+++ b/pkg/win32/polipo.conf	2009-02-15 14:46:02.124269728 +0000
++++ b/pkg/win32/polipo.conf	2009-02-20 06:33:55.000000000 +0000
 @@ -36,8 +36,9 @@
  
  # Uncomment this if you want to use a parent SOCKS proxy:
@@ -127,8 +101,8 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 --- a/pkg/win32/vidalia.wxs.in	2009-01-31 04:32:04.562803000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-02-15 14:54:33.517526136 +0000
-@@ -1,221 +1,198 @@
++++ b/pkg/win32/vidalia.wxs.in	2009-02-20 19:43:57.000000000 +0000
+@@ -1,221 +1,223 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
 -  $Id: vidalia.wxs.in 3486 2009-01-31 04:32:04Z edmanm $
@@ -159,6 +133,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +  <?define CurrMingwLibsGUID="86b879cf-306f-438e-b38f-b9e6d74152cb" ?>
 +  <?define CurrGeoIPCacheGUID="8686ff7a-d812-44db-8c11-b94478495096" ?>
 +  <?define CurrPolipoConfigGUID="2151ad60-10ce-4e91-ab44-d1895d3b001d" ?>
++  <?define CurrMarblePluginGUID="0212a411-960d-4729-b03b-3c95777a4551" ?>
 +  <?define CurrDocumentsGUID="abfaae86-352e-4b63-b9b3-c222936f24b3" ?>
 +  <?define CurrConfigFileGUID="4428ffd8-710d-4550-b51d-16e69e073981" ?>
 +  <?define CurrStartMenuGUID="69d3f4bb-755c-4ade-aeb1-771fd5f8ba60" ?>
@@ -478,6 +453,30 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +              DiskId="1"
 +            />
 +          </Component>
++
++          <!-- Marble plugin library file -->
++          <Component Id="MarblePlugin" Guid="$(var.CurrMarblePluginGUID)">
++            <RegistryKey Root="HKCU" Key="Software\Vidalia" Action="createAndRemoveOnUninstall">
++              <RegistryValue Name="MarblePluginLibrary" Value="1" Type="integer" KeyPath="yes" />
++            </RegistryKey>
++            <File Id="MarbleWidgetDll" DiskId="1"
++              Name="libmarblewidget.dll" Source="bin/libmarblewidget.dll" />
++            <File Id="MarbleOverview.dll" DiskId="1"
++              Name="libMarbleOverviewMap.dll" Source="bin/libMarbleOverviewMap.dll" />
++            <File Id="MarbleStars.dll" DiskId="1"
++              Name="libMarbleStarsPlugin.dll" Source="bin/libMarbleStarsPlugin.dll" />
++            <File Id="CompassFloat.dll" DiskId="1"
++              Name="libCompassFloatItem.dll" Source="bin/libCompassFloatItem.dll" />
++            <File Id="MapScaleFloat.dll" DiskId="1"
++              Name="libMapScaleFloatItem.dll" Source="bin/libMapScaleFloatItem.dll" />
++            <File Id="MarbleCrosshairs.dll" DiskId="1"
++              Name="libMarbleCrosshairsPlugin.dll" Source="bin/libMarbleCrosshairsPlugin.dll" />
++            <File Id="MarbleGeoData.dll" DiskId="1"
++              Name="libMarbleGeoDataPlugin.dll" Source="bin/libMarbleGeoDataPlugin.dll" />
++            <File Id="NavigationFloat.dll" DiskId="1"
++              Name="libNavigationFloatItem.dll" Source="bin/libNavigationFloatItem.dll" />
++          </Component>
++
 +         </Directory>
 +        </Directory>
 +
@@ -518,7 +517,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
                        Icon="vidalia.ico" IconIndex="0" />
              <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
            </Component>
-@@ -223,41 +200,42 @@
+@@ -223,41 +225,43 @@
        </Directory>
  
        <Directory Id="DesktopFolder" Name="Desktop">
@@ -569,10 +568,11 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -        <ComponentGroupRef Id="MarbleData"/>
 +        <ComponentRef Id="GeoIPCache" />
 +        <ComponentRef Id="PolipoConfig" />
++        <ComponentRef Id="MarblePlugin" />
        </Feature>
        <Feature Id="Shortcuts" Title="Shortcuts"
                 AllowAdvertise="no" Absent="allow" Level="1"
-@@ -280,10 +258,15 @@
+@@ -280,10 +284,15 @@
        </Feature>
      </Feature>
  
@@ -593,8 +593,8 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
    </Product>
  </Wix>
 diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
---- a/src/common/win32.cpp	2008-02-29 04:30:11.928307000 +0000
-+++ b/src/common/win32.cpp	2009-02-15 14:46:02.246251184 +0000
+--- a/src/common/win32.cpp	2009-02-16 22:53:13.437184000 +0000
++++ b/src/common/win32.cpp	2009-02-20 06:33:55.000000000 +0000
 @@ -67,16 +67,20 @@
  QString
  win32_program_files_folder()
@@ -622,7 +622,7 @@ diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
  /** Returns the value in keyName at keyLocation. 
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
-+++ b/src/vidalia/config/torsettings.cpp	2009-02-15 14:46:02.247251032 +0000
++++ b/src/vidalia/config/torsettings.cpp	2009-02-20 06:33:56.000000000 +0000
 @@ -61,6 +61,7 @@
  {
  #if defined(Q_OS_WIN32)
@@ -649,7 +649,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
    setDefault(SETTING_AUTH_METHOD,   toString(DEFAULT_AUTH_METHOD));
 diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidaliasettings.cpp
 --- a/src/vidalia/config/vidaliasettings.cpp	2009-02-03 02:09:39.844750000 +0000
-+++ b/src/vidalia/config/vidaliasettings.cpp	2009-02-15 14:46:02.248250880 +0000
++++ b/src/vidalia/config/vidaliasettings.cpp	2009-02-20 06:33:56.000000000 +0000
 @@ -71,9 +71,16 @@
    setDefault(SETTING_SHOW_MAINWINDOW_AT_START, true);
    setDefault(SETTING_BROWSER_EXECUTABLE, "");
@@ -672,7 +672,7 @@ diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidalia
  #else
 diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
 --- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
-+++ b/src/vidalia/network/geoipresolver.cpp	2009-02-15 14:46:02.249250728 +0000
++++ b/src/vidalia/network/geoipresolver.cpp	2009-02-20 06:33:56.000000000 +0000
 @@ -24,13 +24,13 @@
  #endif
  
@@ -705,9 +705,36 @@ diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipre
            "certificate database.");
  #endif
  }
+diff -Naur a/src/vidalia/network/tormapwidget.cpp b/src/vidalia/network/tormapwidget.cpp
+--- a/src/vidalia/network/tormapwidget.cpp	2009-02-19 21:15:24.029490000 +0000
++++ b/src/vidalia/network/tormapwidget.cpp	2009-02-20 06:36:59.000000000 +0000
+@@ -24,8 +24,8 @@
+ using namespace Marble;
+ 
+ /** QPens to use for drawing different map elements */
+-#define CIRCUIT_NORMAL_PEN      QPen(Qt::green,  2.0)
+-#define CIRCUIT_SELECTED_PEN    QPen(Qt::yellow, 3.0)
++#define CIRCUIT_NORMAL_PEN      QPen(Qt::blue,  2.0)
++#define CIRCUIT_SELECTED_PEN    QPen(Qt::green, 3.0)
+ 
+ 
+ /** Default constructor */
+@@ -33,10 +33,11 @@
+   : MarbleWidget(parent)
+ {
+   setMapThemeId("earth/srtm/srtm.dgml");
+-  setShowScaleBar(false);
++  setShowScaleBar(true);
+   setShowCrosshairs(false);
+   setAnimationsEnabled(true);
+   setCursor(Qt::OpenHandCursor);
++  setShowFrameRate(true);
+ 
+   TorMapWidgetInputHandler *handler = new TorMapWidgetInputHandler();
+   TorMapWidgetPopupMenu *popupMenu  = new TorMapWidgetPopupMenu(this);
 diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/entrust-secure-server-root.crt
 --- a/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-02-15 14:46:02.250250576 +0000
++++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-02-20 06:33:56.000000000 +0000
 @@ -0,0 +1,30 @@
 +-----BEGIN CERTIFICATE-----
 +MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UE
@@ -741,7 +768,7 @@ diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/en
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root.crt
 --- a/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/gd-class2-root.crt	2009-02-15 14:46:02.250250576 +0000
++++ b/src/vidalia/res/gd-class2-root.crt	2009-02-20 06:33:56.000000000 +0000
 @@ -0,0 +1,24 @@
 +-----BEGIN CERTIFICATE-----
 +MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh
@@ -769,7 +796,7 @@ diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
 --- a/src/vidalia/res/vidalia.qrc	2009-02-01 00:34:33.066938000 +0000
-+++ b/src/vidalia/res/vidalia.qrc	2009-02-15 14:46:02.251250424 +0000
++++ b/src/vidalia/res/vidalia.qrc	2009-02-20 06:33:56.000000000 +0000
 @@ -290,5 +290,7 @@
      </qresource>
      <qresource prefix="/geoip">
@@ -780,7 +807,7 @@ diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
  </RCC>
 diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
 --- a/src/vidalia/updateprocess.cpp	2009-01-03 20:10:16.806554000 +0000
-+++ b/src/vidalia/updateprocess.cpp	2009-02-15 14:46:02.251250424 +0000
++++ b/src/vidalia/updateprocess.cpp	2009-02-20 06:33:56.000000000 +0000
 @@ -234,13 +234,23 @@
  QString
  UpdateProcess::updateExecutable()

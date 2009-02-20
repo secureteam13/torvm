@@ -163,7 +163,6 @@ SEVNZIP_VER=464
 SEVNZIP_F=7z464.msi
 SEVNZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?modtime=1230949842&big_mirror=1
 SEVNZIP_SUM=19a06e188a83452dc9273290dbef71220686c4c1
-SEVNZIP_NAME=7zip.msi
 
 SDL_F=SDL-1.2.13.tar.gz
 SDL_URL=http://www.libsdl.org/release/SDL-1.2.13.tar.gz
@@ -205,7 +204,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3520
+VIDALIA_VER=3560
 
 # for package resources
 TORSVN_NAME=tor-latest

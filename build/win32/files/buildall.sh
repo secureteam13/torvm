@@ -68,10 +68,7 @@ export bundledir="${brootdir}/Bundle"
 if [[ "$SEVNZIP_INST" == "" ]]; then
   export SEVNZIP_INST=true
 fi
-if [[ "$SEVNZIP_INST_DIR" == "" ]]; then
-  SEVNZIP_INST_DIR=
-fi
-SEVNZIP_DEF_INSTPATH="/$sysdrive/Program Files\7-Zip"
+SEVNZIP_DEF_INSTPATH="/$sysdrive/Program Files/7-Zip"
 if [ -d "$SEVNZIP_DEF_INSTPATH" ]; then
   export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
 fi
@@ -250,8 +247,8 @@ if [[ "$PKGS_INSTALLED" != "yes" ]]; then
       echo "ERROR: Unable to locate expected 7zip package for install at location: /${SEVNZIP_PKG}"
       anyfail=1
     else
-      echo "Attempting to install /${SEVNZIP_PKG} ..."
-      $COMSPEC /k "msiexec /i ${MSYSROOT}\${SEVNZIP_PKG} /qn" < /dev/null
+      echo "Attempting to install ${MSYSROOT}\\${SEVNZIP_PKG} ..."
+      $COMSPEC /k "msiexec /i ${MSYSROOT}\\${SEVNZIP_PKG} /qn" < /dev/null
       # XXX need to check for failure to install properly via exit code and package status.
     fi
   fi
