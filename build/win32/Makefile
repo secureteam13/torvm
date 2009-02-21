@@ -243,7 +243,7 @@ ifeq (true,$(SEVNZIP_DL))
   ALLFILES+=$(SEVNZIP_F)
   SEVNZIP_OPT_DL=if [ ! -e $(WDLDIR)/$(SEVNZIP_F) ]; then $(DLCMD) "$(SEVNZIP_URL)" $(SEVNZIP_SUM) "$(WDLDIR)/$(SEVNZIP_F)"; fi
   ifeq (true,$(SEVNZIP_INST))
-    SEVNZIP_OPT_PKG=dl/$(SEVNZIP_F)
+    SEVNZIP_OPT_PKG=$(SEVNZIP_F)
   endif
 endif
 

@@ -243,12 +243,12 @@ if [[ "$PKGS_INSTALLED" != "yes" ]]; then
   anyfail=0
   echo "Checking for any packages to install..."
   if [[ "$SEVNZIP_INST" == "true" ]]; then
-    if [ ! -f "/${SEVNZIP_PKG}" ]; then
+    if [ ! -f "/dl/${SEVNZIP_PKG}" ]; then
       echo "ERROR: Unable to locate expected 7zip package for install at location: /${SEVNZIP_PKG}"
       anyfail=1
     else
-      echo "Attempting to install ${MSYSROOT}\\${SEVNZIP_PKG} ..."
-      $COMSPEC /k "msiexec /i ${MSYSROOT}\\${SEVNZIP_PKG} /qn" < /dev/null
+      echo "Attempting to install ${MSYSROOT}\\dl\\${SEVNZIP_PKG} ..."
+      $COMSPEC /k "msiexec /i ${MSYSROOT}\\dl\\${SEVNZIP_PKG} /qn" < /dev/null
       # XXX need to check for failure to install properly via exit code and package status.
     fi
   fi
@@ -355,6 +355,7 @@ if [[ "$ZLIB_BUILT" != "yes" ]]; then
       exit 1
     fi
   )
+  cp *.dll $libdir/
 
   pkgbuilt ZLIB_BUILT
 fi
@@ -969,25 +970,6 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   else
     echo "ERROR: unable to build self extracting Tor VM archive."
   fi
-
-  echo "Creating vidalia exe self-extracting archive ..."
-  mkdir vidalia-exes
-  cp bin/vidalia-2d.exe vidalia-exes/
-  cp bin/vidalia-marble.exe vidalia-exes/
-  export exename=VidaliaExes.exe
-  if [ -f $exename ]; then
-    rm -f $exename
-  fi
-  7z.exe a -sfx7z.sfx $exename vidalia-exes
-  if [ -f $exename ]; then
-    cp $exename $bundledir
-    ls -l $exename
-  else
-    echo "ERROR: unable to build self extracting Tor VM archive."
-  fi
-
-  echo "Creating vidalia exe self-extracting archive ..."
-  
 
   pkgbuilt PACKAGES_BUILT
 fi
