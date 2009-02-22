@@ -1004,6 +1004,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp /src/$TOR_DIR/bin/*.exe bin/
   mkdir -p src/config
   mkdir -p share/tor
+  mkdir -p contrib
+  cp /src/$TOR_DIR/contrib/*.ico contrib/
   cp /src/$TOR_DIR/share/tor/geoip share/tor/
   cp /src/$TOR_DIR/src/config/torrc.sample src/config/
   for FNAME in README Usage.html Authors ChangeLog LICENSE; do
