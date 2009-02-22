@@ -1,168 +1,184 @@
 #!/bin/bash
-export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec
-export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib
-
-export KERNEL_IMAGE=/src/add/vmlinuz
-export VMHDD_IMAGE=/src/add/hdd.img
-
-# set sysdrive, ddir, and brootdir in parent env if needed.
-if [[ "$sysdrive" == "" ]]; then
-  sysdrive=`echo $SYSTEMDRIVE | sed 's/:.*//'`
-  if [ ! -d /$sysdrive ]; then
-    # msys not happy about whatever odd location windows installed into...
-    sysdrive=c
-  fi
-fi
-# make sure we express sys drive as lower case because of msys pedantic'ness
-# or that of the sub scripts and whatever else get confused...
-# boy, wouldn't tr be nice? tr -t '[:upper:]' '[:lower:]'
-for DL in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
-  echo $sysdrive | grep -i "^[${DL}]" >/dev/null
-  if (( $? == 0 )); then
-    sysdrive=$DL
-  fi
-done
-if [ ! -d /$sysdrive ]; then
-  echo "Bogus sysdrive Windows root set: $sysdrive , using defaults..."
-  sysdrive=c
-fi
-echo "Using Windows system drive root /$sysdrive , ${sysdrive}:\\"
-export sysdrive
-if [[ "$ddir" == "" ]]; then
-  ddir=/$sysdrive/Tor_VM
-fi
-if [[ "$brootdir" == "" ]]; then
-  brootdir=/$sysdrive/Tor_Win32
-fi
-echo "Using Tor VM destination folder: $ddir"
-echo "Using Bundle destination folder: $brootdir"
-export ddir
-export brootdir
-
-# make sure some default windows paths are available too
-export PATH=$PATH:/$sysdrive/WINDOWS/system32:/$sysdrive/WINDOWS:/$sysdrive/WINDOWS/System32/Wbem
-
-# the build state file is solely used to toggle targets on or off
-# intended to be used when developing or automated via buildbot, etc.
-if [[ "$bstatefile" == "" ]]; then
-  export bstatefile="/src/build.state"
-fi
-if [ -f $bstatefile ]; then
-  source $bstatefile
-else
-  echo '#!/bin/bash' > $bstatefile
-  chmod +x $bstatefile
-fi
-
-function pkgbuilt () {
-  echo "export $1=yes" >> $bstatefile
-}
-
-export libdir="${ddir}/lib"
-export bindir="${ddir}/bin"
-export statedir="${ddir}/state"
-export instdir="${brootdir}/Installer"
-export thandir="${brootdir}/Thandy"
-export bundledir="${brootdir}/Bundle"
-
-if [[ "$SEVNZIP_INST" == "" ]]; then
-  export SEVNZIP_INST=true
-fi
-SEVNZIP_DEF_INSTPATH="/$sysdrive/Program Files/7-Zip"
-if [ -d "$SEVNZIP_DEF_INSTPATH" ]; then
-  export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
-fi
-
-export ZLIB_VER="1.2.3"
-export ZLIB_DIR="zlib-${ZLIB_VER}"
-export ZLIB_FILE="zlib-${ZLIB_VER}.tar.gz"
-
-export WPCAP_DIR=/usr/src/WpcapSrc_4_1_beta4
-export WPCAP_INCLUDE="-I${WPCAP_DIR}/wpcap/libpcap -I${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
-export WPCAP_LDFLAGS="-L${WPCAP_DIR}/wpcap/PRJ -L${WPCAP_DIR}/packetNtx/Dll/Project"
-
-export TORSVN_DIR="tor-latest"
-export TORSVN_FILE="tor-latest.tar.gz"
-
-export PTHREAD_VER=2-8-0
-export PTHREAD_DIR="pthreads-w32-${PTHREAD_VER}-release"
-export PTHREAD_FILE="${PTHREAD_DIR}.tar.gz"
-
-export OPENSSL_VER="0.9.8j"
-export OPENSSL_DIR="openssl-${OPENSSL_VER}"
-export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
-
-export GROFF_VER="1.19.2"
-export GROFF_DIR="groff-${GROFF_VER}"
-export GROFF_FILE="groff-${GROFF_VER}.tar.gz"
-
-export CMAKE_VER="2.6.2"
-export CMAKE_DIR="cmake-${CMAKE_VER}"
-export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
-export CMAKEBIN="/$sysdrive/Program\ Files/CMake/bin"
-export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
-
-export QT_VER="4.4.3"
-export QT_DIR="qt-${QT_VER}"
-export QT_FILE="qt-${QT_VER}.tgz"
-export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
-export QT_BIN="${QT_ROOT}/bin"
-export QTDIR="${sysdrive}:\Qt\4.4.3"
-export QMAKESPEC=win32-g++
-export PATH="$PATH:$QT_BIN:$QTDIR\bin"
-
-export PYTHON_ROOT=/$sysdrive/Python26
-export PATH=$PATH:$PYTHON_ROOT
-
-export MARBLE_DIR=marble-latest
-export MARBLE_FILE="${MARBLE_DIR}.tar.gz"
-export MARBLE_DEST=/marble
-export MARBLE_OPTS="-DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_ROOT_PREFIX=${MARBLE_DEST} -DMARBLE_DATA_PATH=marble"
-
-export VIDALIA_FILE=vidalia-latest.tar.gz
-export VIDALIA_DIR=vidalia-latest
-# XXX need to resolve why this wont build against the installed marble, only the build tree
-export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release"
-export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
-
-export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
-export GNURX_DIR=mingw-libgnurx-2.5.1
-
-export POLIPO_FILE=polipo-20080907.tar.gz
-export POLIPO_DIR=polipo-20080907
-
-export TORBUTTON_FILE=torbutton-1.2.0.xpi
-
-export NSIS_DIR=nsis-2.42
-export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
-
-if [ -d "$VS80COMNTOOLS" ]; then
-  export VSTOOLSDIR="$VS80COMNTOOLS"
-  export VSTOOLSENV="$VS80COMNTOOLS\vsvars32.bat"
-elif [ -d "$VS90COMNTOOLS" ]; then
-  export VSTOOLSDIR="$VS90COMNTOOLS"
-  export VSTOOLSENV="$VS90COMNTOOLS\vsvars32.bat"
-else
-  unset VSTOOLSDIR
-  unset VSTOOLSENV
-fi
-if [ -f "$VSTOOLSENV" ]; then
-  echo "Using VisualStudio environment script at $VSTOOLSENV."
-  export PATH="$PATH:$VSTOOLSDIR:$VSTOOLSDIR\Bin:$VSTOOLSDIR\VC\bin:$VSTOOLSDIR\Common7\IDE:$VSTOOLSDIR\SDK\v2.0\bin"
-  echo "Using new PATH=$PATH"
-fi
-
-# always set these since we may need to copy over failure logs
-# and don't have a proper login shell env
-if [ -f ~/.ssh/user ]; then
-  export BUILD_SCP_USER=`cat ~/.ssh/user`
-  export BUILD_SCP_HOST=`cat ~/.ssh/host`
-  export BUILD_SCP_DIR=`cat ~/.ssh/dest`
-fi
-
 # wrap the actual build process so we capture stdout/stderr
 # and also transfer over the build log and shutdown, if needed.
 if [[ "$1" != "dobuild" ]]; then
+  # only set various environment settings on the first pass
+  export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec:$PATH
+  export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib:$LD_LIBRARY_PATH
+
+  export KERNEL_IMAGE=/src/add/vmlinuz
+  export VMHDD_IMAGE=/src/add/hdd.img
+  
+  # set sysdrive, ddir, and brootdir in parent env if needed.
+  if [[ "$sysdrive" == "" ]]; then
+    sysdrive=`echo $SYSTEMDRIVE | sed 's/:.*//'`
+    if [ ! -d /$sysdrive ]; then
+      # msys not happy about whatever odd location windows installed into...
+      sysdrive=c
+    fi
+  fi
+  # make sure we express sys drive as lower case because of msys pedantic'ness
+  # or that of the sub scripts and whatever else get confused...
+  # boy, wouldn't tr be nice? tr -t '[:upper:]' '[:lower:]'
+  for DL in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
+    echo $sysdrive | grep -i "^[${DL}]" >/dev/null
+    if (( $? == 0 )); then
+      sysdrive=$DL
+    fi
+  done
+  if [ ! -d /$sysdrive ]; then
+    echo "Bogus sysdrive Windows root set: $sysdrive , using defaults..."
+    sysdrive=c
+  fi
+  echo "Using Windows system drive root /$sysdrive , ${sysdrive}:\\"
+  export sysdrive
+  if [[ "$ddir" == "" ]]; then
+    ddir=/$sysdrive/Tor_VM
+  fi
+  if [[ "$brootdir" == "" ]]; then
+    brootdir=/$sysdrive/Tor_Win32
+  fi
+  echo "Using Tor VM destination folder: $ddir"
+  echo "Using Bundle destination folder: $brootdir"
+  export ddir
+  export brootdir
+  
+  # make sure some default windows paths are available too
+  export PATH=$PATH:/$sysdrive/WINDOWS/system32:/$sysdrive/WINDOWS:/$sysdrive/WINDOWS/System32/Wbem
+  
+  # the build state file is solely used to toggle targets on or off
+  # intended to be used when developing or automated via buildbot, etc.
+  if [[ "$bstatefile" == "" ]]; then
+    export bstatefile="/src/build.state"
+  fi
+  if [ -f $bstatefile ]; then
+    source $bstatefile
+  else
+    echo '#!/bin/bash' > $bstatefile
+    chmod +x $bstatefile
+  fi
+  
+  export libdir="${ddir}/lib"
+  export bindir="${ddir}/bin"
+  export statedir="${ddir}/state"
+  export instdir="${brootdir}/Installer"
+  export thandir="${brootdir}/Thandy"
+  export bundledir="${brootdir}/Bundle"
+  
+  if [[ "$SEVNZIP_INST" == "" ]]; then
+    export SEVNZIP_INST=true
+  fi
+  SEVNZIP_DEF_INSTPATH="/${sysdrive}/Program Files/7-Zip"
+  if [ -d "$SEVNZIP_DEF_INSTPATH" ]; then
+    export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
+  fi
+  
+  export ZLIB_VER="1.2.3"
+  export ZLIB_DIR="zlib-${ZLIB_VER}"
+  export ZLIB_FILE="zlib-${ZLIB_VER}.tar.gz"
+
+  export LIBEVENT_VER=1.4.8-stable
+  export LIBEVENT_FILE="libevent-${LIBEVENT_VER}.tar.gz"
+  export LIBEVENT_DIR="libevent-${LIBEVENT_VER}"
+  
+  export TOR_DIR="tor-latest"
+  export TOR_FILE="tor-latest.tar.gz"
+  
+  export PTHREAD_VER=2-8-0
+  export PTHREAD_DIR="pthreads-w32-${PTHREAD_VER}-release"
+  export PTHREAD_FILE="${PTHREAD_DIR}.tar.gz"
+  
+  export OPENSSL_VER="0.9.8j"
+  export OPENSSL_DIR="openssl-${OPENSSL_VER}"
+  export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
+  
+  export GROFF_VER="1.19.2"
+  export GROFF_DIR="groff-${GROFF_VER}"
+  export GROFF_FILE="groff-${GROFF_VER}.tar.gz"
+
+  export SDL_VER=1.2.13
+  export SDL_DIR="SDL-${SDL_VER}"
+  export SDL_FILE="${SDL_DIR}.tar.gz"
+
+  export OPENVPN_VER=2.1_rc15
+  export OPENVPN_DIR="openvpn-${OPENVPN_VER}"
+  export OPENVPN_FILE="${OPENVPN_DIR}.tar.gz"
+
+  export WPCAP_VER=4_1_beta5
+  export WPCAP_DIR="WpcapSrc_${WPCAP_VER}"
+  export WPCAP_FILE="${WPCAP_DIR}.tar.gz"
+  export WPCAP_INCLUDE="-I/src/${WPCAP_DIR}/wpcap/libpcap -I/src/${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
+  export WPCAP_LDFLAGS="-L/src/${WPCAP_DIR}/wpcap/PRJ -L/src/${WPCAP_DIR}/packetNtx/Dll/Project"
+
+  export QEMU_VER=0.9.1
+  export QEMU_DIR="qemu-${QEMU_VER}"
+  export QEMU_FILE="${QEMU_DIR}.tar.gz"
+
+  export CMAKE_VER="2.6.2"
+  export CMAKE_DIR="cmake-${CMAKE_VER}"
+  export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
+  export CMAKEBIN="/$sysdrive/Program Files/CMake/bin"
+  export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
+  
+  export QT_VER="4.4.3"
+  export QT_DIR="qt-${QT_VER}"
+  export QT_FILE="qt-${QT_VER}.tgz"
+  export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
+  export QT_BIN="${QT_ROOT}/bin"
+  export QTDIR="${sysdrive}:\Qt\4.4.3"
+  export QMAKESPEC=win32-g++
+  export PATH="$PATH:$QT_BIN:$QTDIR\bin"
+  
+  export PYTHON_ROOT=/$sysdrive/Python26
+  export PATH=$PATH:$PYTHON_ROOT
+  
+  export MARBLE_DIR=marble-latest
+  export MARBLE_FILE="${MARBLE_DIR}.tar.gz"
+  export MARBLE_DEST=/marble
+  export MARBLE_OPTS="-DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_ROOT_PREFIX=${MARBLE_DEST} -DMARBLE_DATA_PATH=data"
+  
+  export VIDALIA_FILE=vidalia-latest.tar.gz
+  export VIDALIA_DIR=vidalia-latest
+  # XXX need to resolve why this wont build against the installed marble, only the build tree
+  export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release"
+  export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
+  
+  export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
+  export GNURX_DIR=mingw-libgnurx-2.5.1
+  
+  export POLIPO_FILE=polipo-20080907.tar.gz
+  export POLIPO_DIR=polipo-20080907
+  
+  export TORBUTTON_FILE=torbutton-1.2.0.xpi
+  
+  export NSIS_DIR=nsis-2.42
+  export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
+  
+  if [ -d "$VS80COMNTOOLS" ]; then
+    export VSTOOLSDIR="$VS80COMNTOOLS"
+    export VSTOOLSENV="$VS80COMNTOOLS\vsvars32.bat"
+  elif [ -d "$VS90COMNTOOLS" ]; then
+    export VSTOOLSDIR="$VS90COMNTOOLS"
+    export VSTOOLSENV="$VS90COMNTOOLS\vsvars32.bat"
+  else
+    unset VSTOOLSDIR
+    unset VSTOOLSENV
+  fi
+  if [ -f "$VSTOOLSENV" ]; then
+    echo "Using VisualStudio environment script at $VSTOOLSENV."
+    export PATH="$PATH:$VSTOOLSDIR:$VSTOOLSDIR\Bin:$VSTOOLSDIR\VC\bin:$VSTOOLSDIR\Common7\IDE:$VSTOOLSDIR\SDK\v2.0\bin"
+    echo "Using new PATH=$PATH"
+  fi
+  
+  # always set these since we may need to copy over failure logs
+  # and don't have a proper login shell env
+  if [ -f ~/.ssh/user ]; then
+    export BUILD_SCP_USER=`cat ~/.ssh/user`
+    export BUILD_SCP_HOST=`cat ~/.ssh/host`
+    export BUILD_SCP_DIR=`cat ~/.ssh/dest`
+  fi
+
+  # the shell option gives a login shell with all of the env setup properly
   if [[ "$1" == "shell" ]]; then
     exec /bin/bash -l
   fi
@@ -191,6 +207,13 @@ if [[ "$1" != "dobuild" ]]; then
     shutdown.exe -f -s -t 1
   fi
 else
+
+
+# SECOND PASS - begin build process ...
+  
+function pkgbuilt () {
+  echo "export $1=yes" >> $bstatefile
+}
 
 if [[ "$MSYS_SETUP" != "yes" ]]; then
   echo "Setting up MSYS build environment..."
@@ -361,12 +384,32 @@ if [[ "$ZLIB_BUILT" != "yes" ]]; then
 fi
 
 
+if [[ "$LIBEVENT_BUILT" != "yes" ]]; then
+  echo "Building libevent ..."
+  cd /usr/src
+  tar zxf $LIBEVENT_FILE
+  cd $LIBEVENT_DIR
+  ./configure --prefix=/usr --enable-static --disable-shared
+  if (( $? != 0 )); then
+    echo "ERROR: libevent configure failed." >&2
+    exit 1
+  fi
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: libevent build failed." >&2
+    exit 1
+  fi
+  make install
+
+  pkgbuilt LIBEVENT_BUILT
+fi
+
+
 if [[ "$SDL_BUILT" != "yes" ]]; then
   echo "Building SDL library ..."
   cd /usr/src
-  tar zxf SDL-1.2.13.tar.gz
-  mv SDL-1.2.13 SDL
-  cd SDL
+  tar zxf $SDL_FILE
+  cd $SDL_DIR
   ./configure --prefix=/usr
   if (( $? != 0 )); then
     echo "ERROR: SDL configure failed." >&2
@@ -387,9 +430,12 @@ fi
 if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   echo "Building openvpn tap-win32 driver ..."
   cd /usr/src
-  tar zxf openvpn-2.1_rc10.tar.gz
-  cd openvpn-2.1_rc10
-  patch -p1 < ../openvpn-tor-tap-win32-driver.patch 2>/dev/null
+  tar zxf $OPENVPN_FILE
+  cd $OPENVPN_DIR
+  if [ -f ../openvpn-tor-tap-win32-driver.patch ]; then
+    echo "Patching OpenVPN sources ..."
+    patch -p1 < ../openvpn-tor-tap-win32-driver.patch
+  fi
   aclocal -I . && autoheader && autoconf && automake --add-missing --copy
   if (( $? != 0 )); then
     echo "ERROR: openvpn autotools update failed." >&2
@@ -426,13 +472,16 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
 fi
   
 
-if [[ "$WINPCAP_BUILT" != "yes" ]]; then
+if [[ "$WPCAP_BUILT" != "yes" ]]; then
   echo "Building WinPcap ..."
   cd /usr/src
-  tar zxf WpcapSrc_4_1_beta4.tar.gz
-  cd WpcapSrc_4_1_beta4
+  tar zxf $WPCAP_FILE
+  cd $WPCAP_DIR
   wpbase=`pwd`
-  patch -p1 < ../winpcap-tor-device-mods.patch 2>/dev/null
+  if [ -f ../winpcap-tor-device-mods.patch ]; then
+    echo "Patching WinPcap sources ..."
+    patch -p1 < ../winpcap-tor-device-mods.patch
+  fi
   cd packetNtx
   PCAPDIR=`pwd | sed 's/^.usr//' | sed 's/\//\\\/g'`
   BPATH="${MSYSROOT}${PCAPDIR}"
@@ -441,11 +490,12 @@ if [[ "$WINPCAP_BUILT" != "yes" ]]; then
   echo "call CompileDriver" >> dobuild.bat
   echo "exit" >> dobuild.bat
   $COMSPEC /k dobuild.bat
-  if [ ! -f driver/bin/2k/i386/npf.sys ]; then
-    echo "ERROR: WinPcap NPF.sys driver build failed." >&2
+  NPFDRV_F=driver/bin/i386/npf.sys
+  if [ ! -f $NPFDRV_F ]; then
+    echo "ERROR: WinPcap npf.sys driver build failed." >&2
     exit 1
   fi
-  cp driver/bin/2k/i386/npf.sys $libdir/tornpf.sys
+  cp $NPFDRV_F $libdir/tornpf.sys
   cd Dll/Project
   make
   if (( $? != 0 )); then
@@ -462,16 +512,19 @@ if [[ "$WINPCAP_BUILT" != "yes" ]]; then
   fi
   cp torpcap.dll $libdir/
 
-  pkgbuilt WINPCAP_BUILT
+  pkgbuilt WPCAP_BUILT
 fi
 
 
 if [[ "$QEMU_BUILT" != "yes" ]]; then
   echo "Building qemu ..."
   cd /usr/src
-  tar zxf qemu-0.9.1.tar.gz
-  cd qemu-0.9.1
-  patch -p1 < ../qemu-kernel-cmdline-from-stdin.patch 2> /dev/null
+  tar zxf $QEMU_FILE
+  cd $QEMU_DIR
+  if [ -f ../qemu-kernel-cmdline-from-stdin.patch ]; then
+    echo "Patching Qemu sources ..."
+    patch -p1 < ../qemu-kernel-cmdline-from-stdin.patch
+  fi
   if (( $? != 0 )); then
     echo "ERROR: Qemu cmdline via stdin patch failed." >&2
     exit 1
@@ -592,6 +645,63 @@ if [[ "$OPENSSL_BUILT" != "yes" ]]; then
   pkgbuilt OPENSSL_BUILT
 fi
 
+
+if [[ "$TOR_BUILT" != "yes" ]]; then
+  echo "Building Tor stand alone ..."
+  cd /usr/src
+  tar zxf $TOR_FILE
+  cd $TOR_DIR
+  if [ ! -f configure ]; then
+    echo "Attempting autogen..."
+    aclocal
+    autoheader
+    autoconf
+    automake --add-missing --copy
+  fi
+  echo "Invoking configure"
+  (
+    export CFLAGS="-I /src/$ZLIB_DIR -I/src/$LIBEVENT_DIR -I/src/$OPENSSL_DIR"
+    ./configure --prefix=/src/$TOR_DIR \
+            --with-zlib-dir=/src/$ZLIB_DIR \
+            --with-libevent-dir=/src/$LIBEVENT_DIR \
+            --with-openssl-dir=/src/$OPENSSL_DIR \
+            --enable-shared \
+            --enable-threads \
+            --enable-local-appdata \
+            --disable-transparent
+    if (( $? != 0 )); then
+      echo "ERROR: torsvn autoconf configure failed." >&2
+      exit 1
+    fi
+    make
+    if (( $? != 0 )); then
+      echo "ERROR: make autoconf torsvn failed." >&2
+      exit 1
+    fi
+    make install
+  ) 
+  # prepare files needed for WiX MSI package build at expected locations
+  cp /src/$OPENSSL_DIR/cryptoeay32-0.9.8.dll bin/
+  cp /src/$OPENSSL_DIR/ssleay32-0.9.8.dll bin/
+  # line conversion prior to MSI packaging and other documentation prep
+  ( 
+    # this has to run detached or else troff tries to eat our controlling tty leading to badness...
+    # TODO : tech this thing how to wait properly ...
+    groff -m man -F /share -M /share/tmac -T html doc/tor.1 > Usage.html &
+  )
+  sleep 5
+  ls -lh Usage.html
+  for FILE in README ChangeLog LICENSE Authors src/config/torrc.sample; do
+    if [ -f $FILE ]; then
+      unix2dos $FILE
+    else
+      # must have the file present or the WiX MSI build fails
+      echo > $FILE
+    fi
+  done
+
+  pkgbuilt OPENSSL_BUILT
+fi
 
 if [[ "$PYCRYPTO_BUILT" != "yes" ]]; then
   echo "Building PyCrypto ..."
@@ -841,12 +951,6 @@ WIX_UI=/wix/WixUIExtension.dll
 
 if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Building bundle packages ..."
-  if [[ "$TORSVN_EXTR" != "yes" ]]; then
-    echo "Extracting sources for Tor from svn ..."
-    cd /usr/src
-    tar zxf $TORSVN_FILE
-    pkgbuilt TORSVN_EXTR
-  fi
   echo "Expanding package dir ..."
   cd /usr/src
   tar zxf pkg.tgz
@@ -896,7 +1000,15 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
-  cp /src/$TORSVN_DIR/contrib/*.wxs ./
+  cp /src/$TOR_DIR/contrib/*.wxs ./
+  cp /src/$TOR_DIR/bin/*.exe bin/
+  mkdir -p src/config
+  mkdir -p share/tor
+  cp /src/$TOR_DIR/share/tor/geoip share/tor/
+  cp /src/$TOR_DIR/src/config/torrc.sample src/config/
+  for FNAME in README Usage.html Authors ChangeLog LICENSE; do
+    cp /src/$TOR_DIR/$FNAME ./
+  done
   cp -a $ddir ./
   # XXX replace this with Matt's torbutton NSIS magic
   candle.exe *.wxs
@@ -908,6 +1020,15 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     ls -l torvm.msi
   else
     echo "ERROR: unable to build Tor VM MSI installer."
+  fi
+
+  echo "Linking tor MSI installer package ..."
+  light.exe -out tor.msi WixUI_Tor.wixobj tor.wixobj -ext $WIX_UI
+  if [ -f tor.msi ]; then
+    cp tor.msi $bundledir
+    ls -l tor.msi
+  else
+    echo "ERROR: unable to build Tor MSI installer."
   fi
 
   echo "Linking polipo MSI installer package ..."

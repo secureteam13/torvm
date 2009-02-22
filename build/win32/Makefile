@@ -112,6 +112,10 @@ PTHREADS_F=pthreads-w32-2-8-0-release.tar.gz
 PTHREADS_URL=ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-8-0-release.tar.gz
 PTHREADS_SUM=da8371cb20e8e238f96a1d0651212f154d84a9ac
 
+LIBEVENT_F=libevent-1.4.8-stable.tar.gz
+LIBEVENT_URL=http://www.monkey.org/~provos/libevent-1.4.8-stable.tar.gz
+LIBEVENT_SUM=82c05a893688810aafc2b372b567a837eb115732
+
 ACONF_F=autoconf2.5-2.61-1-bin.tar.bz2
 ACONF_URL=http://downloads.sourceforge.net/mingw/autoconf2.5-2.61-1-bin.tar.bz2?modtime=1190249465&big_mirror=1
 ACONF_SUM=7f05699dfeb0fea12b490da7204eeb89644a3bf7
@@ -168,20 +172,21 @@ SDL_F=SDL-1.2.13.tar.gz
 SDL_URL=http://www.libsdl.org/release/SDL-1.2.13.tar.gz
 SDL_SUM=51fcaa3e1d5c01fd813ea08688780f86b19cf539
 
-WPCAPSRC_F=WpcapSrc_4_1_beta4.zip
-WPCAPSRC_URL=http://www.winpcap.org/install/bin/WpcapSrc_4_1_beta4.zip
-WPCAPSRC_SUM=1450c4d293a38c25ec8cd8a9be30e04858df36d9
+WPCAPSRC_VER=4_1_beta5
+WPCAPSRC_F=WpcapSrc_$(WPCAPSRC_VER).zip
+WPCAPSRC_URL=http://www.winpcap.org/install/bin/$(WPCAPSRC_F)
+WPCAPSRC_SUM=bf2de680542626738765733f0c61f0c60c37de6c
 
 QEMU_F=qemu-0.9.1.tar.gz
-QEMU_URL=http://bellard.org/qemu/qemu-0.9.1.tar.gz
+QEMU_URL=http://bellard.org/qemu/$(QEMU_F)
 QEMU_SUM=630ea20b5989f0df00128de7f7be661c573ed041
 
-OVPN_F=openvpn-2.1_rc10.tar.gz
-OVPN_URL=http://openvpn.net/release/openvpn-2.1_rc10.tar.gz
-OVPN_SUM=b7f4af94704caa8aa3279ccbc391b98cf7ed953e
+OVPN_F=openvpn-2.1_rc15.tar.gz
+OVPN_URL=http://openvpn.net/release/$(OVPN_F)
+OVPN_SUM=a07f9b24947428e905d0c41339b9ed522358c672
 
 WINDDK_F=1830_usa_ddk.iso
-WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
+WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/$(WINDDK_F)
 WINDDK_SUM=0d2154d88a5ee252cc908630c77863bb42777387
 
 QT_VER=4.4.3
@@ -191,7 +196,7 @@ QT_URL=ftp://ftp.trolltech.com/qt/source/qt-win-opensource-src-$(QT_VER).zip
 QT_SUM=669d494b9c37353f87c13765ed9f3ea97c0fa9e0
 
 POLIPO_F=polipo-20080907.tar.gz
-POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/polipo-20080907.tar.gz
+POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
 POLIPO_SUM=dda211e3027310891fb555c1fe5fa2f5b274aa0f
 
 MARBLE_NAME=marble-latest
@@ -234,7 +239,7 @@ THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 # buildscripts need some dire clean up...
 OK:=echo -n
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -275,6 +280,7 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(SSH_F) ]; then $(DLCMD) "$(SSH_URL)" $(SSH_SUM) "$(WDLDIR)/$(SSH_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(ZLIBSRC_F) ]; then $(DLCMD) "$(ZLIBSRC_URL)" $(ZLIBSRC_SUM) "$(WDLDIR)/$(ZLIBSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PTHREADS_F) ]; then $(DLCMD) "$(PTHREADS_URL)" $(PTHREADS_SUM) "$(WDLDIR)/$(PTHREADS_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(LIBEVENT_F) ]; then $(DLCMD) "$(LIBEVENT_URL)" $(LIBEVENT_SUM) "$(WDLDIR)/$(LIBEVENT_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(ACONF_F) ]; then $(DLCMD) "$(ACONF_URL)" $(ACONF_SUM) "$(WDLDIR)/$(ACONF_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(AMAKE_F) ]; then $(DLCMD) "$(AMAKE_URL)" $(AMAKE_SUM) "$(WDLDIR)/$(AMAKE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PERL_F) ]; then $(DLCMD) "$(PERL_URL)" $(PERL_SUM) "$(WDLDIR)/$(PERL_F)"; fi
@@ -351,8 +357,9 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(OVPN_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(LIBEVENT_F) $(ISODIR)/dl/src/; \
 	echo "--- Repacking WinPCAP archive ..."; \
-	$(UNZIP) $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_4_1_beta4; tar cf $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar WpcapSrc_4_1_beta4; gzip -9 $(ISODIR)/dl/src/WpcapSrc_4_1_beta4.tar; rm -rf WpcapSrc_4_1_beta4 $(ISODIR)/dl/$(WPCAPSRC_F); \
+	$(UNZIP) $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_$(WPCAPSRC_VER); tar cf $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar WpcapSrc_$(WPCAPSRC_VER); gzip -9 $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar; rm -rf WpcapSrc_$(WPCAPSRC_VER) $(ISODIR)/dl/$(WPCAPSRC_F); \
 	echo "--- Repacking Py2Exe archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(PY2EXE_F) -d tmp; mv tmp/py2exe* py2exe;rmdir tmp; tar zcf $(ISODIR)/dl/$(PY2EXE_TGZ) py2exe; rm -rf py2exe $(ISODIR)/dl/$(PY2EXE_F); \
 	echo "--- Repacking NSIS archive ..."; \

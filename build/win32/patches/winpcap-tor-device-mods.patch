@@ -1,6 +1,6 @@
-diff -Naur orig-winpcap/Common/WpcapNames.h mod-winpcap/Common/WpcapNames.h
---- orig-winpcap/Common/WpcapNames.h	2007-11-14 20:22:04.000000000 +0000
-+++ mod-winpcap/Common/WpcapNames.h	2008-09-27 09:13:29.564581776 +0000
+diff -Naur a/Common/WpcapNames.h b/Common/WpcapNames.h
+--- a/Common/WpcapNames.h	2007-11-14 19:22:04.000000000 +0000
++++ b/Common/WpcapNames.h	2009-02-22 04:07:19.666593408 +0000
 @@ -39,45 +39,45 @@
  //  - please do not use prefix names longer than 70 chars. 
  //  - the following characters are surely accepted in the prefixes:  "[A-Z][a-z][0-9]_-',"   
@@ -72,10 +72,10 @@ diff -Naur orig-winpcap/Common/WpcapNames.h mod-winpcap/Common/WpcapNames.h
  
  #endif //__WPCAPNAMES_H_EED6D131C6DB4dd696757D219977A7E5
  
-diff -Naur orig-winpcap/packetNtx/Dll/AdInfo.c mod-winpcap/packetNtx/Dll/AdInfo.c
---- orig-winpcap/packetNtx/Dll/AdInfo.c	2007-11-13 22:59:14.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/AdInfo.c	2008-10-05 03:35:04.323075776 +0000
-@@ -96,7 +96,7 @@
+diff -Naur a/packetNtx/Dll/AdInfo.c b/packetNtx/Dll/AdInfo.c
+--- a/packetNtx/Dll/AdInfo.c	2008-11-19 06:16:24.000000000 +0000
++++ b/packetNtx/Dll/AdInfo.c	2009-02-22 04:07:19.667593256 +0000
+@@ -105,7 +105,7 @@
  #endif /* HAVE_DAG_API */
  
  /// Title of error windows
@@ -84,9 +84,9 @@ diff -Naur orig-winpcap/packetNtx/Dll/AdInfo.c mod-winpcap/packetNtx/Dll/AdInfo.
  
  ULONG inet_addrU(const WCHAR *cp);
  
-diff -Naur orig-winpcap/packetNtx/Dll/Packet.def mod-winpcap/packetNtx/Dll/Packet.def
---- orig-winpcap/packetNtx/Dll/Packet.def	2006-08-09 00:11:04.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/Packet.def	1970-01-01 00:00:00.000000000 +0000
+diff -Naur a/packetNtx/Dll/Packet.def b/packetNtx/Dll/Packet.def
+--- a/packetNtx/Dll/Packet.def	2006-08-08 23:11:04.000000000 +0000
++++ b/packetNtx/Dll/Packet.def	1970-01-01 00:00:00.000000000 +0000
 @@ -1,35 +0,0 @@
 -LIBRARY packet
 -
@@ -123,10 +123,10 @@ diff -Naur orig-winpcap/packetNtx/Dll/Packet.def mod-winpcap/packetNtx/Dll/Packe
 -		PacketIsDumpEnded
 -		PacketSetLoopbackBehavior
 -		PacketGetAirPcapHandle
-diff -Naur orig-winpcap/packetNtx/Dll/Packet32.c mod-winpcap/packetNtx/Dll/Packet32.c
---- orig-winpcap/packetNtx/Dll/Packet32.c	2007-11-13 22:59:30.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/Packet32.c	2008-09-27 09:17:40.512431904 +0000
-@@ -849,16 +849,14 @@
+diff -Naur a/packetNtx/Dll/Packet32.c b/packetNtx/Dll/Packet32.c
+--- a/packetNtx/Dll/Packet32.c	2008-11-18 19:17:42.000000000 +0000
++++ b/packetNtx/Dll/Packet32.c	2009-02-22 04:07:19.670592800 +0000
+@@ -862,16 +862,14 @@
  		err = GetLastError();
  		if (err == ERROR_SERVICE_EXISTS) 
  		{
@@ -145,9 +145,9 @@ diff -Naur orig-winpcap/packetNtx/Dll/Packet32.c mod-winpcap/packetNtx/Dll/Packe
  		result = TRUE;
  	}
  
-diff -Naur orig-winpcap/packetNtx/Dll/Project/GNUmakefile mod-winpcap/packetNtx/Dll/Project/GNUmakefile
---- orig-winpcap/packetNtx/Dll/Project/GNUmakefile	2006-11-17 02:29:18.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/Project/GNUmakefile	2008-10-05 03:29:27.294311936 +0000
+diff -Naur a/packetNtx/Dll/Project/GNUmakefile b/packetNtx/Dll/Project/GNUmakefile
+--- a/packetNtx/Dll/Project/GNUmakefile	2006-11-17 01:29:18.000000000 +0000
++++ b/packetNtx/Dll/Project/GNUmakefile	2009-02-22 04:07:19.671592648 +0000
 @@ -1,23 +1,22 @@
  # Makefile for cygwin gcc
  # Nate Lawson <nate@rootlabs.com>
@@ -177,9 +177,9 @@ diff -Naur orig-winpcap/packetNtx/Dll/Project/GNUmakefile mod-winpcap/packetNtx/
  
 -install: Packet.dll
 -	cp Packet.dll c:/winnt/system32
-diff -Naur orig-winpcap/packetNtx/Dll/torpkt.def mod-winpcap/packetNtx/Dll/torpkt.def
---- orig-winpcap/packetNtx/Dll/torpkt.def	1970-01-01 00:00:00.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/torpkt.def	2008-10-05 03:30:05.596489120 +0000
+diff -Naur a/packetNtx/Dll/torpkt.def b/packetNtx/Dll/torpkt.def
+--- a/packetNtx/Dll/torpkt.def	1970-01-01 00:00:00.000000000 +0000
++++ b/packetNtx/Dll/torpkt.def	2009-02-22 04:07:19.671592648 +0000
 @@ -0,0 +1,34 @@
 +LIBRARY torpkt
 +
@@ -215,9 +215,9 @@ diff -Naur orig-winpcap/packetNtx/Dll/torpkt.def mod-winpcap/packetNtx/Dll/torpk
 +		PacketSetDumpLimits
 +		PacketIsDumpEnded
 +		PacketSetLoopbackBehavior
-diff -Naur orig-winpcap/packetNtx/Dll/version.rc2 mod-winpcap/packetNtx/Dll/version.rc2
---- orig-winpcap/packetNtx/Dll/version.rc2	2006-07-25 00:46:54.000000000 +0000
-+++ mod-winpcap/packetNtx/Dll/version.rc2	2008-10-05 03:33:27.420807160 +0000
+diff -Naur a/packetNtx/Dll/version.rc2 b/packetNtx/Dll/version.rc2
+--- a/packetNtx/Dll/version.rc2	2006-07-24 23:46:54.000000000 +0000
++++ b/packetNtx/Dll/version.rc2	2009-02-22 04:07:19.671592648 +0000
 @@ -26,20 +26,20 @@
      BEGIN
          BLOCK "000004b0"
@@ -246,9 +246,9 @@ diff -Naur orig-winpcap/packetNtx/Dll/version.rc2 mod-winpcap/packetNtx/Dll/vers
  			VALUE "ProductVersion",    WINPCAP_VER_STRING
              VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
          END
-diff -Naur orig-winpcap/packetNtx/driver/NPF.RC mod-winpcap/packetNtx/driver/NPF.RC
---- orig-winpcap/packetNtx/driver/NPF.RC	2007-11-01 21:34:16.000000000 +0000
-+++ mod-winpcap/packetNtx/driver/NPF.RC	2008-09-26 07:18:26.893743736 +0000
+diff -Naur a/packetNtx/driver/NPF.RC b/packetNtx/driver/NPF.RC
+--- a/packetNtx/driver/NPF.RC	2007-11-01 20:34:16.000000000 +0000
++++ b/packetNtx/driver/NPF.RC	2009-02-22 04:07:19.672592496 +0000
 @@ -22,22 +22,22 @@
      BEGIN
          BLOCK "000004b0"
@@ -279,9 +279,9 @@ diff -Naur orig-winpcap/packetNtx/driver/NPF.RC mod-winpcap/packetNtx/driver/NPF
          END
      END
      BLOCK "VarFileInfo"
-diff -Naur orig-winpcap/packetNtx/driver/dump.c mod-winpcap/packetNtx/driver/dump.c
---- orig-winpcap/packetNtx/driver/dump.c	2008-05-09 17:37:06.000000000 +0000
-+++ mod-winpcap/packetNtx/driver/dump.c	2008-09-26 07:13:21.962100392 +0000
+diff -Naur a/packetNtx/driver/dump.c b/packetNtx/driver/dump.c
+--- a/packetNtx/driver/dump.c	2008-05-09 16:37:06.000000000 +0000
++++ b/packetNtx/driver/dump.c	2009-02-22 04:07:19.673592344 +0000
 @@ -247,6 +247,7 @@
          return ntStatus;
      }  
@@ -299,22 +299,12 @@ diff -Naur orig-winpcap/packetNtx/driver/dump.c mod-winpcap/packetNtx/driver/dum
     
     return ntStatus;
     
-diff -Naur orig-winpcap/version.h mod-winpcap/version.h
---- orig-winpcap/version.h	2008-05-21 22:35:42.000000000 +0000
-+++ mod-winpcap/version.h	2008-09-27 09:19:29.530858584 +0000
-@@ -15,23 +15,23 @@
- // 4.1.0.1124 -->  WinPcap  4.1 beta3
- // 4.1.0.1237 -->  WinPcap  4.1 beta4
- 
--#define WINPCAP_MAJOR	4
-+#define WINPCAP_MAJOR	9
- #define WINPCAP_MINOR	1
--#define WINPCAP_REV		0
-+#define WINPCAP_REV	0
- #define WINPCAP_BUILD	1237
- #define WINPCAP_VER_STRING	"4.1.0.1237"
- #define WINPCAP_PACKET9x_STRING_VERSION	"4.1 beta4"
- #define WINPCAP_WPCAP_STRING_VERSION "4.1 beta4"
+diff -Naur a/version.h b/version.h
+--- a/version.h	2008-12-23 14:51:46.000000000 +0000
++++ b/version.h	2009-02-22 04:15:03.551072248 +0000
+@@ -24,9 +24,9 @@
+ #define WINPCAP_PACKET9x_STRING_VERSION	"4.1 BUILD 1452"
+ #define WINPCAP_WPCAP_STRING_VERSION "4.1 beta5"
  
 -#define WINPCAP_COMPANY_NAME 			"CACE Technologies, Inc."
 +#define WINPCAP_COMPANY_NAME 			"The Tor Project, Inc."
@@ -324,16 +314,9 @@ diff -Naur orig-winpcap/version.h mod-winpcap/version.h
  
  #define WINPCAP_COPYRIGHT_STRING 		"Copyright © 2005-2008 CACE Technologies. Copyright © 1999-2005 NetGroup, Politecnico di Torino."
  #define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright © 2005-2008 CACE Technologies. Copyright © 2003-2005 NetGroup, Politecnico di Torino."
- #define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright © 2007-2008 CACE Technologies."
- #define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright © 2005-2008 CACE Technologies. Copyright © 2003-2005 NetGroup, Politecnico di Torino."
- 
--#define WINPCAP_BUILD_DESCRIPTION 		""
-+#define WINPCAP_BUILD_DESCRIPTION 		"Modified WinPcap Driver for Tor Qemu VM"
- #define WINPCAP_PRIVATE_BUILD			""
- #define WINPCAP_LIBPCAP_VERSION			"1.0 - branch"
-diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
---- orig-winpcap/wpcap/PRJ/GNUmakefile	2008-05-20 17:30:46.000000000 +0000
-+++ mod-winpcap/wpcap/PRJ/GNUmakefile	2008-10-05 03:43:00.025757976 +0000
+diff -Naur a/wpcap/PRJ/GNUmakefile b/wpcap/PRJ/GNUmakefile
+--- a/wpcap/PRJ/GNUmakefile	2008-12-21 12:46:22.000000000 +0000
++++ b/wpcap/PRJ/GNUmakefile	2009-02-22 05:31:11.507637296 +0000
 @@ -1,5 +1,6 @@
  # Makefile for cygwin gcc
  # Nate Lawson <nate@rootlabs.com>
@@ -341,7 +324,7 @@ diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
  
  # Set according to your system type
  SYSTYPE = "NT"
-@@ -18,21 +19,19 @@
+@@ -18,22 +19,20 @@
  YFLAGS = -y -p pcap_
  
  PACKET_DIR = packetNTx
@@ -358,137 +341,37 @@ diff -Naur orig-winpcap/wpcap/PRJ/GNUmakefile mod-winpcap/wpcap/PRJ/GNUmakefile
  	-DSIZEOF_LONG_LONG=8 \
 -	-DHAVE_REMOTE -DHAVE_AIRPCAP_API \
 +	-DHAVE_REMOTE \
+ 	-DHAVE_TC_API \
  	-mno-cygwin -shared ${OPTFLAGS}
 -LDFLAGS = -Wl,--out-implib,../lib/libwpcap.a
 -LIBS = -L ../../${PACKET_DIR}/DLL/Project -lPacket -lws2_32
-+LDFLAGS = -Wl,--out-implib,libtorpcap.a
++LDFLAGS = -Wl,--out-implib,../lib/libtorpcap.a
 +LIBS = -L ../../${PACKET_DIR}/DLL/Project -ltorpkt -lws2_32
  OBJS = ../libpcap/bpf/net/bpf_filter.o \
  	../libpcap/bpf_dump.o \
  	../libpcap/bpf_image.o \
-@@ -63,13 +62,14 @@
- 	../Win32-Extensions/Win32-Extensions.o
- 
+@@ -66,13 +65,13 @@
  main: ${OBJS}
+ 	@${RM} -rf ../lib/
+ 	mkdir ../lib/
 -	${CC} ${CFLAGS} ${LDFLAGS} -o wpcap.dll wpcap.def ${OBJS} ${LIBS}
 +	${CC} ${CFLAGS} ${LDFLAGS} -o torpcap.dll torpcap.def ${OBJS} ${LIBS}
  
--install:
+ install:
 -	cp wpcap.dll ${INSTALL_DIR}
-+# by default, we don't want clean to delete the generated grammar
-+realclean: clean
-+	${RM} ../libpcap/scanner.c ../libpcap/grammar.c
++	cp torpcap.dll ${INSTALL_DIR}
  
  clean:
 -	${RM} ${OBJS} ../libpcap/scanner.c ../libpcap/grammar.c wpcap.a wpcap.dll
-+	${RM} ${OBJS} torpcap.a torpcap.dll
++	${RM} ${OBJS} ../libpcap/scanner.c ../libpcap/grammar.c torpcap.a torpcap.dll
  
  # Keeps intermediate .c files from being deleted
  .SECONDARY: ../libpcap/scanner.c ../libpcap/grammar.c
-diff -Naur orig-winpcap/wpcap/PRJ/WPCAP.DEF mod-winpcap/wpcap/PRJ/WPCAP.DEF
---- orig-winpcap/wpcap/PRJ/WPCAP.DEF	2008-04-25 18:45:08.000000000 +0000
-+++ mod-winpcap/wpcap/PRJ/WPCAP.DEF	1970-01-01 00:00:00.000000000 +0000
-@@ -1,92 +0,0 @@
--LIBRARY wpcap.dll
--
--DESCRIPTION 'Win32 Packet Capture Library'
--
--EXPORTS
--		pcap_lookupdev
--		pcap_lookupnet
--		pcap_open_live
--		pcap_open_offline
--		pcap_close
--		pcap_getnonblock
--		pcap_setnonblock
--		pcap_loop
--		pcap_dispatch
--		pcap_read
--		pcap_setuserbuffer
--		pcap_offline_read
--		pcap_next
--		pcap_stats
--		pcap_stats_ex
--		pcap_setfilter
--		pcap_perror
--		pcap_strerror
--		pcap_geterr
--		pcap_compile
--		pcap_compile_nopcap
--		pcap_freecode
--		pcap_datalink
--		pcap_snapshot
--		pcap_is_swapped
--		pcap_major_version
--		pcap_minor_version
--		pcap_file
--		pcap_fileno
--		pcap_dump_open
--		pcap_dump_close
--		pcap_dump_flush
--		pcap_dump
--		pcap_dump_file
--		pcap_setbuff
--		pcap_setmode
--		pcap_sendpacket
--		pcap_sendqueue_alloc
--		pcap_sendqueue_destroy
--		pcap_sendqueue_queue
--		pcap_sendqueue_transmit
--		pcap_next_etherent
--		pcap_getevent
--		pcap_setmintocopy
--		pcap_open_dead
--		pcap_findalldevs
--		pcap_freealldevs
--		pcap_live_dump
--		pcap_live_dump_ended
--		bpf_filter
--		bpf_validate
--		bpf_image
--		bpf_dump
--		wsockinit
--		endservent
--		getservent
--		eproto_db
--		pcap_stats_ex
--		pcap_open
--		pcap_createsrcstr
--		pcap_parsesrcstr
--		pcap_findalldevs_ex
--		pcap_remoteact_accept
--		pcap_remoteact_list
--		pcap_remoteact_close
--		pcap_remoteact_cleanup
--		install_bpf_program
--		pcap_next_ex
--		pcap_offline_filter
--		pcap_setsampling
--		pcap_breakloop
--		pcap_list_datalinks
--		pcap_list_datalinks
--		pcap_set_datalink
--		pcap_datalink_name_to_val
--		pcap_datalink_val_to_name
--		pcap_datalink_val_to_description
--		pcap_lib_version
--		pcap_dump_file
--		pcap_dump_ftell
--		pcap_get_airpcap_handle
--		pcap_create
--		pcap_activate
--		pcap_set_promisc
--		pcap_set_snaplen
--		pcap_set_timeout
--		pcap_set_buffer_size
-\ No newline at end of file
-diff -Naur orig-winpcap/wpcap/PRJ/torpcap.def mod-winpcap/wpcap/PRJ/torpcap.def
---- orig-winpcap/wpcap/PRJ/torpcap.def	1970-01-01 00:00:00.000000000 +0000
-+++ mod-winpcap/wpcap/PRJ/torpcap.def	2008-10-05 03:43:39.914693936 +0000
-@@ -0,0 +1,92 @@
+diff -Naur a/wpcap/PRJ/torpcap.def b/wpcap/PRJ/torpcap.def
+--- a/wpcap/PRJ/torpcap.def	1970-01-01 00:00:00.000000000 +0000
++++ b/wpcap/PRJ/torpcap.def	2009-02-22 04:12:32.836984272 +0000
+@@ -0,0 +1,91 @@
 +LIBRARY torpcap.dll
-+
-+DESCRIPTION 'Tor VM Win32 Packet Capture Library'
 +
 +EXPORTS
 +		pcap_lookupdev
@@ -578,3 +461,4 @@ diff -Naur orig-winpcap/wpcap/PRJ/torpcap.def mod-winpcap/wpcap/PRJ/torpcap.def
 +		pcap_set_snaplen
 +		pcap_set_timeout
 +		pcap_set_buffer_size
++		pcap_hopen_offline

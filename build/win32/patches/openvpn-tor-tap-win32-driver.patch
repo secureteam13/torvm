@@ -1,6 +1,6 @@
-diff -Naur orig-openvpn-2.1_rc10/config-win32.h.in mod-openvpn-2.1_rc10/config-win32.h.in
---- orig-openvpn-2.1_rc10/config-win32.h.in	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/config-win32.h.in	2008-09-26 09:09:34.498113800 +0000
+diff -Naur a/config-win32.h.in b/config-win32.h.in
+--- a/config-win32.h.in	2008-10-06 07:22:21.000000000 +0000
++++ b/config-win32.h.in	2009-02-22 04:17:44.807557536 +0000
 @@ -35,7 +35,6 @@
  
  #include <windows.h>
@@ -18,10 +18,10 @@ diff -Naur orig-openvpn-2.1_rc10/config-win32.h.in mod-openvpn-2.1_rc10/config-w
  
  /* Define to the full name of this package. */
  #define PACKAGE_NAME @PACKAGE_NAME@
-diff -Naur orig-openvpn-2.1_rc10/configure.ac mod-openvpn-2.1_rc10/configure.ac
---- orig-openvpn-2.1_rc10/configure.ac	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/configure.ac	2008-09-26 08:44:00.800271312 +0000
-@@ -865,6 +865,8 @@
+diff -Naur a/configure.ac b/configure.ac
+--- a/configure.ac	2008-10-14 04:14:36.000000000 +0000
++++ b/configure.ac	2009-02-22 04:17:44.809557232 +0000
+@@ -866,6 +866,8 @@
  	openvpn.spec
  	config-win32.h
  	images/Makefile
@@ -30,18 +30,18 @@ diff -Naur orig-openvpn-2.1_rc10/configure.ac mod-openvpn-2.1_rc10/configure.ac
  	service-win32/Makefile
  	install-win32/Makefile
  	install-win32/settings
-diff -Naur orig-openvpn-2.1_rc10/install-win32/maketap mod-openvpn-2.1_rc10/install-win32/maketap
---- orig-openvpn-2.1_rc10/install-win32/maketap	2008-08-10 18:35:23.000000000 +0000
-+++ mod-openvpn-2.1_rc10/install-win32/maketap	2008-09-26 08:53:30.634643320 +0000
-@@ -4,22 +4,27 @@
+diff -Naur a/install-win32/maketap b/install-win32/maketap
+--- a/install-win32/maketap	2008-10-07 21:10:10.000000000 +0000
++++ b/install-win32/maketap	2009-02-22 04:20:37.273338752 +0000
+@@ -4,15 +4,15 @@
  # Requires the Windows DDK
  
  # get version.nsi definitions
 -. autodefs/defs.sh
 +#. autodefs/defs.sh
  
--if [ -d "/c/WINDDK/$DDKVER" ] ; then
-+if [ -d $DDKDIR ] ; then
+-if [ -n "$DDKVER" ] && [ -d "/c/WINDDK/$DDKVER" ] ; then
++if [ -d "$DDKDIR" ] ; then
  
  # common declarations for all DDK build targets
  . install-win32/ddk-common
@@ -50,12 +50,9 @@ diff -Naur orig-openvpn-2.1_rc10/install-win32/maketap mod-openvpn-2.1_rc10/inst
 -MACRO="perl install-win32/macro.pl autodefs/defs.in"
 +MACRO="perl install-win32/macro.pl install-win32/settings"
  IFDEF="perl install-win32/ifdef.pl"
--rm -rf tap-win32/amd64
-+if [ -d tap-win32/amd64 ]; then
-+  rm -rf tap-win32/amd64
-+fi
+ rm -rf tap-win32/amd64
  mkdir tap-win32/amd64
- $MACRO <tap-win32/SOURCES.in >tap-win32/SOURCES
+@@ -20,6 +20,9 @@
  $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF >tap-win32/i386/OemWin2k.inf
  $MACRO <tap-win32/i386/OemWin2k.inf.in | $IFDEF -DAMD64 >tap-win32/amd64/OemWin2k.inf
  
@@ -65,16 +62,16 @@ diff -Naur orig-openvpn-2.1_rc10/install-win32/maketap mod-openvpn-2.1_rc10/inst
  if [ -n "$PRODUCT_TAP_DEBUG" ] ; then
      w2ktarget="w2k c"
      amdtarget="chk $x64_tag WNET"
-@@ -96,5 +101,5 @@
+@@ -96,5 +99,5 @@
  fi
  
  else
 -    echo Not building TAP driver -- DDK version $DDKVER NOT FOUND
 +    echo Not building TAP driver -- DDK installation at \"$DDKDIR\" NOT FOUND
  fi
-diff -Naur orig-openvpn-2.1_rc10/tap-win32/SOURCES.in mod-openvpn-2.1_rc10/tap-win32/SOURCES.in
---- orig-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/SOURCES.in	2008-09-26 08:57:16.360327800 +0000
+diff -Naur a/tap-win32/SOURCES.in b/tap-win32/SOURCES.in
+--- a/tap-win32/SOURCES.in	2008-09-30 02:34:09.000000000 +0000
++++ b/tap-win32/SOURCES.in	2009-02-22 04:17:44.810557080 +0000
 @@ -4,7 +4,7 @@
  MAJORCOMP=ntos
  MINORCOMP=ndis
@@ -96,9 +93,9 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/SOURCES.in mod-openvpn-2.1_rc10/tap-w
  
  # Produce the same symbolic information for both free & checked builds.
  # This will allow us to perform full source-level debugging on both
-diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in
---- orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in	2008-09-26 08:05:21.851805064 +0000
+diff -Naur a/tap-win32/i386/OemWin2k.inf.in b/tap-win32/i386/OemWin2k.inf.in
+--- a/tap-win32/i386/OemWin2k.inf.in	2008-10-06 07:22:21.000000000 +0000
++++ b/tap-win32/i386/OemWin2k.inf.in	2009-02-22 04:17:44.811556928 +0000
 @@ -6,9 +6,9 @@
  ; ****************************************************************************
  
@@ -241,27 +238,23 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/i386/OemWin2k.inf.in mod-openvpn-2.1_
  
  ;---------------------------------------------------------------
  ;                                      End
-diff -Naur orig-openvpn-2.1_rc10/tap-win32/resource.rc mod-openvpn-2.1_rc10/tap-win32/resource.rc
---- orig-openvpn-2.1_rc10/tap-win32/resource.rc	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/resource.rc	2008-09-26 08:53:59.067320896 +0000
-@@ -33,11 +33,11 @@
+diff -Naur a/tap-win32/resource.rc b/tap-win32/resource.rc
+--- a/tap-win32/resource.rc	2008-10-06 07:28:13.000000000 +0000
++++ b/tap-win32/resource.rc	2009-02-22 04:22:10.483168704 +0000
+@@ -33,8 +33,8 @@
  				VFT2_DRV_COMM
  */
  
 -#define VER_COMPANYNAME_STR         "The OpenVPN Project"
+-#define VER_FILEDESCRIPTION_STR     "TAP-Win32 Virtual Network Driver"
 +#define VER_COMPANYNAME_STR         "The Tor Project, Inc."
- #define VER_FILEDESCRIPTION_STR     "TAP-Win32 Virtual Network Driver"
++#define VER_FILEDESCRIPTION_STR     "Tor VM TAP-Win32 Virtual Network Driver"
  #define VER_ORIGINALFILENAME_STR    TAP_COMPONENT_ID ".sys"
--#define VER_LEGALCOPYRIGHT_YEARS    "2003-2006"
--#define VER_LEGALCOPYRIGHT_STR      "Telethra, Inc."
-+#define VER_LEGALCOPYRIGHT_YEARS    "2003-2008"
-+#define VER_LEGALCOPYRIGHT_STR      "Telethra, Inc. & TPI"
- 
- 
- #define VER_PRODUCTNAME_STR         VER_FILEDESCRIPTION_STR
-diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c
---- orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-08-10 18:35:25.000000000 +0000
-+++ mod-openvpn-2.1_rc10/tap-win32/tapdrvr.c	2008-09-26 09:12:24.573258448 +0000
+ #define VER_LEGALCOPYRIGHT_YEARS    "2003-2008"
+ #define VER_LEGALCOPYRIGHT_STR      "OpenVPN Technologies, Inc."
+diff -Naur a/tap-win32/tapdrvr.c b/tap-win32/tapdrvr.c
+--- a/tap-win32/tapdrvr.c	2008-10-06 07:22:21.000000000 +0000
++++ b/tap-win32/tapdrvr.c	2009-02-22 04:17:44.919540512 +0000
 @@ -39,10 +39,10 @@
  // TAP_IOCTL_CONFIG_TUN ioctl.
  //======================================================
@@ -274,23 +267,21 @@ diff -Naur orig-openvpn-2.1_rc10/tap-win32/tapdrvr.c mod-openvpn-2.1_rc10/tap-wi
  
  #define NDIS_MINIPORT_DRIVER
  #define BINARY_COMPATIBLE 0
-diff -Naur orig-openvpn-2.1_rc10/version.m4 mod-openvpn-2.1_rc10/version.m4
---- orig-openvpn-2.1_rc10/version.m4	2008-09-10 06:55:52.000000000 +0000
-+++ mod-openvpn-2.1_rc10/version.m4	2008-09-23 10:11:57.426120280 +0000
-@@ -1,6 +1,12 @@
+diff -Naur a/version.m4 b/version.m4
+--- a/version.m4	2008-11-19 18:08:50.000000000 +0000
++++ b/version.m4	2009-02-22 04:24:31.835679856 +0000
+@@ -1,6 +1,11 @@
 -dnl define the OpenVPN version
 +define(PRODUCT_NAME,[TorTap32])
- define(PRODUCT_VERSION,[2.1_rc10])
+ define(PRODUCT_VERSION,[2.1_rc15])
 -dnl define the TAP version
 -define(PRODUCT_TAP_ID,[tap0901])
 +define(PRODUCT_TAP_ID,[tortap91])
  define(PRODUCT_TAP_WIN32_MIN_MAJOR,[9])
--define(PRODUCT_TAP_WIN32_MIN_MINOR,[1])
-+define(PRODUCT_TAP_WIN32_MIN_MINOR,[4])
+ define(PRODUCT_TAP_WIN32_MIN_MINOR,[1])
 +define(PRODUCT_TAP_MAJOR_VER,[9])
 +define(PRODUCT_TAP_MINOR_VER,[4])
-+define(PRODUCT_TAP_RELDATE,[09/22/2008])
-+define(PRODUCT_TAP_DEVICE_DESCRIPTION,[Tor TAP-Win32 Adapter V9 for Qemu])
-+define(PRODUCT_TAP_PROVIDER,[Tor TAP-Win32 Provider V9])
++define(PRODUCT_TAP_RELDATE,[02/22/2009])
++define(PRODUCT_TAP_DEVICE_DESCRIPTION,[Tor VM TAP-Win32 Adapter V9])
++define(PRODUCT_TAP_PROVIDER,[Tor VM TAP-Win32 Provider V9])
 +define(PRODUCT_TAP_CHARACTERISTICS,[0x81])
-+
