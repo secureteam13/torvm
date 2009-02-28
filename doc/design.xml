@@ -29,9 +29,9 @@
     </affiliation>
    </author>
 
-   <pubdate>September 24, 2008</pubdate>
+   <pubdate>February 27, 2009</pubdate>
    <copyright>
-     <year>2008</year>
+     <year>2008-2009</year>
      <holder>The Tor Project, Inc.</holder>
    </copyright>
  </articleinfo>
@@ -46,26 +46,42 @@ This document describes a transparent <trademark class="trade">Tor</trademark> p
  in addition to design goals and implementation detail.
   </para>
 
+  <sect2 id="privacyintro">
+   <title>Privacy and Anonymity</title>
+   <para>
+Privacy is the ability to selectively disclose information about yourself and who you share it with. 
+ Tor is a privacy enhancing technology designed to provide low latency anonymity on the Internet against an
+ adversary who can generate, modify, or delete traffic, run malicious Tor nodes, and perform other attacks
+ against participants in the network.
+   </para>
+   <para>
+Using the nymity slider as reference Tor aims to provide Unlinkable Anonymity for its users. A poor implementation
+ of Tor may expose the user to set reduction attacks eroding privacy to Linkable Anonymity. A more effective
+ attack could further degrade user privacy to Persistent Pseudonymity via a unique identifier, for example. And
+ worst case side channel attacks that reveal origin IP address can void all of the privacy
+ intent of the Tor software. These side channel or catastrophic attacks completely defeat the privacy goals of Tor
+ and indicate a failure of the implementation.
+   </para>
+  </sect2>
+
   <sect2 id="transoverview">
    <title>Transparent Proxy Overview</title>
    <para>
 A <ulink url="http://wiki.noreply.org/noreply/TheOnionRouter/TransparentProxy">transparent Tor proxy</ulink>
- operates at layer3/4 of the OSI model instead of the usual application layer
- like a SOCKS or HTTP proxy. Configuring specific applications to use Tor for
- anonymous TCP and name resolution is no longer required; the transparent proxy intercepts TCP and
- DNS traffic from these programs and routes it through Tor without any explicit application setup.
+ operates at the network and transport layers of of the OSI model instead of the usual application layer
+ like SOCKS or HTTP. Intercepting and routing traffic in this manner avoids the risk of catastrophic side
+ channel attacks that pose the most significant risk to privacy, particularly in a Windows environment.
    </para>
    <para>
-There are many benefits to this approach despite some added difficulties, particularly in a
- Windows environment. By transparently routing host traffic through Tor a number of privacy compromising
- side channel attacks are no longer possible. Usability is also improved as users no longer need to
- struggle with SOCKS configuration or proxy wrappers on a per application basis.
+Usability is also improved as manual SOCKS or HTTP proxy configuration is no longer necessary in each anonymized
+ application. Software that does not support any kind of proxy feature can also be supported in this manner
+ without any additional effort.
    </para>
   </sect2>
 
 
   <sect2 id="vmoverview">
-   <title>Virtual Machine Benefits</title>
+   <title>Virtual Machine Advantages</title>
    <para>
 A virtual machine environment can further improve the security position by providing defense in depth against
  attacks which rely on using local applications to make requests to Tor that can compromise anonymity. This
@@ -90,11 +106,18 @@ For Windows platforms offloading the TCP session intensive Tor process to a Linu
   </sect2>
 
   <sect2 id="multivm">
-   <title>Application Isolation Virtual Machines</title>
+   <title>Application Isolation and Consistency</title>
    <para>
-<!-- MRP
--->
-  </para>
+The use of multiple virtual machines to isolate application instances can protect against linkability of
+ user communications by providing a consistent and trusted initial state for anonymous applications using
+ a static virtual machine image to ensure that any changes made within that isolated environment are not
+ persisted from one runtime instance to the next.
+   </para>
+   <para>
+This fixed virtual machine state is critical for using otherwise dangerous software like browser plugins
+ that can write persistent and unique identifying information to hard disk and relay this information to
+ an attacker.
+   </para>
   </sect2>
 
 
@@ -108,16 +131,16 @@ For Windows platforms offloading the TCP session intensive Tor process to a Linu
   <title>Tor VM Design</title>
   <para>
 The transparent Tor proxy virtual machine must provide a usable and secure interface to the Tor
- network. A number of design criteria are necessary to achieve this goal.
+ network that preserves the unlinkable anonymity intent of Tor. A number of design criteria are
+ necessary to achieve this goal.
   </para>
 
 
   <sect2 id="threatmodel">
    <title>Threat Model</title>
    <para>
-A number of threats are expected when using the Tor network for anonymous exit into the Internet.
- Many of these threats can be mitigated with a robust Tor implementation while other risks cannot
- be discouraged without significant effort and constrained usage.
+A number of threats are expected when using the Tor network for anonymous communication over the
+ Internet.
    </para>
 
     <sect3>
@@ -126,8 +149,27 @@ A number of threats are expected when using the Tor network for anonymous exit i
    
       <listitem><command>Identify User Endpoint</command>
       <para>
-The goal of an attacker within this threat model is to obtain the Tor user origin IP address or fingerprint a specific
- Tor user.
+One goal of the attacker within this threat model is to obtain the Tor user origin IP address.
+      </para>
+      </listitem>
+
+      <listitem><command>Identify User Verinym</command>
+      <para>
+The attacker may desire uniquely identifying user information like name and address stored on the
+ host computer.
+      </para>
+      </listitem>
+
+      <listitem><command>Reduce Privacy to Persistent Pseudonym</command>
+      <para>
+While not as useful as the identifying information above the attacker may wish to uniquely track the individuals
+ using Tor even if their true identities remain unknown.
+      </para>
+      </listitem>
+
+      <listitem><command>Link Anonymous Communications</command>
+      <para>
+The attacker may also attempt to correlate anonymous communications from the same user with each other.
       </para>
       </listitem>
 
@@ -175,24 +217,26 @@ The attacker may observe distinguishing characteristics of Tor user traffic to p
       </para>
       </listitem>
 
-      <listitem><command>Linking Attacks</command>
+      <listitem><command>Linking Attacks via Persistent State</command>
       <para>
-The attacker may use files or application state stored on disk to link separate user instances of Tor use with
- each other. This is a useful method of reducing the anonymity set of the target.
+The attacker may use files or application state stored on disk to link separate instances of Tor use with
+ each other. Note that unique identifiers or configuration associated with applications or operating system
+ components can be used to link communications from the same user if exposed to an attacker.
       </para>
       </listitem>
 
       <listitem><command>Fingerprinting Attacks</command>
       <para>
-<!-- MRP
--->
+The attacker may obtain as much information as possible about the application and environment it is running
+ in to obtain a set of parameters unique to each pseudonym targeted.
       </para>
       </listitem>
 
       <listitem><command>Full Remote Code Execution Attacks</command>
       <para>
-<!-- MRP
--->
+Vulnerabilities in applications or configuration may be exploited remotely for arbitrary execution of the
+ attackers code. This will typically grant access to most of the files and configuration on the operating
+ system.
       </para>
       </listitem>
 
@@ -206,8 +250,8 @@ The attacker may use files or application state stored on disk to link separate 
 
       <listitem><command>Tor Attacks</command>
       <para>
-Attacks which Tor cannot defend against, like a global passive adversary, are obviously outside the scope
- of even the most robust Tor implementation.
+Attacks which Tor cannot defend against, like a global passive adversary or traffic confirmation attacks,
+ are obviously outside the scope of even the most robust Tor implementation.
       </para>
       </listitem>
 
@@ -223,11 +267,11 @@ Attacks which leverage an application or operating system flaw to gain full remo
 The multiple virtual machine model provides defense in depth against these types of attacks and may constrain the
  scope of any compromise to the single virtual machine instance affected by the exploit. It is possible
  (though hard to quantify how difficult) to escalate from a compromised guest VM to secondary exploit of the host
- OS, rendering all protections ineffective.
+ OS, again rendering all protections ineffective.
       </para>
       </listitem>
       
-      <listitem><command>Correlation Attacks</command>
+      <listitem><command>Some Correlation Attacks</command>
       <para>
 If a Tor user interacts with the same site or service when using Tor and not using Tor it is likely
  trivial for an attacker to correlate the anonymous activity with the original user, and thus achieve their
@@ -251,43 +295,22 @@ The ability to switch between anonymous and direct access to such services requi
      <title>Attacks Difficult to Defend Against Transparently</title>
      <itemizedlist>
 
-      <listitem><command>Partitioning Attacks</command>
+      <listitem><command>Partitioning and Fingerprinting Attacks</command>
       <para>
-As mentioned above, there is a fundamental trade off between the transparent approach and a constrained single
- application use of Tor with strong state isolation and communication normalization. Scrubbing every byte and filtering
- every potentially misused component of an application protocol is the only way to ensure that partitioning attacks
- are prevented (as much as possible).  This entails a significant effort and significantly constrains the capabilities
- of the application. Attempting such an effort for a transparent proxy would require extensive development and testing
- for every application layer protocol that might be encountered, and would still be unable to scrub content inside
- encrypted sessions like SSL.
-      </para>
-      <para>
-For situations where a user needs additional applications or protocols they are already reducing their
- anonymity set; a correct transparent proxy implementation will prevent all IP disclosure vulnerabilities
- via side channels that would otherwise provide an attacker with vulnerable client endpoint
- addresses using trivial effort.
-      </para>
-      <para>
-In a Windows environment (and even other operating systems) there are simply too many vectors for proxy bypass
- and DNS side channels to trust most application specific proxy configurations.
-      </para>
-      <para>
-The implications of this trade off and its practical impact on various types of Tor users needs further study.
- Defending against these types of attacks is outside the scope of this implementation, however, it would be
- useful to encourage use of plugins or other tools that normalize application content on the host OS where
- it is most effective.
+While side channel attacks can be thwarted effectively with a robust transparent Tor implementation it is more
+ difficult to protect the content of the communications from partitioning or fingerprinting attacks. The use of
+ TorButton and other such tools is encouraged to provide additional defense against these attacks. Application
+ virtual machines may be difficult to implement for the full spectrum of applications in a way that defeats these
+ attacks.
       </para>
       </listitem>
 
       <listitem><command>The Faithless Endpoint</command>
       <para>
-Another difficult problem for transparent proxy configurations is the opportunity for malicious exit nodes to observe
- and manipulate traffic exiting from their router to compromise user privacy and security. 
+Another difficult problem for Tor implementations is the opportunity for malicious exit nodes to observe
+ and manipulate traffic from their router to compromise user privacy and security. 
  <ulink href="http://www.cosic.esat.kuleuven.be/publications/article-896.pdf">The Faithless Endpoint</ulink> details a
- number of risks that users may not be aware of. This is another trade off where the risks of side channel attacks
- identifying endpoint location are weighed against other risks introduced by users unaware, unable, or unwilling
- to encrypt their sensitive traffic end to end while using Tor. Sending sensitive private information through a malicious
- exit node can potentially give an attacker all the information necessary to identify the client endpoint IP address.
+ number of risks that users may not be aware of.
       </para>
       <para>
 Educating the user about these risks in an intuitive manner and providing them tools to prevent unintended exposure to
@@ -313,7 +336,7 @@ The risks identified in the threat model above drive a number of design criteria
      <title>Transparent Proxy Requirements</title>
       <orderedlist>
 
-      <listitem><command>All TCP and DNS Traffic Proxied</command>
+      <listitem><command>Proxy All TCP and DNS Traffic</command>
       <para>
 All TCP and DNS traffic must be routed through the Tor VM without fail. This requires that no local subnets
  be exposed on the host network stack once started to prevent the combined local and remote DNS exploits
@@ -321,7 +344,7 @@ All TCP and DNS traffic must be routed through the Tor VM without fail. This req
       </para>
       </listitem>
 
-      <listitem><command>Filter Traffic</command>
+      <listitem><command>Filter Remaining Traffic</command>
       <para>
 Traffic that is not TCP or DNS must be dropped at the Tor VM instance to prevent forwarding potentially
  sensitive multicast, ICMP, or other datagrams to the upstream router(s). Likewise certain protocols, like SMTP
@@ -382,7 +405,7 @@ The ability to run multiple VM instances for application runtime isolation and d
     </sect3>
 
     <sect3 id="hosttransreqs">
-     <title>Host Transport Requirements</title>
+     <title>Host Requirements</title>
       <orderedlist>
 
       <listitem><command>IP Routing Through Tor VM</command>
@@ -391,6 +414,15 @@ All operating systems that are able to run Tor should be able to route traffic i
  transparent proxy through the virtual machine. Using the combined bridge and tap adapter configuration
  there is no need to rely on VPN or DHCP resources for Tor VM functionality; basic IP interface configuration
  and IP routing facilities are all that is necessary.
+      </para>
+      </listitem>
+
+      <listitem><command>Privilege Separation</command>
+      <para>
+To obtain the most benefit of a transparent virtual machine implementation host access controls
+ and privilege separation should be used to constrain the capabilities of the implementation and
+ the applications used with it. Newer Windows versions go beyond the typical owner / group based
+ distinction into fine grained access control which may be useful.
       </para>
       </listitem>
 
@@ -517,14 +549,12 @@ The coLinux cooperative virtual machine provides low CPU and memory
    </para>
    <para>
 Qemu on the other hand provides full CPU emulation for much stronger host / guest isolation and does not require
- any changes to the guest kernel or ring0 drivers on the host. For these reasons Qemu is preferred for the
+ any changes to the guest kernel or system level drivers on the host. For these reasons Qemu is preferred for the
  virtual machine implementation despite the increased CPU and memory overhead associated with full emulation.
    </para>
    <para>
  Both solutions provide bridged network devices via the WinPcap driver and point-to-point connections using the
- Tap32 adapter. An unknown amount of effort will be needed to make the existing open source WinPcap driver portable. 
- The <ulink url="http://microolap.com/products/network/pssdk/faq/">Packet Sniffer SDK</ulink> libraries
- are a good example of the desired portability requirements for a modified WinPcap implementation.
+ Tap32 adapter.
    </para>
   </sect2>
 
@@ -582,13 +612,6 @@ kamikaze-libevent-package.patch
       </para>
       </listitem>
 
-      <listitem><command>Boot and Runtime Modifications</command>
-      <para>
-<literallayout><function>build/iso/
-</function></literallayout>
-      </para>
-      </listitem>
-
     </itemizedlist>
    </sect3>
 
@@ -612,28 +635,10 @@ kamikaze-libevent-package.patch
     <title>OpenVPN TAP-Win32 Patches</title>
     <itemizedlist>
 
-      <listitem><command>TAP-Win32 Network Device Driver</command>
+      <listitem><command>Portable TAP-Win32 Network Device Driver</command>
       <para>
 <literallayout><function>openvpn-tor-tap-win32-driver.patch
 </function></literallayout>
-      </para>
-      </listitem>
-
-    </itemizedlist>
-   </sect3>
-
-
-   <sect3>
-    <title>Vidalia Patches</title>
-    <itemizedlist>
-      
-      <listitem><command>Start and Stop Control of VM</command>
-      <para>
-      </para>
-      </listitem>
-
-      <listitem><command>Direct (non-Tor) and Blocked Port Setup</command>
-      <para>
       </para>
       </listitem>
 
