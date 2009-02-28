@@ -69,9 +69,7 @@ if [[ "$1" != "dobuild" ]]; then
     export SEVNZIP_INST=true
   fi
   SEVNZIP_DEF_INSTPATH="/${sysdrive}/Program Files/7-Zip"
-  if [ -d "$SEVNZIP_DEF_INSTPATH" ]; then
-    export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
-  fi
+  export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
   
   export ZLIB_VER="1.2.3"
   export ZLIB_DIR="zlib-${ZLIB_VER}"
