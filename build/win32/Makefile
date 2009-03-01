@@ -17,79 +17,79 @@ LOCALGITOPT:=--local --bare -n
 # with an autorun.inf that launches a build of all the win32 parts.
 # 
 ZLIB_F=zlib-1.2.3-bin.zip
-ZLIB_URL=http://downloads.sourceforge.net/gnuwin32/zlib-1.2.3-bin.zip?modtime=1122324542&big_mirror=1
+ZLIB_URL=http://downloads.sourceforge.net/gnuwin32/zlib-1.2.3-bin.zip?big_mirror=1
 ZLIB_SUM=becbcaf5076e307e743b1edc6a5645849eba9ebc
 
 GZIP_F=gzip-1.3.12-1-bin.zip
-GZIP_URL=http://downloads.sourceforge.net/gnuwin32/gzip-1.3.12-1-bin.zip?modtime=1213401872&big_mirror=1
+GZIP_URL=http://downloads.sourceforge.net/gnuwin32/gzip-1.3.12-1-bin.zip?big_mirror=1
 GZIP_SUM=69901b7a58e324e39653d4282deaf5ab5bb5c07f
 
 BZIP2_F=bzip2-1.0.5-bin.zip
-BZIP2_URL=http://downloads.sourceforge.net/gnuwin32/bzip2-1.0.5-bin.zip?modtime=1206045010&big_mirror=1
+BZIP2_URL=http://downloads.sourceforge.net/gnuwin32/bzip2-1.0.5-bin.zip?big_mirror=1
 BZIP2_SUM=618ba51d3d6838e71a922febf717471b7d5f54e2
 
 LIBARCH_F=libarchive-2.4.12-1-bin.zip
-LIBARCH_URL=http://downloads.sourceforge.net/gnuwin32/libarchive-2.4.12-1-bin.zip?modtime=1215347767&big_mirror=1
+LIBARCH_URL=http://downloads.sourceforge.net/gnuwin32/libarchive-2.4.12-1-bin.zip?big_mirror=1
 LIBARCH_SUM=02eb2fe2200705d0067f03780c6d65f51ae69e42
 
 BINUTILS_F=binutils-2.18.50-20080109-2.tar.gz
-BINUTILS_URL=http://downloads.sourceforge.net/mingw/binutils-2.18.50-20080109-2.tar.gz?modtime=1206567544&big_mirror=1
+BINUTILS_URL=http://downloads.sourceforge.net/mingw/binutils-2.18.50-20080109-2.tar.gz?big_mirror=1
 BINUTILS_SUM=4a47e75604765f671ca233bb503f1ca67fd93af0
 
 GCCORE_F=gcc-core-3.4.5-20060117-3.tar.gz
-GCCORE_URL=http://downloads.sourceforge.net/mingw/gcc-core-3.4.5-20060117-3.tar.gz?modtime=1209046227&big_mirror=1
+GCCORE_URL=http://downloads.sourceforge.net/mingw/gcc-core-3.4.5-20060117-3.tar.gz?big_mirror=1
 GCCORE_SUM=1ba77819f5749954fda080c0137af359a09760fc
 
 GPP_F=gcc-g++-3.4.5-20060117-3.tar.gz
-GPP_URL=http://downloads.sourceforge.net/mingw/gcc-g%2B%2B-3.4.5-20060117-3.tar.gz?modtime=1209046244&big_mirror=1
+GPP_URL=http://downloads.sourceforge.net/mingw/gcc-g%2B%2B-3.4.5-20060117-3.tar.gz?big_mirror=1
 GPP_SUM=1d31f990d4027f171ab8c55374bec815a46c16dd
 
 MINGWRUN_F=mingw-runtime-3.14.tar.gz
-MINGWRUN_URL=http://downloads.sourceforge.net/mingw/mingw-runtime-3.14.tar.gz?modtime=1198749088&big_mirror=1
+MINGWRUN_URL=http://downloads.sourceforge.net/mingw/mingw-runtime-3.14.tar.gz?big_mirror=1
 MINGWRUN_SUM=ebd523dff5cb5bc476124a283b3ba9781f907fea
 
 MINGWUTIL_F=mingw-utils-0.3.tar.gz
-MINGWUTIL_URL=http://downloads.sourceforge.net/mingw/mingw-utils-0.3.tar.gz?modtime=1077362266&big_mirror=1
+MINGWUTIL_URL=http://downloads.sourceforge.net/mingw/mingw-utils-0.3.tar.gz?big_mirror=1
 MINGWUTIL_SUM=7ae32742ece1e89978784634aed824775cf47336
 
 MAKE_F=mingw32-make-3.81-20080326-3.tar.gz
-MAKE_URL=http://downloads.sourceforge.net/mingw/mingw32-make-3.81-20080326-3.tar.gz?modtime=1212658958&big_mirror=1
+MAKE_URL=http://downloads.sourceforge.net/mingw/mingw32-make-3.81-20080326-3.tar.gz?big_mirror=1
 MAKE_SUM=86ab2ddffdd2df6245856bb0dd50fbd8ba372767
 
 W32API_F=w32api-3.11.tar.gz
-W32API_URL=http://downloads.sourceforge.net/mingw/w32api-3.11.tar.gz?modtime=1198748420&big_mirror=1
+W32API_URL=http://downloads.sourceforge.net/mingw/w32api-3.11.tar.gz?big_mirror=1
 W32API_SUM=0969cde19c3a85012b4924cb49cf2e9ef3d1b6df
 
 MSYS_F=MSYS-1.0.11-20071204.tar.bz2
-MSYS_URL=http://downloads.sourceforge.net/mingw/MSYS-1.0.11-20071204.tar.bz2?modtime=1196807934&big_mirror=1
+MSYS_URL=http://downloads.sourceforge.net/mingw/MSYS-1.0.11-20071204.tar.bz2?big_mirror=1
 MSYS_SUM=9a1207b04ffaf8880c58de643609e4deed3e1563
 
 MSYSCORE_F=msysCORE-1.0.11-2007.01.19-1.tar.bz2
-MSYSCORE_URL=http://downloads.sourceforge.net/mingw/msysCORE-1.0.11-2007.01.19-1.tar.bz2?modtime=1169214215&big_mirror=1
+MSYSCORE_URL=http://downloads.sourceforge.net/mingw/msysCORE-1.0.11-2007.01.19-1.tar.bz2?big_mirror=1
 MSYSCORE_SUM=65870650914925dfd8451a9452bff3cdb8320221
 
 BASH_F=bash-3.1-MSYS-1.0.11-1.tar.bz2
-BASH_URL=http://downloads.sourceforge.net/mingw/bash-3.1-MSYS-1.0.11-1.tar.bz2?modtime=1195140582&big_mirror=1
+BASH_URL=http://downloads.sourceforge.net/mingw/bash-3.1-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 BASH_SUM=a440bb5a6e2edfe703b67877c7e7e48504aad6dc
 
 DIFFUTIL_F=diffutils-2.8.7-MSYS-1.0.11-1.tar.bz2
-DIFFUTIL_URL=http://downloads.sourceforge.net/mingw/diffutils-2.8.7-MSYS-1.0.11-1.tar.bz2?modtime=1196332674&big_mirror=1
+DIFFUTIL_URL=http://downloads.sourceforge.net/mingw/diffutils-2.8.7-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 DIFFUTIL_SUM=a34f0470674b6bb807e505839a477f9b9c70facf
 
 LIBTOOL_F=libtool1.5-1.5.25a-1-bin.tar.bz2
-LIBTOOL_URL=http://downloads.sourceforge.net/mingw/libtool1.5-1.5.25a-1-bin.tar.bz2?modtime=1190250326&big_mirror=1
+LIBTOOL_URL=http://downloads.sourceforge.net/mingw/libtool1.5-1.5.25a-1-bin.tar.bz2?big_mirror=1
 LIBTOOL_SUM=7e7206011471dbe79f5298d76ea9530288b2a6dd
 
 MINIRES_F=minires-1.01-1-MSYS-1.0.11-1.tar.bz2
-MINIRES_URL=http://downloads.sourceforge.net/mingw/minires-1.01-1-MSYS-1.0.11-1.tar.bz2?modtime=1206482214&big_mirror=1
+MINIRES_URL=http://downloads.sourceforge.net/mingw/minires-1.01-1-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 MINIRES_SUM=c077e08cce446656ff0c0b3f30a327652f9c9986
 
 MSYSZLIB_F=zlib-1.2.3-MSYS-1.0.11-1.tar.bz2
-MSYSZLIB_URL=http://downloads.sourceforge.net/mingw/zlib-1.2.3-MSYS-1.0.11-1.tar.bz2?modtime=1206455079&big_mirror=1
+MSYSZLIB_URL=http://downloads.sourceforge.net/mingw/zlib-1.2.3-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 MSYSZLIB_SUM=dff1a110b165d7ba4d7804b1c2f4a023823eec90
 
 MSYSCRYPT_F=crypt-1.1-1-MSYS-1.0.11-1.tar.bz2
-MSYSCRYPT_URL=http://downloads.sourceforge.net/mingw/crypt-1.1-1-MSYS-1.0.11-1.tar.bz2?modtime=1206481779&big_mirror=1
+MSYSCRYPT_URL=http://downloads.sourceforge.net/mingw/crypt-1.1-1-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 MSYSCRYPT_SUM=072e9a158d41e73aa5a766df016494dab74085e4
 
 M4_F=m4-1.4.7-MSYS.tar.bz2
@@ -97,11 +97,11 @@ M4_URL=http://prdownloads.sourceforge.net/mingw/m4-1.4.7-MSYS.tar.bz2?download
 M4_SUM=a00ed987824456946777d92f600612f344211dcc
 
 SSL_F=openssl-0.9.8g-1-MSYS-1.0.11-2-dll098.tar.gz
-SSL_URL=http://downloads.sourceforge.net/mingw/openssl-0.9.8g-1-MSYS-1.0.11-2-dll098.tar.gz?modtime=1206734099&big_mirror=1
+SSL_URL=http://downloads.sourceforge.net/mingw/openssl-0.9.8g-1-MSYS-1.0.11-2-dll098.tar.gz?big_mirror=1
 SSL_SUM=eba5f37fdec2982727556a3dbb5ea6fd04296b76
 
 SSH_F=openssh-4.7p1-MSYS-1.0.11-1-bin.tar.gz
-SSH_URL=http://downloads.sourceforge.net/mingw/openssh-4.7p1-MSYS-1.0.11-1-bin.tar.gz?modtime=1206734972&big_mirror=1
+SSH_URL=http://downloads.sourceforge.net/mingw/openssh-4.7p1-MSYS-1.0.11-1-bin.tar.gz?big_mirror=1
 SSH_SUM=bf1617bf43de198cea7c197621494baec9520bcb
 
 ZLIBSRC_F=zlib-1.2.3.tar.gz
@@ -117,15 +117,15 @@ LIBEVENT_URL=http://www.monkey.org/~provos/libevent-1.4.8-stable.tar.gz
 LIBEVENT_SUM=82c05a893688810aafc2b372b567a837eb115732
 
 ACONF_F=autoconf2.5-2.61-1-bin.tar.bz2
-ACONF_URL=http://downloads.sourceforge.net/mingw/autoconf2.5-2.61-1-bin.tar.bz2?modtime=1190249465&big_mirror=1
+ACONF_URL=http://downloads.sourceforge.net/mingw/autoconf2.5-2.61-1-bin.tar.bz2?big_mirror=1
 ACONF_SUM=7f05699dfeb0fea12b490da7204eeb89644a3bf7
 
 AMAKE_F=automake1.9-1.9.6-2-bin.tar.bz2
-AMAKE_URL=http://downloads.sourceforge.net/mingw/automake1.9-1.9.6-2-bin.tar.bz2?modtime=1190249841&big_mirror=1
+AMAKE_URL=http://downloads.sourceforge.net/mingw/automake1.9-1.9.6-2-bin.tar.bz2?big_mirror=1
 AMAKE_SUM=685dd354868ebb6fca148a300f20b55e1c036fca
 
 PERL_F=perl-5.6.1-MSYS-1.0.11-1.tar.bz2
-PERL_URL=http://downloads.sourceforge.net/mingw/perl-5.6.1-MSYS-1.0.11-1.tar.bz2?modtime=1206455338&big_mirror=1
+PERL_URL=http://downloads.sourceforge.net/mingw/perl-5.6.1-MSYS-1.0.11-1.tar.bz2?big_mirror=1
 PERL_SUM=ff1f07a061c7958bc9043f0085a55ff0101b1be4
 
 GROFF_F=groff-1.19.2.tar.gz
@@ -140,23 +140,32 @@ SSLSRC_F=openssl-0.9.8j.tar.gz
 SSLSRC_URL=http://www.openssl.org/source/openssl-0.9.8j.tar.gz
 SSLSRC_SUM=f70f7127a26e951e8a0d854c0c9e6b4c24df78e4
 
+PYTHON_F=Python-3.0.1.tar.bz2
+PYTHON_URL=http://www.python.org/ftp/python/3.0.1/$(PYTHON_F)
+PYTHON_SUM=6206059f0c04336e8d6550d2cdd88ab91f2657ff
+
 PY2EXE_F=py2exe-0.6.9.zip
 PY2EXE_TGZ=py2exe.tar.gz
-PY2EXE_URL=http://downloads.sourceforge.net/py2exe/py2exe-0.6.9.zip?modtime=1226789941&big_mirror=1
+PY2EXE_URL=http://downloads.sourceforge.net/py2exe/py2exe-0.6.9.zip?big_mirror=1
 PY2EXE_SUM=f1a2cdfbf6d142f6ff54edfcf9d127e2d07169d5
 
-WIX_F=wix3.0.4721.0-binaries.zip
+WIX_F=wix3.0.4805.0-binaries.zip
 WIX_TGZ=wix.tar.gz
-WIX_URL=http://downloads.sourceforge.net/wix/wix3.0.4721.0-binaries.zip?modtime=1227270606&big_mirror=1
-WIX_SUM=3035442aeab28a01f1cb032c610f375f763a0f88
+WIX_URL=http://downloads.sourceforge.net/wix/wix3.0.4805.0-binaries.zip?big_mirror=1
+WIX_SUM=58dcedd89efcf9b80f7d6f1c0c5f9ee44a800892
+
+WIXSRC_F=wix3.0.4805.0-sources.zip
+WIXSRC_TGZ=wixsrc.tar.gz
+WIXSRC_URL=http://downloads.sourceforge.net/wix/wix3.0.4805.0-sources.zip?big_mirror=1
+WIXSRC_SUM=60d5bfa98fcf8f902586067393eb3ac7e4b12f82
 
 GNURX_F=mingw-libgnurx-2.5.1-src.tar.gz
-GNURX_URL=http://downloads.sourceforge.net/mingw/mingw-libgnurx-2.5.1-src.tar.gz?modtime=1178542293&big_mirror=1
+GNURX_URL=http://downloads.sourceforge.net/mingw/mingw-libgnurx-2.5.1-src.tar.gz?big_mirror=1
 GNURX_SUM=f1e4af2541645dac82362b618aaa849658cd4988
 
 NSIS_VER=2.42
 NSIS_F=nsis-$(NSIS_VER).zip
-NSIS_URL=http://downloads.sourceforge.net/nsis/nsis-2.42.zip?modtime=1229784735&big_mirror=1
+NSIS_URL=http://downloads.sourceforge.net/nsis/nsis-2.42.zip?big_mirror=1
 NSIS_SUM=a1aef12a33f16273ac9109fde28713399f6a8016
 NSIS_TGZ=nsis-2.42.tar.gz
 
@@ -165,7 +174,7 @@ SEVNZIP_DL=true
 SEVNZIP_INST=true
 SEVNZIP_VER=464
 SEVNZIP_F=7z464.msi
-SEVNZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?modtime=1230949842&big_mirror=1
+SEVNZIP_URL=http://downloads.sourceforge.net/sevenzip/7z464.msi?big_mirror=1
 SEVNZIP_SUM=19a06e188a83452dc9273290dbef71220686c4c1
 
 SDL_F=SDL-1.2.13.tar.gz
@@ -209,7 +218,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3560
+VIDALIA_VER=3597
 
 # for package resources
 TORSVN_NAME=tor-latest
@@ -239,7 +248,7 @@ THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 # buildscripts need some dire clean up...
 OK:=echo -n
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PY2EXE_F) $(WIX_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(SSL_F) $(SSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PYTHON_F) $(PY2EXE_F) $(WIX_F) $(WIXSRC_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -289,8 +298,10 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(QT_F) ]; then $(DLCMD) "$(QT_URL)" $(QT_SUM) "$(WDLDIR)/$(QT_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(NSIS_F) ]; then $(DLCMD) "$(NSIS_URL)" $(NSIS_SUM) "$(WDLDIR)/$(NSIS_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SSLSRC_F) ]; then $(DLCMD) "$(SSLSRC_URL)" $(SSLSRC_SUM) "$(WDLDIR)/$(SSLSRC_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(PYTHON_F) ]; then $(DLCMD) "$(PYTHON_URL)" $(PYTHON_SUM) "$(WDLDIR)/$(PYTHON_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(PY2EXE_F) ]; then $(DLCMD) "$(PY2EXE_URL)" $(PY2EXE_SUM) "$(WDLDIR)/$(PY2EXE_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(WIX_F) ]; then $(DLCMD) "$(WIX_URL)" $(WIX_SUM) "$(WDLDIR)/$(WIX_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(WIXSRC_F) ]; then $(DLCMD) "$(WIXSRC_URL)" $(WIXSRC_SUM) "$(WDLDIR)/$(WIXSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(GNURX_F) ]; then $(DLCMD) "$(GNURX_URL)" $(GNURX_SUM) "$(WDLDIR)/$(GNURX_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(POLIPO_F) ]; then $(DLCMD) "$(POLIPO_URL)" $(POLIPO_SUM) "$(WDLDIR)/$(POLIPO_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(SDL_F) ]; then $(DLCMD) "$(SDL_URL)" $(SDL_SUM) "$(WDLDIR)/$(SDL_F)"; fi
@@ -358,6 +369,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mv $(ISODIR)/dl/$(OVPN_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(LIBEVENT_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(PYTHON_F) $(ISODIR)/dl/src/; \
 	echo "--- Repacking WinPCAP archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_$(WPCAPSRC_VER); tar cf $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar WpcapSrc_$(WPCAPSRC_VER); gzip -9 $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar; rm -rf WpcapSrc_$(WPCAPSRC_VER) $(ISODIR)/dl/$(WPCAPSRC_F); \
 	echo "--- Repacking Py2Exe archive ..."; \
@@ -366,6 +378,8 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	$(UNZIP) $(WDLDIR)/$(NSIS_F); tar zcf $(ISODIR)/dl/$(NSIS_TGZ) nsis-$(NSIS_VER); rm -rf nsis-$(NSIS_VER) $(ISODIR)/dl/$(NSIS_F); \
 	echo "--- Repacking WiX archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(WIX_F) -d wix; tar zcf $(ISODIR)/dl/$(WIX_TGZ) wix; rm -rf wix $(ISODIR)/dl/$(WIX_F); \
+	echo "--- Repacking WiX sources archive ..."; \
+	$(UNZIP) $(WDLDIR)/$(WIXSRC_F) -d wixsrc; tar zcf $(ISODIR)/dl/$(WIXSRC_TGZ) wixsrc; rm -rf wixsrc $(ISODIR)/dl/$(WIXSRC_F); \
 	echo "--- Repacking Qt archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(QT_F) -d qt-$(QT_VER); mv qt-$(QT_VER)/qt-*/* qt-$(QT_VER)/; rm -rf qt-$(QT_VER)/qt-*; tar zcf $(ISODIR)/dl/src/$(QT_TGZ) qt-$(QT_VER); rm -rf qt-$(QT_VER) $(ISODIR)/dl/$(QT_F); \
 	echo "--- Exporting Vidalia version $(VIDALIA_VER) from local mirror ..."; \

@@ -13,12 +13,12 @@ if [[ "$1" != "dobuild" ]]; then
   if [[ "$sysdrive" == "" ]]; then
     sysdrive=`echo $SYSTEMDRIVE | sed 's/:.*//'`
     if [ ! -d /$sysdrive ]; then
-      # msys not happy about whatever odd location windows installed into...
+      # msys not happy about whatever odd location windows installed into.
       sysdrive=c
     fi
   fi
   # make sure we express sys drive as lower case because of msys pedantic'ness
-  # or that of the sub scripts and whatever else get confused...
+  # or that of the sub scripts and whatever else get confused.
   # boy, wouldn't tr be nice? tr -t '[:upper:]' '[:lower:]'
   for DL in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
     echo $sysdrive | grep -i "^[${DL}]" >/dev/null
@@ -27,7 +27,7 @@ if [[ "$1" != "dobuild" ]]; then
     fi
   done
   if [ ! -d /$sysdrive ]; then
-    echo "Bogus sysdrive Windows root set: $sysdrive , using defaults..."
+    echo "Bogus sysdrive Windows root set: $sysdrive , using defaults ..."
     sysdrive=c
   fi
   echo "Using Windows system drive root /$sysdrive , ${sysdrive}:\\"
@@ -58,7 +58,7 @@ if [[ "$1" != "dobuild" ]]; then
     chmod +x $bstatefile
   fi
   
-  export libdir="${ddir}/lib"
+  export bdlibdir="${ddir}/lib"
   export bindir="${ddir}/bin"
   export statedir="${ddir}/state"
   export instdir="${brootdir}/Installer"
@@ -151,6 +151,9 @@ if [[ "$1" != "dobuild" ]]; then
   
   export NSIS_DIR=nsis-2.42
   export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
+
+  export WIXSRC_DIR=wixsrc
+  export WIXSRC_FILE=wixsrc.tar.gz
   
   if [ -d "$VS80COMNTOOLS" ]; then
     export VSTOOLSDIR="$VS80COMNTOOLS"
@@ -184,7 +187,7 @@ if [[ "$1" != "dobuild" ]]; then
   if [[ "$bld_dsub" == "" ]]; then
     export bld_dsub="${BUILD_SCP_DIR}/${build_date}"
     if [[ "$BUILD_SCP_NOSUBDIR" == "TRUE" ]]; then
-      # dont include the date subdir in any copied destinations...
+      # dont include the date subdir in any copied destinations.
       export bld_dsub="${BUILD_SCP_DIR}"
     fi
   fi
@@ -207,14 +210,14 @@ if [[ "$1" != "dobuild" ]]; then
 else
 
 
-# SECOND PASS - begin build process ...
+# SECOND PASS - begin build process
   
 function pkgbuilt () {
   echo "export $1=yes" >> $bstatefile
 }
 
 if [[ "$MSYS_SETUP" != "yes" ]]; then
-  echo "Setting up MSYS build environment..."
+  echo "Setting up MSYS build environment ..."
   if [ -f ~/.ssh/user ]; then
     chmod 700 ~/.ssh >/dev/null 2>&1
     if [ ! -f ~/.ssh/id_rsa ]; then
@@ -224,7 +227,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     chmod 600 ~/.ssh/id_rsa >/dev/null 2>&1
   fi
 
-  for dir in $ddir $libdir $bindir $statedir $brootdir $instdir $thandir $bundledir; do
+  for dir in $ddir $bdlibdir $bindir $statedir $brootdir $instdir $thandir $bundledir; do
     if [ ! -d $dir ]; then
       mkdir -p $dir
     fi
@@ -235,7 +238,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
   tar xf /dl/m4*
 
   if [ -d /usr/usr ]; then
-    # ahh, gotta love the msys /usr <-> / equivalence hack...
+    # ahh, gotta love the msys /usr <-> / equivalence hack.
     cd /usr/usr
     if [ -d local ]; then
       mv local ../
@@ -257,12 +260,19 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
   # we only need the dll for ssh and friends.
   rm -f /include/zlib.h /include/zconf.h /lib/libz.a /lib/libz.dll.a 
 
+  # if WiX sources available extract into expected location for
+  # localization support.
+  cd /src
+  if [ -d /$WIXSRC_DIR ]; then
+    mv /$WIXSRC_DIR ./
+  fi
+
   pkgbuilt MSYS_SETUP
 fi
 
 if [[ "$PKGS_INSTALLED" != "yes" ]]; then
   anyfail=0
-  echo "Checking for any packages to install..."
+  echo "Checking for any packages to install ..."
   if [[ "$SEVNZIP_INST" == "true" ]]; then
     if [ ! -f "/dl/${SEVNZIP_PKG}" ]; then
       echo "ERROR: Unable to locate expected 7zip package for install at location: /${SEVNZIP_PKG}"
@@ -326,7 +336,6 @@ if [[ "$IGNORE_DDK" != "yes" ]]; then
 fi
 
 
-# package builds start here ...
 if [[ "$PTHREADS_BUILT" != "yes" ]]; then
   echo "Building pthreads-w32 ..."
   cd /usr/src
@@ -337,11 +346,11 @@ if [[ "$PTHREADS_BUILT" != "yes" ]]; then
     echo "ERROR: pthreads-32 build failed." >&2
     exit 1
   fi
-  # make install not quite sane yet ...
+  # XXX make install not quite sane yet
   cp *.a /lib/
   cp *.dll /bin/
   cp *.h /usr/include/
-  cp pthreadGC2.dll $libdir/
+  cp pthreadGC2.dll $bdlibdir/
 
   pkgbuilt PTHREADS_BUILT
 fi
@@ -352,31 +361,27 @@ if [[ "$ZLIB_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $ZLIB_FILE
   cd $ZLIB_DIR
-  (
-    # LIBZ configure is odd... perhaps these should be renamed
-    unset libdir
-    ./configure --prefix=/usr --enable-shared
-    if (( $? != 0 )); then
-      echo "ERROR: zlib configure failed." >&2
-      exit 1
-    fi
-    make
-    if (( $? != 0 )); then
-      echo "ERROR: zlib build failed." >&2
-      exit 1
-    fi
-    make install
-    if (( $? != 0 )); then
-      echo "ERROR: zlib install failed." >&2
-      exit 1
-    fi
-    make -f win32/Makefile.gcc
-    if (( $? != 0 )); then
-      echo "ERROR: zlib dynamic build failed." >&2
-      exit 1
-    fi
-  )
-  cp *.dll $libdir/
+  ./configure --prefix=/usr --enable-shared
+  if (( $? != 0 )); then
+    echo "ERROR: zlib configure failed." >&2
+    exit 1
+  fi
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: zlib build failed." >&2
+    exit 1
+  fi
+  make install
+  if (( $? != 0 )); then
+    echo "ERROR: zlib install failed." >&2
+    exit 1
+  fi
+  make -f win32/Makefile.gcc
+  if (( $? != 0 )); then
+    echo "ERROR: zlib dynamic build failed." >&2
+    exit 1
+  fi
+  cp *.dll $bdlibdir/
 
   pkgbuilt ZLIB_BUILT
 fi
@@ -419,7 +424,7 @@ if [[ "$SDL_BUILT" != "yes" ]]; then
     exit 1
   fi
   make install
-  cp /usr/bin/SDL.dll $libdir/
+  cp /usr/bin/SDL.dll $bdlibdir/
 
   pkgbuilt SDL_BUILT
 fi
@@ -463,8 +468,8 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
     echo "ERROR: openvpn tap-win32 driver build failed." >&2
     exit 1
   fi
-  cp i386/${TAPDRVN}.sys $libdir/
-  cp i386/OemWin2k.inf $libdir/${TAPDRVN}.inf
+  cp i386/${TAPDRVN}.sys $bdlibdir/
+  cp i386/OemWin2k.inf $bdlibdir/${TAPDRVN}.inf
 
   pkgbuilt OPENVPN_BUILT
 fi
@@ -493,14 +498,14 @@ if [[ "$WPCAP_BUILT" != "yes" ]]; then
     echo "ERROR: WinPcap npf.sys driver build failed." >&2
     exit 1
   fi
-  cp $NPFDRV_F $libdir/tornpf.sys
+  cp $NPFDRV_F $bdlibdir/tornpf.sys
   cd Dll/Project
   make
   if (( $? != 0 )); then
     echo "ERROR: WinPcap Packet user space library build failed." >&2
     exit 1
   fi
-  cp torpkt.dll $libdir/
+  cp torpkt.dll $bdlibdir/
   cd $wpbase
   cd wpcap/PRJ
   make
@@ -508,7 +513,7 @@ if [[ "$WPCAP_BUILT" != "yes" ]]; then
     echo "ERROR: WinPcap libwpcap user space library build failed." >&2
     exit 1
   fi
-  cp torpcap.dll $libdir/
+  cp torpcap.dll $bdlibdir/
 
   pkgbuilt WPCAP_BUILT
 fi
@@ -650,7 +655,7 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
   tar zxf $TOR_FILE
   cd $TOR_DIR
   if [ ! -f configure ]; then
-    echo "Attempting autogen..."
+    echo "Attempting autogen ..."
     aclocal
     autoheader
     autoconf
@@ -683,11 +688,25 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
   cp /src/$OPENSSL_DIR/ssleay32-0.9.8.dll bin/
   # line conversion prior to MSI packaging and other documentation prep
   ( 
-    # this has to run detached or else troff tries to eat our controlling tty leading to badness...
-    # TODO : tech this thing how to wait properly ...
+    # this has to run detached or else troff tries to eat our controlling tty
+    # resulting in a hung build without user interaction.
     groff -m man -F /share -M /share/tmac -T html doc/tor.1 > Usage.html &
+    i=20
+    pc=0
+    while (( $i > 0 )); do
+      sleep 1
+      i=$(expr $i - 1)
+      if [ -f Usage.html ]; then
+        cc=$(cat Usage.html | wc -c)
+        if (( $cc > $pc )); then
+          pc=$cc
+        else
+          # all done generating
+          i=0
+        fi
+      fi
+    done
   )
-  sleep 5
   ls -lh Usage.html
   for FILE in README ChangeLog LICENSE Authors src/config/torrc.sample; do
     if [ -f $FILE ]; then
@@ -698,8 +717,9 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
     fi
   done
 
-  pkgbuilt OPENSSL_BUILT
+  pkgbuilt TOR_BUILT
 fi
+
 
 if [[ "$PYCRYPTO_BUILT" != "yes" ]]; then
   echo "Building PyCrypto ..."
@@ -744,7 +764,7 @@ if [[ "$THANDY_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf thandy-latest.tar.gz
   cd thandy-latest
-  echo "Starting build..."
+  echo "Starting python Thandy build ..."
   python setup.py build
   if (( $? != 0 )); then
     echo "ERROR: Thandy build failed."
@@ -937,8 +957,8 @@ fi
 
 
 # don't forget the kernel and virtual disk
-cp $KERNEL_IMAGE $libdir/
-cp $VMHDD_IMAGE $libdir/
+cp $KERNEL_IMAGE $bdlibdir/
+cp $VMHDD_IMAGE $bdlibdir/
 
 
 # Microsoft Installer package build
@@ -946,17 +966,31 @@ TOR_WXS=tor.wxs
 TORUI_WXS=WixUI_Tor.wxs
 TOR_WXS_DIR=contrib
 WIX_UI=/wix/WixUIExtension.dll
+WIXSRC_WXLDIR=/src/$WIXSRC_DIR/src/ext/UIExtension/wixlib
+DEF_WXL_LANG=en-us
+WXL_LANGS="cs-cz de-de en-us es-es fr-fr hu-hu it-it ja-jp nl-nl pl-pl ru-ru uk-ua"
+# XXX currently problems with WiX handling of: zh_CN zh_TW
+VIDALIA_LANGS="cs de en es fa fi fr he it nl pl pt ro ru sv"
+WIX_ALL_LOC_LINK=""
+for LANG in $WXL_LANGS; do
+  WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc WixUI_${LANG}.wxl"
+done
+for LANG in $VIDALIA_LANGS; do
+  WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc vidalia_${LANG}.wxl"
+done
+
+# XXX for now this eats up too much time and space
+# rely on the multi-lingual packages if possible.
+BUILD_IND_LANGS=no
 
 if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Building bundle packages ..."
   echo "Expanding package dir ..."
-  cd /usr/src
+  cd /src
   tar zxf pkg.tgz
   if [ -f /usr/src/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
     echo "Creating Vidalia MSI package ..."
-    cd /usr/src/$VIDALIA_DIR
-    ls -l src/vidalia/vidalia.exe
-    mkdir bin
+    cd /src/$VIDALIA_DIR
     for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do
       cp /$sysdrive/Qt/$QT_VER/bin/$FILE bin/
     done
@@ -974,16 +1008,17 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     fi
     if [[ "$DEBUG_NO_STRIP" == "" ]]; then
       echo "Stripping debug symbols from binaries and libraries ..."
-      strip $libdir/*.dll
+      strip $bdlibdir/*.dll
       strip $bindir/*.exe
       strip $ddir/*.exe
       strip bin/*.dll
       strip bin/*.exe
     fi
 
-
+    cp $WIXSRC_WXLDIR/*.wxl ./
+    cp pkg/win32/*.wxl ./
     candle.exe pkg/win32/*.wxs
-    light.exe -out vidalia.msi vidalia.wixobj WixUI_Tor.wixobj -ext $WIX_UI
+    light.exe -out vidalia.msi vidalia.wixobj WixUI_Custom.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
     if [ -f vidalia.msi ]; then
       cp vidalia.msi $bundledir
       cp vidalia.msi ../pkg/
@@ -992,9 +1027,32 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     else
       echo "ERROR: unable to build vidalia MSI installer."
     fi
+    if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+      for LANG in $VIDALIA_LANGS; do
+        WIXCULTURE=$DEF_WXL_LANG
+        for WIXLANG in $WXL_LANGS; do
+          pre=$(echo $WIXLANG | sed 's/-.*//')
+          if [[ "$pre" == "$LANG" ]]; then
+            WIXCULTURE=$WIXLANG
+          fi
+        done
+        outfile="vidalia-${LANG}.msi"
+        echo "Linking localized $outfile ..."
+        light.exe -out $outfile vidalia.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        if [ -f $outfile ]; then
+          cp $outfile $bundledir
+          cp $outfile ../pkg/
+          ls -l $outfile
+        else
+          echo "ERROR: unable to link localized $outfile vidalia MSI installer."
+        fi
+      done
+    fi
   fi
   cd /usr/src/pkg
   echo "Copying various package dependencies into place ..."
+  cp $WIXSRC_WXLDIR/*.wxl ./
+  cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
   cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
@@ -1014,7 +1072,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   candle.exe *.wxs
 
   echo "Linking torvm MSI installer package ..."
-  light.exe -out torvm.msi WixUI_Tor.wixobj torvm.wixobj -ext $WIX_UI
+  light.exe -out torvm.msi WixUI_Tor.wixobj torvm.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f torvm.msi ]; then
     cp torvm.msi $bundledir
     ls -l torvm.msi
@@ -1023,7 +1081,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking tor MSI installer package ..."
-  light.exe -out tor.msi WixUI_Tor.wixobj tor.wixobj -ext $WIX_UI
+  light.exe -out tor.msi WixUI_Tor.wixobj tor.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f tor.msi ]; then
     cp tor.msi $bundledir
     ls -l tor.msi
@@ -1032,7 +1090,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking polipo MSI installer package ..."
-  light.exe -out polipo.msi WixUI_Tor.wixobj polipo.wixobj -ext $WIX_UI
+  light.exe -out polipo.msi WixUI_Tor.wixobj polipo.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f polipo.msi ]; then
     cp polipo.msi $bundledir
     ls -l polipo.msi
@@ -1043,7 +1101,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f /src/$TORBUTTON_FILE ]; then
     cp /src/$TORBUTTON_FILE torbutton.xpi
     echo "Linking torbutton MSI installer package ..."
-    light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj -ext $WIX_UI
+    light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
     if [ -f torbutton.msi ]; then
       cp torbutton.msi $bundledir
       ls -l torbutton.msi
@@ -1053,7 +1111,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking thandy MSI installer package ..."
-  light.exe -out thandy.msi WixUI_Tor.wixobj thandy.wixobj -ext $WIX_UI
+  light.exe -out thandy.msi WixUI_Tor.wixobj thandy.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f thandy.msi ]; then
     cp thandy.msi $bundledir
     ls -l thandy.msi
