@@ -1049,7 +1049,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     else
       echo "ERROR: unable to build vidalia MSI installer."
     fi
-    light.exe -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -sloc -ext $WIX_UI
+    # the null LCID/codepage should actually be run through ascii filter to be sure.
+    cp WixUI_en-us.wxl WixUI_nullcp.wxl
+    cp vidalia_en.wxl vidalia_nullcp.wxl
+    light.exe -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
     if [ -f vidalia-intl.msi ]; then
       export BASEMSI=vidalia-intl.msi
     fi
@@ -1130,7 +1133,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Tor VM MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -sloc -ext $WIX_UI
+  light.exe -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f torvm-intl.msi ]; then
     export BASEMSI=torvm-intl.msi
   else
@@ -1174,7 +1177,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Tor MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -sloc -ext $WIX_UI
+  light.exe -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f tor-intl.msi ]; then
     export BASEMSI=tor-intl.msi
   else
@@ -1218,7 +1221,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build polipo MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -sloc -ext $WIX_UI
+  light.exe -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f polipo-intl.msi ]; then
     export BASEMSI=polipo-intl.msi
   else
@@ -1264,7 +1267,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       echo "ERROR: unable to build torbutton MSI installer."
     fi
     echo "Linking minimal zero codepage MSI installer package ..."
-    light.exe -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -sloc -ext $WIX_UI
+    light.exe -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl  -ext $WIX_UI
     if [ -f torbutton-intl.msi ]; then
       export BASEMSI=torbutton-intl.msi
     else
@@ -1309,7 +1312,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Thandy MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -sloc -ext $WIX_UI
+  light.exe -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f thandy-intl.msi ]; then
     export BASEMSI=thandy-intl.msi
   else
