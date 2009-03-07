@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="Windows-1252" ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?define ThisProductVersion="0.0.2" ?>
+  <?define ThisProductVersionDisp="0.0.2" ?>
+  <?define UpgradeCode="bda6a744-0815-4fdc-88a8-d40d8c154133" ?>
+  <?define CurrProductGUID="43b6b534-8148-4813-8d22-4da1df4783c3" ?>
+  <?define CurrDocsOnDesktopGUID="d20d7258-1e4a-4d26-a2f4-e08a939a0ae8" ?>
+
+  <Product Name="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
+           Language="!(loc.LCID)"
+           Version="$(var.ThisProductVersion)"
+           Manufacturer="www.torproject.org"
+           UpgradeCode="$(var.UpgradeCode)">
+    
+    <Package Id="*" Keywords="Installer"
+             Description="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp) Installer"
+             Manufacturer="www.torproject.org"
+             InstallerVersion="200" Compressed="yes"
+             InstallPrivileges="limited" />
+
+    <Media Id="1" Cabinet="License.cab" CompressionLevel="high"
+           EmbedCab="yes" DiskPrompt="CD-ROM #1" />
+    <Property Id="DiskPrompt" Value="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp) Installation Volume [1]" />
+    <Property Id="ALLUSERS" Secure="yes"/>
+    <Property Id="ReinstallModeText">omus</Property>
+
+    <!-- Associate this package with the upgrade code for this series
+    to ensure that upgrade installations by Thandy or other means work
+    as expected.
+    The OnlyDetect option must be false to ensure that existing files
+    from an older version are removed and replaced with current files.
+      -->
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion
+        Property="UPGRADEFOUND"
+        OnlyDetect="no"
+        Minimum="0.0.1"
+        IncludeMinimum="yes"
+        Maximum="$(var.ThisProductVersion)"
+        IncludeMaximum="no"
+      />
+    </Upgrade>
+
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder" Name="ProgramFiles">
+        <Directory Id="ProgramsInstDir" Name="Tor Vidalia License Docs">
+        </Directory>
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="AddTorDocsToDesktop" Guid="$(var.CurrDesktopGUID)">
+          <RegistryKey Root="HKCU" Key="Software\Tor Vidalia License Docs" Action="createAndRemoveOnUninstall">
+            <RegistryValue Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
+          </RegistryKey>
+          <Shortcut Id="TorDocsDesktopShortcut"
+                    Name="Tor Vidalia License Docs" Target="[ProgramsInstDir]"
+                    Directory="DesktopFolder" WorkingDirectory="ProgramsInstDir" />
+        </Component>
+      </Directory>
+    </Directory>
+
+    <!-- Build up the feature hierarchy -->
+    <Feature Id="Complete" Title="Tor Vidalia License Docs"
+             Level="1" Display="expand"
+             Description="" />
+      <Feature Id="MainApplication" Title="Tor Vidalia License Docs $(var.ThisProductVersionDisp)"
+               AllowAdvertise="no" Absent="disallow" Level="1"
+               Description="Main application">
+        <ComponentRef Id="DocFolder" />
+      </Feature>
+      <Feature Id="Shortcuts" Title="Shortcuts"
+               AllowAdvertise="no" Absent="allow" Level="1"
+               Description="Add a shortcut to Desktop.">
+        <Feature Id="DesktopShortcuts" Title="Add to Desktop"
+                 AllowAdvertise="no" Absent="allow" Level="1"
+                 Description="Add Tor Docs to your Desktop">
+          <ComponentRef Id="AddTorDocsToDesktop" />
+        </Feature>
+      </Feature>
+    </Feature>
+
+    <!-- Upgrade installation sequence. -->
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallValidate" />
+    </InstallExecuteSequence>
+
+    <!-- Set the UI options -->
+    <UIRef Id="WixUI_Custom" />
+    <Icon Id="tor.ico" SourceFile="tor.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="header.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="welcome.bmp" />
+  </Product>
+</Wix>

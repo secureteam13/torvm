@@ -198,11 +198,10 @@ WINDDK_F=1830_usa_ddk.iso
 WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/$(WINDDK_F)
 WINDDK_SUM=0d2154d88a5ee252cc908630c77863bb42777387
 
-QT_VER=4.4.3
-QT_F=qt-win-opensource-src-$(QT_VER).zip
-QT_TGZ=qt-$(QT_VER).tgz
-QT_URL=ftp://ftp.trolltech.com/qt/source/qt-win-opensource-src-$(QT_VER).zip
-QT_SUM=669d494b9c37353f87c13765ed9f3ea97c0fa9e0
+QT_VER=4.5.0
+QT_F=qt-all-opensource-src-$(QT_VER).tar.bz2
+QT_URL=ftp://ftp.qtsoftware.com/qt/source/$(QT_F)
+QT_SUM=51dc8c66bc0866e480e71b50a8ffe577b2937fcc
 
 POLIPO_F=polipo-20080907.tar.gz
 POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
@@ -218,20 +217,20 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3597
+VIDALIA_VER=3601
 
 # for package resources
 TORSVN_NAME=tor-latest
 TORSVN_TGZ=$(TORSVN_NAME).tar.gz
 TORSVN_SVN=https://tor-svn.freehaven.net/svn/tor/
 TORSVN_BR=trunk
-TORSVN_VER=18546
+TORSVN_VER=18791
 
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
 TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
-TORBUTTON_VER=18548
+TORBUTTON_VER=18788
 
 # XXX add / switch to signed tags one key mgmt resolved
 PYCRYPTO_NAME=pycrypto-latest
@@ -345,6 +344,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	echo "export SEVNZIP_PKG=$(SEVNZIP_OPT_PKG)" >> $(ISODIR)/bldopts; \
 	echo "--- Copying packages for ISO image file system ..."; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
+	cp files/*.vbs $(ISODIR)/bin/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
@@ -370,6 +370,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(LIBEVENT_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(PYTHON_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(QT_F) $(ISODIR)/dl/src/; \
 	echo "--- Repacking WinPCAP archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_$(WPCAPSRC_VER); tar cf $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar WpcapSrc_$(WPCAPSRC_VER); gzip -9 $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar; rm -rf WpcapSrc_$(WPCAPSRC_VER) $(ISODIR)/dl/$(WPCAPSRC_F); \
 	echo "--- Repacking Py2Exe archive ..."; \
@@ -380,8 +381,6 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	$(UNZIP) $(WDLDIR)/$(WIX_F) -d wix; tar zcf $(ISODIR)/dl/$(WIX_TGZ) wix; rm -rf wix $(ISODIR)/dl/$(WIX_F); \
 	echo "--- Repacking WiX sources archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(WIXSRC_F) -d wixsrc; tar zcf $(ISODIR)/dl/$(WIXSRC_TGZ) wixsrc; rm -rf wixsrc $(ISODIR)/dl/$(WIXSRC_F); \
-	echo "--- Repacking Qt archive ..."; \
-	$(UNZIP) $(WDLDIR)/$(QT_F) -d qt-$(QT_VER); mv qt-$(QT_VER)/qt-*/* qt-$(QT_VER)/; rm -rf qt-$(QT_VER)/qt-*; tar zcf $(ISODIR)/dl/src/$(QT_TGZ) qt-$(QT_VER); rm -rf qt-$(QT_VER) $(ISODIR)/dl/$(QT_F); \
 	echo "--- Exporting Vidalia version $(VIDALIA_VER) from local mirror ..."; \
 	rm -rf $(VIDALIA_NAME); $(SVNCMD) export --revision $(VIDALIA_VER) $(SDLDIR)/$(VIDALIA_NAME) $(VIDALIA_NAME); \
 	tar zcf $(ISODIR)/dl/src/$(VIDALIA_TGZ) $(VIDALIA_NAME); rm -rf $(VIDALIA_NAME); \

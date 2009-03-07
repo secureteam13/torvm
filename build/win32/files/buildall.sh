@@ -64,6 +64,7 @@ if [[ "$1" != "dobuild" ]]; then
   export instdir="${brootdir}/Installer"
   export thandir="${brootdir}/Thandy"
   export bundledir="${brootdir}/Bundle"
+  export licensedir="${brootdir}/License"
   
   if [[ "$SEVNZIP_INST" == "" ]]; then
     export SEVNZIP_INST=true
@@ -118,12 +119,12 @@ if [[ "$1" != "dobuild" ]]; then
   export CMAKEBIN="/$sysdrive/Program Files/CMake/bin"
   export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
   
-  export QT_VER="4.4.3"
-  export QT_DIR="qt-${QT_VER}"
-  export QT_FILE="qt-${QT_VER}.tgz"
+  export QT_VER="4.5.0"
+  export QT_DIR="qt-all-opensource-src-${QT_VER}"
+  export QT_FILE="${QT_DIR}.tar.bz2"
   export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
   export QT_BIN="${QT_ROOT}/bin"
-  export QTDIR="${sysdrive}:\Qt\4.4.3"
+  export QTDIR="${sysdrive}:\Qt\4.5.0"
   export QMAKESPEC=win32-g++
   export PATH="$PATH:$QT_BIN:$QTDIR\bin"
   
@@ -133,7 +134,7 @@ if [[ "$1" != "dobuild" ]]; then
   export MARBLE_DIR=marble-latest
   export MARBLE_FILE="${MARBLE_DIR}.tar.gz"
   export MARBLE_DEST=/marble
-  export MARBLE_OPTS="-DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_ROOT_PREFIX=${MARBLE_DEST} -DMARBLE_DATA_PATH=data"
+  export MARBLE_OPTS="-DCMAKE_BUILD_TYPE=release -DQTONLY=ON -DCMAKE_INSTALL_PREFIX=${MARBLE_DEST} -DPACKAGE_ROOT_PREFIX=${MARBLE_DEST} -DMARBLE_DATA_PATH=data"
   
   export VIDALIA_FILE=vidalia-latest.tar.gz
   export VIDALIA_DIR=vidalia-latest
@@ -227,7 +228,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     chmod 600 ~/.ssh/id_rsa >/dev/null 2>&1
   fi
 
-  for dir in $ddir $bdlibdir $bindir $statedir $brootdir $instdir $thandir $bundledir; do
+  for dir in $ddir $bdlibdir $bindir $statedir $brootdir $instdir $thandir $bundledir $licensedir; do
     if [ ! -d $dir ]; then
       mkdir -p $dir
     fi
@@ -351,6 +352,8 @@ if [[ "$PTHREADS_BUILT" != "yes" ]]; then
   cp *.dll /bin/
   cp *.h /usr/include/
   cp pthreadGC2.dll $bdlibdir/
+  cp COPYING.LIB $licensedir/pthreads-w32-COPYING-LIB.txt
+  cp COPYING $licensedir/pthreads-w32-COPYING.txt
 
   pkgbuilt PTHREADS_BUILT
 fi
@@ -382,6 +385,7 @@ if [[ "$ZLIB_BUILT" != "yes" ]]; then
     exit 1
   fi
   cp *.dll $bdlibdir/
+  cp README $licensedir/zlib-README.txt
 
   pkgbuilt ZLIB_BUILT
 fi
@@ -403,6 +407,7 @@ if [[ "$LIBEVENT_BUILT" != "yes" ]]; then
     exit 1
   fi
   make install
+  # XXX license info is per file
 
   pkgbuilt LIBEVENT_BUILT
 fi
@@ -425,6 +430,7 @@ if [[ "$SDL_BUILT" != "yes" ]]; then
   fi
   make install
   cp /usr/bin/SDL.dll $bdlibdir/
+  cp COPYING $licensedir/SDL-COPYING.txt
 
   pkgbuilt SDL_BUILT
 fi
@@ -470,6 +476,8 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   fi
   cp i386/${TAPDRVN}.sys $bdlibdir/
   cp i386/OemWin2k.inf $bdlibdir/${TAPDRVN}.inf
+  cp COPYING $licensedir/openvpn-COPYING.txt
+  cp COPYRIGHT.GPL $licensedir/openvpn-COPYRIGHT-GPL.txt
 
   pkgbuilt OPENVPN_BUILT
 fi
@@ -707,6 +715,7 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
       fi
     done
   )
+  mkdir pkgdocs
   ls -lh Usage.html
   for FILE in README ChangeLog LICENSE Authors src/config/torrc.sample; do
     if [ -f $FILE ]; then
@@ -715,6 +724,7 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
       # must have the file present or the WiX MSI build fails
       echo > $FILE
     fi
+    cp $FILE pkgdocs/
   done
 
   pkgbuilt TOR_BUILT
@@ -810,7 +820,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   echo "Building Qt ..."
   cd /usr/src
   mkdir /$sysdrive/Qt
-  tar zxf $QT_FILE
+  tar jxf $QT_FILE
   mv $QT_DIR /$sysdrive/Qt/$QT_VER
   cd /$sysdrive/Qt/$QT_VER
   if [ -f /src/qt-mingwssl.patch ]; then
@@ -818,7 +828,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   fi 
   QT_CONF="-confirm-license -release -shared"
   QT_CONF="$QT_CONF -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns"
-  QT_CONF="$QT_CONF -qt-style-windowsxp -qt-style-windowsvista"
+  QT_CONF="$QT_CONF -qt-style-windowsxp -no-style-windowsvista"
   QT_CONF="$QT_CONF -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc"
   QT_CONF="$QT_CONF -no-fast -openssl -no-libmng -no-libtiff -qt-libpng -qt-libjpeg -qt-gif"
   ./configure.exe $QT_CONF
@@ -835,12 +845,12 @@ if [[ "$QT_BUILT" != "yes" ]]; then
     fi
   fi
 
-  # so it seems some things (marble) want to try and load
+  # XXX: so it seems some things (marble) want to try and load
   # image plugins that are not plugins, namely the .a libtool
   # hooks for linking DLL's in mingw.  this is a hammer to
   # prevent such mistakes that will halt an automated build with
-  # "Error not a library" warning when they try to OpenLibrary
-  # XXX Marble just needs a patch or config tweak to not do this.
+  # "Error not a library" warnings when a static lib is passed
+  # to OpenLibrary.
   find plugins/imageformats -name \*.a -exec rm {} \;
 
   pkgbuilt QT_BUILT
@@ -962,15 +972,13 @@ cp $VMHDD_IMAGE $bdlibdir/
 
 
 # Microsoft Installer package build
-TOR_WXS=tor.wxs
-TORUI_WXS=WixUI_Tor.wxs
 TOR_WXS_DIR=contrib
 WIX_UI=/wix/WixUIExtension.dll
 WIXSRC_WXLDIR=/src/$WIXSRC_DIR/src/ext/UIExtension/wixlib
 DEF_WXL_LANG=en-us
-WXL_LANGS="cs-cz de-de en-us es-es fr-fr hu-hu it-it ja-jp nl-nl pl-pl ru-ru uk-ua"
+WXL_LANGS="cs-cz de-de es-es fr-fr hu-hu it-it ja-jp nl-nl pl-pl ru-ru uk-ua en-us"
 # XXX currently problems with WiX handling of: zh_CN zh_TW
-VIDALIA_LANGS="cs de en es fa fi fr he it nl pl pt ro ru sv"
+VIDALIA_LANGS="cs de es fa fi fr he it nl pl pt ro ru sv en"
 WIX_ALL_LOC_LINK=""
 for LANG in $WXL_LANGS; do
   WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc WixUI_${LANG}.wxl"
@@ -979,9 +987,8 @@ for LANG in $VIDALIA_LANGS; do
   WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc vidalia_${LANG}.wxl"
 done
 
-# XXX for now this eats up too much time and space
-# rely on the multi-lingual packages if possible.
-BUILD_IND_LANGS=no
+# XXX building all languages eats up too much time and space
+BUILD_IND_LANGS=yes
 
 if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Building bundle packages ..."
@@ -1015,6 +1022,14 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       strip bin/*.exe
     fi
 
+    # typical work flow using generated component fragments from heat.exe:
+    # heat.exe dir $pkgdir -gg -ke -sfrag -nologo -out "${pkgdir}.wxs" -template:product
+    # tail +4c $out > $tmp, dos2unix $tmp
+    # wixtool.exe splice -i prod.wxs -o out.wxs Directory:DirName=heat.wxs:Directory:dirname
+    # wixtool.exe splice -i out.wxs -o final.wxs Feature:MainApplication=heat.wxs:Feature:ProductFeature
+    # light.exe -sloc -out vid.wixout -xo -cc cabcache WixUI_Custom.wixobj vidalia.wixobj -ext /wix/WixUIExtension.dll
+    # light.exe "-cultures:es-es;de-de;en-us" -loc WixUI_es-es.wxl -loc WixUI_de-de.wxl -loc WixUI_en-us.wxl -loc vidalia_es.wxl -loc vidalia_de.wxl -loc vidalia_en.wxl -out test.msi -cc cabcache -reusecab vid.wixout
+
     cp $WIXSRC_WXLDIR/*.wxl ./
     cp pkg/win32/*.wxl ./
     candle.exe pkg/win32/*.wxs
@@ -1026,6 +1041,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       ls -l vidalia.msi
     else
       echo "ERROR: unable to build vidalia MSI installer."
+    fi
+    light.exe -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -sloc -ext $WIX_UI
+    if [ -f vidalia-intl.msi ]; then
+      export BASEMSI=vidalia-intl.msi
     fi
     if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
       for LANG in $VIDALIA_LANGS; do
@@ -1043,17 +1062,29 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
           cp $outfile $bundledir
           cp $outfile ../pkg/
           ls -l $outfile
+          if [ -f $BASEMSI ]; then
+            echo "Adding language $LANG as transform against minimal MSI package ..."
+            cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          fi
         else
           echo "ERROR: unable to link localized $outfile vidalia MSI installer."
         fi
       done
+      if [ -f $BASEMSI ]; then
+        cp $BASEMSI ../pkg/
+      fi
     fi
   fi
   cd /usr/src/pkg
   echo "Copying various package dependencies into place ..."
   cp $WIXSRC_WXLDIR/*.wxl ./
+  cp /src/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
+  cp /src/$VIDALIA_DIR/pkg/win32/*.bmp ./
+  cp /src/$VIDALIA_DIR/pkg/win32/*.vbs ./
+  cp /src/$VIDALIA_DIR/pkg/win32/*.wxs ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
   cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
+  cp ../torvm-w32/tor-icon-32.ico ./tor.ico
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
   cp /src/$TOR_DIR/contrib/*.wxs ./
@@ -1061,9 +1092,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   mkdir -p src/config
   mkdir -p share/tor
   mkdir -p contrib
-  cp /src/$TOR_DIR/contrib/*.ico contrib/
-  cp /src/$TOR_DIR/share/tor/geoip share/tor/
-  cp /src/$TOR_DIR/src/config/torrc.sample src/config/
+  cp /src/$TOR_DIR/contrib/*.ico ./
+  cp /src/$TOR_DIR/share/tor/geoip ./
+  cp /src/$TOR_DIR/src/config/torrc.sample ./
   for FNAME in README Usage.html Authors ChangeLog LICENSE; do
     cp /src/$TOR_DIR/$FNAME ./
   done
@@ -1071,52 +1102,246 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   # XXX replace this with Matt's torbutton NSIS magic
   candle.exe *.wxs
 
+  echo "Building Tor Vidalia bundle license docs package ..."
+  (
+    cd $licensedir;cd ../
+    heat.exe dir License -gg -ke -sfrag -nologo -out license-dir.wxs -template:product
+    if [ -f license-dir.wxs ]; then mv license-dir.wxs /src/pkg/; fi
+  )
+  if [ ! -f license-dir.wxs ]; then
+    echo "Failed to generate directory tree component for $licensedir ."
+  else
+    # whatever WiX is putting in those first four bytes causes parser havoc
+    tail +4c license-dir.wxs > license-dir.wxs.tmp; dos2unix license-dir.wxs.tmp; cat license-dir.wxs.tmp > license-dir.wxs; rm -f license-dir.wxs.tmp
+    wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:License
+    wixtool.exe splice -i license-tmpdir.wxs -o license-all.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
+    rm -f license-tmpdir.wxs
+    candle.exe license-all.wxs
+    echo "Linking Tor Vidalia bundle license docs package ..."
+    light.exe -out license.msi WixUI_Custom.wixobj license-all.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  fi
+
   echo "Linking torvm MSI installer package ..."
-  light.exe -out torvm.msi WixUI_Tor.wixobj torvm.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe -out torvm.msi WixUI_Custom.wixobj torvm.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f torvm.msi ]; then
     cp torvm.msi $bundledir
     ls -l torvm.msi
   else
     echo "ERROR: unable to build Tor VM MSI installer."
   fi
+  echo "Linking minimal zero codepage MSI installer package ..."
+  light.exe -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -sloc -ext $WIX_UI
+  if [ -f torvm-intl.msi ]; then
+    export BASEMSI=torvm-intl.msi
+  else
+    echo "ERROR: unable to link minimal zero codepage Tor VM MSI installer."
+    export BASEMSI=""
+  fi
+  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    for LANG in $VIDALIA_LANGS; do
+      WIXCULTURE=$DEF_WXL_LANG
+      for WIXLANG in $WXL_LANGS; do
+        pre=$(echo $WIXLANG | sed 's/-.*//')
+        if [[ "$pre" == "$LANG" ]]; then
+          WIXCULTURE=$WIXLANG
+        fi 
+      done 
+      outfile="torvm-${LANG}.msi"
+      echo "Linking localized $outfile ..."
+      light.exe -out $outfile torvm.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      if [ -f $outfile ]; then
+        cp $outfile $bundledir
+        ls -l $outfile
+        if [ -f "$BASEMSI" ]; then
+          echo "Adding language $LANG as transform against minimal MSI package ..."
+          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+        fi
+      else
+        echo "ERROR: unable to link localized $outfile MSI installer."
+      fi
+    done
+  fi
+  if [ -f "$BASEMSI" ]; then
+    cp "$BASEMSI" $bundledir
+  fi
 
   echo "Linking tor MSI installer package ..."
-  light.exe -out tor.msi WixUI_Tor.wixobj tor.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe -out tor.msi WixUI_Custom.wixobj tor.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f tor.msi ]; then
     cp tor.msi $bundledir
     ls -l tor.msi
   else
     echo "ERROR: unable to build Tor MSI installer."
   fi
+  echo "Linking minimal zero codepage MSI installer package ..."
+  light.exe -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -sloc -ext $WIX_UI
+  if [ -f tor-intl.msi ]; then
+    export BASEMSI=tor-intl.msi
+  else
+    echo "ERROR: unable to link minimal zero codepage Tor VM MSI installer."
+    export BASEMSI=""
+  fi
+  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    for LANG in $VIDALIA_LANGS; do
+      WIXCULTURE=$DEF_WXL_LANG
+      for WIXLANG in $WXL_LANGS; do
+        pre=$(echo $WIXLANG | sed 's/-.*//')
+        if [[ "$pre" == "$LANG" ]]; then
+          WIXCULTURE=$WIXLANG
+        fi 
+      done 
+      outfile="tor-${LANG}.msi"
+      echo "Linking localized $outfile ..."
+      light.exe -out $outfile tor.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      if [ -f $outfile ]; then
+        cp $outfile $bundledir
+        ls -l $outfile
+        if [ -f "$BASEMSI" ]; then
+          echo "Adding language $LANG as transform against minimal MSI package ..."
+          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+        fi
+      else
+        echo "ERROR: unable to link localized $outfile MSI installer."
+      fi
+    done
+  fi
+  if [ -f "$BASEMSI" ]; then
+    cp "$BASEMSI" $bundledir
+  fi
 
   echo "Linking polipo MSI installer package ..."
-  light.exe -out polipo.msi WixUI_Tor.wixobj polipo.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe -out polipo.msi WixUI_Custom.wixobj polipo.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f polipo.msi ]; then
     cp polipo.msi $bundledir
     ls -l polipo.msi
   else
     echo "ERROR: unable to build polipo MSI installer."
   fi
+  echo "Linking minimal zero codepage MSI installer package ..."
+  light.exe -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -sloc -ext $WIX_UI
+  if [ -f polipo-intl.msi ]; then
+    export BASEMSI=polipo-intl.msi
+  else
+    echo "ERROR: unable to link minimal zero codepage Polipo MSI installer."
+    export BASEMSI=""
+  fi
+  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    for LANG in $VIDALIA_LANGS; do
+      WIXCULTURE=$DEF_WXL_LANG
+      for WIXLANG in $WXL_LANGS; do
+        pre=$(echo $WIXLANG | sed 's/-.*//')
+        if [[ "$pre" == "$LANG" ]]; then
+          WIXCULTURE=$WIXLANG
+        fi
+      done 
+      outfile="polipo-${LANG}.msi"
+      echo "Linking localized $outfile ..."
+      light.exe -out $outfile polipo.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      if [ -f $outfile ]; then
+        cp $outfile $bundledir
+        ls -l $outfile
+        if [ -f "$BASEMSI" ]; then
+          echo "Adding language $LANG as transform against minimal MSI package ..."
+          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+        fi
+      else
+        echo "ERROR: unable to link localized $outfile MSI installer."
+      fi
+    done
+  fi
+  if [ -f "$BASEMSI" ]; then
+    cp "$BASEMSI" $bundledir
+  fi
 
   if [ -f /src/$TORBUTTON_FILE ]; then
     cp /src/$TORBUTTON_FILE torbutton.xpi
     echo "Linking torbutton MSI installer package ..."
-    light.exe -out torbutton.msi WixUI_Tor.wixobj torbutton.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+    light.exe -out torbutton.msi WixUI_Custom.wixobj torbutton.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
     if [ -f torbutton.msi ]; then
       cp torbutton.msi $bundledir
       ls -l torbutton.msi
     else
       echo "ERROR: unable to build torbutton MSI installer."
     fi
+    echo "Linking minimal zero codepage MSI installer package ..."
+    light.exe -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -sloc -ext $WIX_UI
+    if [ -f torbutton-intl.msi ]; then
+      export BASEMSI=torbutton-intl.msi
+    else
+      echo "ERROR: unable to link minimal zero codepage TorButton MSI installer."
+      export BASEMSI=""
+    fi
+    if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+      for LANG in $VIDALIA_LANGS; do
+        WIXCULTURE=$DEF_WXL_LANG 
+        for WIXLANG in $WXL_LANGS; do
+          pre=$(echo $WIXLANG | sed 's/-.*//')
+          if [[ "$pre" == "$LANG" ]]; then
+            WIXCULTURE=$WIXLANG
+          fi
+        done
+        outfile="torbutton-${LANG}.msi"
+        echo "Linking localized $outfile ..."
+        light.exe -out $outfile torbutton.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        if [ -f $outfile ]; then
+          cp $outfile $bundledir
+          ls -l $outfile
+          if [ -f "$BASEMSI" ]; then
+            echo "Adding language $LANG as transform against minimal MSI package ..."
+            cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          fi
+        else
+          echo "ERROR: unable to link localized $outfile MSI installer."
+        fi
+      done
+    fi
+    if [ -f "$BASEMSI" ]; then
+      cp "$BASEMSI" $bundledir
+    fi
   fi
 
   echo "Linking thandy MSI installer package ..."
-  light.exe -out thandy.msi WixUI_Tor.wixobj thandy.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe -out thandy.msi WixUI_Custom.wixobj thandy.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
   if [ -f thandy.msi ]; then
     cp thandy.msi $bundledir
     ls -l thandy.msi
   else
     echo "ERROR: unable to build Thandy MSI installer."
+  fi
+  echo "Linking minimal zero codepage MSI installer package ..."
+  light.exe -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -sloc -ext $WIX_UI
+  if [ -f thandy-intl.msi ]; then
+    export BASEMSI=thandy-intl.msi
+  else
+    echo "ERROR: unable to link minimal zero codepage Thandy MSI installer."
+    export BASEMSI=""
+  fi
+  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    for LANG in $VIDALIA_LANGS; do
+      WIXCULTURE=$DEF_WXL_LANG 
+      for WIXLANG in $WXL_LANGS; do
+        pre=$(echo $WIXLANG | sed 's/-.*//')
+        if [[ "$pre" == "$LANG" ]]; then
+          WIXCULTURE=$WIXLANG
+        fi
+      done
+      outfile="thandy-${LANG}.msi"
+      echo "Linking localized $outfile ..."
+      light.exe -out $outfile thandy.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      if [ -f $outfile ]; then
+        cp $outfile $bundledir
+        ls -l $outfile
+        if [ -f "$BASEMSI" ]; then
+          echo "Adding language $LANG as transform against minimal MSI package ..."
+          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+        fi
+      else
+        echo "ERROR: unable to link localized $outfile MSI installer."
+      fi
+    done
+  fi
+  if [ -f "$BASEMSI" ]; then
+    cp "$BASEMSI" $bundledir
   fi
 
   echo "Creating Tor VM bundle installer executable ..."

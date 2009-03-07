@@ -1,13 +1,16 @@
-diff -Naur orig-qt-4.4.3/src/network/ssl/qsslsocket_openssl_symbols.cpp mod-qt-4.4.3/src/network/ssl/qsslsocket_openssl_symbols.cpp
---- orig-qt-4.4.3/src/network/ssl/qsslsocket_openssl_symbols.cpp	2008-09-27 09:00:56.000000000 +0000
-+++ mod-qt-4.4.3/src/network/ssl/qsslsocket_openssl_symbols.cpp	2008-12-30 09:53:24.191484064 +0000
-@@ -327,14 +327,22 @@
+diff -Naur a/src/network/ssl/qsslsocket_openssl_symbols.cpp b/src/network/ssl/qsslsocket_openssl_symbols.cpp
+--- a/src/network/ssl/qsslsocket_openssl_symbols.cpp	2009-02-25 21:32:38.000000000 +0000
++++ b/src/network/ssl/qsslsocket_openssl_symbols.cpp	2009-03-06 16:14:07.852583592 +0000
+@@ -320,16 +320,24 @@
+ # ifdef Q_OS_WIN
+     QLibrary *ssleay32 = new QLibrary(QLatin1String("ssleay32"));
      if (!ssleay32->load()) {
-         // Cannot find ssleay32.dll
+-        // Cannot find ssleay32.dll
          delete ssleay32;
 -        return pair;
 +        ssleay32 = new QLibrary(QLatin1String("ssleay32-0.9.8"));
 +        if (!ssleay32->load()) {
++            // Cannot find ssleay32.dll
 +            delete ssleay32;
 +            return pair;
 +        }
@@ -20,8 +23,8 @@ diff -Naur orig-qt-4.4.3/src/network/ssl/qsslsocket_openssl_symbols.cpp mod-qt-4
 -        return pair;
 +        libeay32 = new QLibrary(QLatin1String("cryptoeay32-0.9.8"));
 +        if (!libeay32->load()) {
-+            delete libeay32;
 +            delete ssleay32;
++            delete libeay32;
 +            return pair;
 +        }
      }
