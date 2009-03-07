@@ -1011,7 +1011,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     cp pkg/win32/polipo.conf bin/
     if [ -d $MARBLE_DEST ]; then
       cp $MARBLE_DEST/libmarblewidget.dll bin/
-      cp $MARBLE_DEST/plugins/*.dll bin/
+      mkdir -p plugins/imageformats
+      cp $MARBLE_DEST/plugins/*.dll plugins/
+      cp /$sysdrive/Qt/$QT_VER/plugins/imageformats/*.dll plugins/imageformats/
     fi
     if [[ "$DEBUG_NO_STRIP" == "" ]]; then
       echo "Stripping debug symbols from binaries and libraries ..."
@@ -1020,6 +1022,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       strip $ddir/*.exe
       strip bin/*.dll
       strip bin/*.exe
+      strip plugins/*.dll
+      strip plugins/imageformats/*.dll
     fi
 
     # typical work flow using generated component fragments from heat.exe:
@@ -1079,7 +1083,6 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Copying various package dependencies into place ..."
   cp $WIXSRC_WXLDIR/*.wxl ./
   cp /src/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
-  cp /src/$VIDALIA_DIR/pkg/win32/*.bmp ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.vbs ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxs ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
@@ -1087,11 +1090,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp ../torvm-w32/tor-icon-32.ico ./tor.ico
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
-  cp /src/$TOR_DIR/contrib/*.wxs ./
   cp /src/$TOR_DIR/bin/*.exe bin/
-  mkdir -p src/config
-  mkdir -p share/tor
-  mkdir -p contrib
   cp /src/$TOR_DIR/contrib/*.ico ./
   cp /src/$TOR_DIR/share/tor/geoip ./
   cp /src/$TOR_DIR/src/config/torrc.sample ./
@@ -1103,11 +1102,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   candle.exe *.wxs
 
   echo "Building Tor Vidalia bundle license docs package ..."
-  (
-    cd $licensedir;cd ../
-    heat.exe dir License -gg -ke -sfrag -nologo -out license-dir.wxs -template:product
-    if [ -f license-dir.wxs ]; then mv license-dir.wxs /src/pkg/; fi
-  )
+  cp -a $licensedir ./
+  find License -type f -exec unix2dos {} \;
+  heat.exe dir License -gg -ke -sfrag -nologo -out license-dir.wxs -template:product
   if [ ! -f license-dir.wxs ]; then
     echo "Failed to generate directory tree component for $licensedir ."
   else

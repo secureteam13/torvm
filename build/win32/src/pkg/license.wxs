@@ -48,7 +48,7 @@
         </Directory>
       </Directory>
       <Directory Id="DesktopFolder" Name="Desktop">
-        <Component Id="AddTorDocsToDesktop" Guid="$(var.CurrDesktopGUID)">
+        <Component Id="AddTorDocsToDesktop" Guid="$(var.CurrDocsOnDesktopGUID)">
           <RegistryKey Root="HKCU" Key="Software\Tor Vidalia License Docs" Action="createAndRemoveOnUninstall">
             <RegistryValue Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
           </RegistryKey>
@@ -62,11 +62,10 @@
     <!-- Build up the feature hierarchy -->
     <Feature Id="Complete" Title="Tor Vidalia License Docs"
              Level="1" Display="expand"
-             Description="" />
+             Description="Tor Vidalia License Docs">
       <Feature Id="MainApplication" Title="Tor Vidalia License Docs $(var.ThisProductVersionDisp)"
                AllowAdvertise="no" Absent="disallow" Level="1"
                Description="Main application">
-        <ComponentRef Id="DocFolder" />
       </Feature>
       <Feature Id="Shortcuts" Title="Shortcuts"
                AllowAdvertise="no" Absent="allow" Level="1"
