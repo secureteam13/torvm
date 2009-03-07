@@ -202,7 +202,7 @@
     </InstallExecuteSequence>
 
     <!-- Set the UI options -->
-    <UIRef Id="WixUI_Tor" />
+    <UIRef Id="WixUI_Custom" />
     <Icon Id="torvm.ico" SourceFile="torvm.ico" />
     <WixVariable Id="WixUIBannerBmp" Value="header.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="welcome.bmp" />
