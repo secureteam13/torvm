@@ -826,11 +826,11 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   if [ -f /src/qt-mingwssl.patch ]; then
     patch -p1 < /src/qt-mingwssl.patch
   fi 
-  QT_CONF="-confirm-license -release -shared"
+  QT_CONF="-confirm-license -release -shared -fast"
   QT_CONF="$QT_CONF -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns"
   QT_CONF="$QT_CONF -qt-style-windowsxp -no-style-windowsvista"
   QT_CONF="$QT_CONF -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc"
-  QT_CONF="$QT_CONF -no-fast -openssl -no-libmng -no-libtiff -qt-libpng -qt-libjpeg -qt-gif"
+  QT_CONF="$QT_CONF -openssl -no-libmng -no-libtiff -qt-libpng -qt-libjpeg -qt-gif"
   ./configure.exe $QT_CONF
   echo "QT_BUILD_PARTS -= examples" >> .qmake.cache
   echo "QT_BUILD_PARTS -= demos" >> .qmake.cache
