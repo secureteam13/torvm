@@ -18,16 +18,15 @@
   <?define CurrStartupGUID="37319e3d-57e4-4c06-860b-a0bc2a305963" ?>
 
   <Product Name="Tor VM $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
-           Language="1033" Codepage="1252"
+           Language="!(loc.LCID)"
            Version="$(var.ThisProductVersion)"
-           Manufacturer="vidalia-project.net"
+           Manufacturer="www.torproject.org"
            UpgradeCode="$(var.UpgradeCode)">
     
     <Package Id="*" Keywords="Installer"
              Description="Tor VM $(var.ThisProductVersionDisp) Installer"
-             Manufacturer="vidalia-project.net"
-             InstallerVersion="100" Compressed="yes"
-             Languages="1033"  SummaryCodepage="1252"
+             Manufacturer="www.torproject.org"
+             InstallerVersion="200" Compressed="yes"
              InstallPrivileges="elevated" />
 
     <Media Id="1" Cabinet="TorVM.cab" CompressionLevel="high"

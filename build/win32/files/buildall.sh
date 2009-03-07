@@ -1013,7 +1013,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       cp $MARBLE_DEST/libmarblewidget.dll bin/
       mkdir -p plugins/imageformats
       cp $MARBLE_DEST/plugins/*.dll plugins/
+      cp $MARBLE_DEST/plugins/*.dll bin/
       cp /$sysdrive/Qt/$QT_VER/plugins/imageformats/*.dll plugins/imageformats/
+      cp /$sysdrive/Qt/$QT_VER/plugins/imageformats/*.dll bin/
     fi
     if [[ "$DEBUG_NO_STRIP" == "" ]]; then
       echo "Stripping debug symbols from binaries and libraries ..."
@@ -1034,6 +1036,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     # light.exe -sloc -out vid.wixout -xo -cc cabcache WixUI_Custom.wixobj vidalia.wixobj -ext /wix/WixUIExtension.dll
     # light.exe "-cultures:es-es;de-de;en-us" -loc WixUI_es-es.wxl -loc WixUI_de-de.wxl -loc WixUI_en-us.wxl -loc vidalia_es.wxl -loc vidalia_de.wxl -loc vidalia_en.wxl -out test.msi -cc cabcache -reusecab vid.wixout
 
+    cp pkg/win32/*.vbs ./
     cp $WIXSRC_WXLDIR/*.wxl ./
     cp pkg/win32/*.wxl ./
     candle.exe pkg/win32/*.wxs
@@ -1079,7 +1082,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       fi
     fi
   fi
-  cd /usr/src/pkg
+  cd /src/pkg
   echo "Copying various package dependencies into place ..."
   cp $WIXSRC_WXLDIR/*.wxl ./
   cp /src/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
