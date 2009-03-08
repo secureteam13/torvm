@@ -148,7 +148,7 @@ if [[ "$1" != "dobuild" ]]; then
   export POLIPO_FILE=polipo-20080907.tar.gz
   export POLIPO_DIR=polipo-20080907
   
-  export TORBUTTON_FILE=torbutton-1.2.0.xpi
+  export TORBUTTON_FILE=torbutton-1.2.0-dev.xpi
   
   export NSIS_DIR=nsis-2.42
   export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
@@ -476,6 +476,8 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   fi
   cp i386/${TAPDRVN}.sys $bdlibdir/
   cp i386/OemWin2k.inf $bdlibdir/${TAPDRVN}.inf
+
+  cd /src/$OPENVPN_DIR
   cp COPYING $licensedir/openvpn-COPYING.txt
   cp COPYRIGHT.GPL $licensedir/openvpn-COPYRIGHT-GPL.txt
 
@@ -1007,8 +1009,10 @@ for LANG in $VIDALIA_LANGS; do
 done
 WIX_DEFAULT_LOC_LINK="-cultures:en-us -loc vidalia_en.wxl"
 
-# XXX building all languages eats up too much time and space
-BUILD_IND_LANGS=yes
+# Building locale specific package variants results in aprox. 300MB of MSI packages.
+if [[ "$BUILD_IND_LANGS" == "" ]]; then
+  export BUILD_IND_LANGS=yes
+fi
 
 if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Building bundle packages ..."
@@ -1073,6 +1077,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     # the null LCID/codepage should actually be run through ascii filter to be sure.
     cp WixUI_en-us.wxl WixUI_nullcp.wxl
     cp vidalia_en.wxl vidalia_nullcp.wxl
+    cp WixUI_nullcp.wxl vidalia_nullcp.wxl ../pkg/
     light.exe $LIGHT_OPTS -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
     if [ -f vidalia-intl.msi ]; then
       export BASEMSI=vidalia-intl.msi
@@ -1130,20 +1135,26 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   candle.exe *.wxs
 
   echo "Building Tor Vidalia bundle license docs package ..."
-  cp -a $licensedir ./
-  find License -type f -exec unix2dos {} \;
-  heat.exe dir License -gg -ke -sfrag -nologo -out license-dir.wxs -template:product
+  cp -a $licensedir ./LicenseDocs
+  find LicenseDocs -type f -exec unix2dos {} \;
+  heat.exe dir LicenseDocs -gg -ke -sfrag -nologo -out license-dir.wxs -template:product
   if [ ! -f license-dir.wxs ]; then
     echo "Failed to generate directory tree component for $licensedir ."
   else
     # whatever WiX is putting in those first four bytes causes parser havoc
     tail +4c license-dir.wxs > license-dir.wxs.tmp; dos2unix license-dir.wxs.tmp; cat license-dir.wxs.tmp > license-dir.wxs; rm -f license-dir.wxs.tmp
-    wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:License
+    wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:LicenseDocs
     wixtool.exe splice -i license-tmpdir.wxs -o license-all.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
     rm -f license-tmpdir.wxs
     candle.exe license-all.wxs
     echo "Linking Tor Vidalia bundle license docs package ..."
     light.exe $LIGHT_OPTS -out license.msi WixUI_Custom.wixobj license-all.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+    if [ -f license.msi ]; then
+      cp license.msi $bundledir
+      ls -l license.msi
+    else
+      echo "ERROR: unable to build license documents MSI installer."
+    fi
   fi
 
   echo "Linking torvm MSI installer package ..."
