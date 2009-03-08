@@ -567,6 +567,7 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
   cp pc-bios/bios.bin $bindir/
   cp pc-bios/vgabios.bin $bindir/
   cp pc-bios/vgabios-cirrus.bin $bindir/
+  cp LICENSE $licensedir/Qemu-LICENSE.txt
 
   pkgbuilt QEMU_BUILT
 fi
@@ -652,6 +653,7 @@ if [[ "$OPENSSL_BUILT" != "yes" ]]; then
   cp -f *.dll /lib/
   cp *.a /lib/
   cp -a include/openssl /usr/include/
+  cp LICENSE $licensedir/OpenSSL-LICENSE.txt
 
   pkgbuilt OPENSSL_BUILT
 fi
@@ -726,6 +728,7 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
     fi
     cp $FILE pkgdocs/
   done
+  cp LICENSE $licensedir/Tor-LICENSE.txt
 
   pkgbuilt TOR_BUILT
 fi
@@ -746,6 +749,9 @@ if [[ "$PYCRYPTO_BUILT" != "yes" ]]; then
     echo "ERROR: PyCrypto install failed."
     exit 1
   fi
+  cp LEGAL/copy/README $licensedir/PyCrypto-LEGAL-README.txt
+  cp LEGAL/copy/LICENSE.libtom $licensedir/PyCrypto-LICENSE-libtom.txt
+  cp LEGAL/copy/LICENSE.orig $licensedir/PyCrypto-LICENSE-orig.txt
 
   pkgbuilt PYCRYPTO_BUILT
 fi
@@ -764,6 +770,7 @@ if [[ "$PY2EXE_BUILT" != "yes" ]]; then
     echo "ERROR: Thandy install failed."
     exit 1
   fi
+  cp docs/LICENSE.txt $licensedir/Py2Exe-LICENSE.txt
 
   pkgbuilt PY2EXE_BUILT
 fi
@@ -853,6 +860,10 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   # to OpenLibrary.
   find plugins/imageformats -name \*.a -exec rm {} \;
 
+  cp LICENSE.LGPL $licensedir/Qt-LICENSE-LGPL.txt
+  cp LICENSE.GPL3 $licensedir/Qt-LICENSE-GPLv3.txt
+  cp LGPL_EXCEPTION.txt $licensedir/Qt-LGPL-EXCEPTION.txt
+
   pkgbuilt QT_BUILT
 fi
 
@@ -874,6 +885,7 @@ if [[ "$GNUREGEX_BUILT" != "yes" ]]; then
   if (( $? != 0 )); then
     echo "ERROR: GNU regex install failed."
   fi
+  cp COPYING.LIB $licensedir/GNURegEx-COPYING-LIB.txt
 
   pkgbuilt GNUREGEX_BUILT
 fi
@@ -892,6 +904,7 @@ if [[ "$POLIPO_BUILT" != "yes" ]]; then
   if (( $? != 0 )); then
     echo "ERROR: polipo build failed."
   fi
+  cp COPYING $licensedir/Polipo-COPYING.txt
 
   pkgbuilt POLIPO_BUILT
 fi
@@ -914,6 +927,7 @@ if [[ "$MARBLE_BUILT" != "yes" ]]; then
   if (( $? != 0 )); then
     echo "ERROR: Marble build failed."
   fi
+  cp LICENSE.txt $licensedir/Marble-LICENSE.txt
 
   pkgbuilt MARBLE_BUILT
 fi
@@ -961,6 +975,9 @@ if [[ "$VIDALIA_BUILT" != "yes" ]]; then
   if [ -f $VIDALIA_EXE ]; then
     cp $VIDALIA_EXE bin/vidalia-marble.exe
   fi
+  cp LICENSE $licensedir/Vidalia-LICENSE.txt
+  cp LICENSE-GPLV2 $licensedir/Vidalia-LICENSE-GPLv2.txt
+  cp LICENSE-GPLV3 $licensedir/Vidalia-LICENSE-GPLv3.txt
 
   pkgbuilt VIDALIA_BUILT
 fi
@@ -973,6 +990,8 @@ cp $VMHDD_IMAGE $bdlibdir/
 
 # Microsoft Installer package build
 TOR_WXS_DIR=contrib
+# Suppress logo and irrelevant warnings about ALLUSERS path variation
+LIGHT_OPTS="-nologo -sw1076"
 WIX_UI=/wix/WixUIExtension.dll
 WIXSRC_WXLDIR=/src/$WIXSRC_DIR/src/ext/UIExtension/wixlib
 DEF_WXL_LANG=en-us
@@ -986,6 +1005,7 @@ done
 for LANG in $VIDALIA_LANGS; do
   WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc vidalia_${LANG}.wxl"
 done
+WIX_DEFAULT_LOC_LINK="-cultures:en-us -loc vidalia_en.wxl"
 
 # XXX building all languages eats up too much time and space
 BUILD_IND_LANGS=yes
@@ -1037,10 +1057,11 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     # light.exe "-cultures:es-es;de-de;en-us" -loc WixUI_es-es.wxl -loc WixUI_de-de.wxl -loc WixUI_en-us.wxl -loc vidalia_es.wxl -loc vidalia_de.wxl -loc vidalia_en.wxl -out test.msi -cc cabcache -reusecab vid.wixout
 
     cp pkg/win32/*.vbs ./
+    cp pkg/win32/default-*.bmp ./
     cp $WIXSRC_WXLDIR/*.wxl ./
     cp pkg/win32/*.wxl ./
     candle.exe pkg/win32/*.wxs
-    light.exe -out vidalia.msi vidalia.wixobj WixUI_Custom.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out vidalia.msi vidalia.wixobj WixUI_Custom.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
     if [ -f vidalia.msi ]; then
       cp vidalia.msi $bundledir
       cp vidalia.msi ../pkg/
@@ -1052,7 +1073,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     # the null LCID/codepage should actually be run through ascii filter to be sure.
     cp WixUI_en-us.wxl WixUI_nullcp.wxl
     cp vidalia_en.wxl vidalia_nullcp.wxl
-    light.exe -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
     if [ -f vidalia-intl.msi ]; then
       export BASEMSI=vidalia-intl.msi
     fi
@@ -1067,7 +1088,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         done
         outfile="vidalia-${LANG}.msi"
         echo "Linking localized $outfile ..."
-        light.exe -out $outfile vidalia.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out $outfile vidalia.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
         if [ -f $outfile ]; then
           cp $outfile $bundledir
           cp $outfile ../pkg/
@@ -1089,6 +1110,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Copying various package dependencies into place ..."
   cp $WIXSRC_WXLDIR/*.wxl ./
   cp /src/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
+  cp /src/$VIDALIA_DIR/pkg/win32/default-*.bmp ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.vbs ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxs ./
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
@@ -1121,11 +1143,11 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     rm -f license-tmpdir.wxs
     candle.exe license-all.wxs
     echo "Linking Tor Vidalia bundle license docs package ..."
-    light.exe -out license.msi WixUI_Custom.wixobj license-all.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out license.msi WixUI_Custom.wixobj license-all.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
   fi
 
   echo "Linking torvm MSI installer package ..."
-  light.exe -out torvm.msi WixUI_Custom.wixobj torvm.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out torvm.msi WixUI_Custom.wixobj torvm.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
   if [ -f torvm.msi ]; then
     cp torvm.msi $bundledir
     ls -l torvm.msi
@@ -1133,7 +1155,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Tor VM MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f torvm-intl.msi ]; then
     export BASEMSI=torvm-intl.msi
   else
@@ -1151,7 +1173,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="torvm-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe -out $outfile torvm.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile torvm.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
@@ -1169,7 +1191,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking tor MSI installer package ..."
-  light.exe -out tor.msi WixUI_Custom.wixobj tor.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out tor.msi WixUI_Custom.wixobj tor.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
   if [ -f tor.msi ]; then
     cp tor.msi $bundledir
     ls -l tor.msi
@@ -1177,7 +1199,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Tor MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f tor-intl.msi ]; then
     export BASEMSI=tor-intl.msi
   else
@@ -1195,7 +1217,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="tor-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe -out $outfile tor.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile tor.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
@@ -1213,7 +1235,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking polipo MSI installer package ..."
-  light.exe -out polipo.msi WixUI_Custom.wixobj polipo.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out polipo.msi WixUI_Custom.wixobj polipo.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
   if [ -f polipo.msi ]; then
     cp polipo.msi $bundledir
     ls -l polipo.msi
@@ -1221,7 +1243,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build polipo MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f polipo-intl.msi ]; then
     export BASEMSI=polipo-intl.msi
   else
@@ -1239,7 +1261,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="polipo-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe -out $outfile polipo.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile polipo.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
@@ -1259,7 +1281,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f /src/$TORBUTTON_FILE ]; then
     cp /src/$TORBUTTON_FILE torbutton.xpi
     echo "Linking torbutton MSI installer package ..."
-    light.exe -out torbutton.msi WixUI_Custom.wixobj torbutton.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out torbutton.msi WixUI_Custom.wixobj torbutton.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
     if [ -f torbutton.msi ]; then
       cp torbutton.msi $bundledir
       ls -l torbutton.msi
@@ -1267,7 +1289,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       echo "ERROR: unable to build torbutton MSI installer."
     fi
     echo "Linking minimal zero codepage MSI installer package ..."
-    light.exe -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl  -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl  -ext $WIX_UI
     if [ -f torbutton-intl.msi ]; then
       export BASEMSI=torbutton-intl.msi
     else
@@ -1285,7 +1307,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         done
         outfile="torbutton-${LANG}.msi"
         echo "Linking localized $outfile ..."
-        light.exe -out $outfile torbutton.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out $outfile torbutton.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
         if [ -f $outfile ]; then
           cp $outfile $bundledir
           ls -l $outfile
@@ -1304,7 +1326,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking thandy MSI installer package ..."
-  light.exe -out thandy.msi WixUI_Custom.wixobj thandy.wixobj $WIX_ALL_LOC_LINK -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out thandy.msi WixUI_Custom.wixobj thandy.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
   if [ -f thandy.msi ]; then
     cp thandy.msi $bundledir
     ls -l thandy.msi
@@ -1312,7 +1334,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Thandy MSI installer."
   fi
   echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
   if [ -f thandy-intl.msi ]; then
     export BASEMSI=thandy-intl.msi
   else
@@ -1330,7 +1352,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done
       outfile="thandy-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe -out $outfile thandy.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile thandy.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
