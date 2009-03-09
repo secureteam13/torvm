@@ -11,15 +11,18 @@ basic features are not yet avilable; edit the Makefile to adjust manually.
 
 
 
-NOTE: Two subversion repositories are accessed via SSL with keys that may need
+NOTE: Some subversion repositories are accessed via SSL with keys that may need
 to be accepted manually.  To confirm that you have authenticated the keys used
-issue the following commands and approve the keys if needed:
+issue the following commands as the build user and approve the keys if needed:
 
-    svn info https://svn.torproject.org/svn/torvm/trunk
+    svn info https://svn.torproject.org/svn/torvm/trunk/
     # Fingerprint: 55:62:fe:1b:60:f9:35:fa:50:44:dd:33:ea:54:77:26:e4:da:5f:72
 
     svn info https://svn.openwrt.org/openwrt/trunk/
     # Fingerprint: a1:0a:d8:2d:af:4e:67:92:18:a0:27:b6:9f:2b:e1:12:08:28:a0:b1
+
+    svn info https://svn.vidalia-project.net/svn/vidalia/trunk/
+    # Fingerprint: 1e:ff:c9:02:af:53:50:f8:7a:6f:6f:95:25:c3:fb:50:78:15:9b:28
 
 
 
