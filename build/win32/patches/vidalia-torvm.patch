@@ -31,8 +31,8 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 --- a/pkg/win32/vidalia.wxs.in	2009-02-24 05:46:46.615879000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-03-07 03:57:41.691104680 +0000
-@@ -1,260 +1,275 @@
++++ b/pkg/win32/vidalia.wxs.in	2009-03-09 16:26:33.282871496 +0000
+@@ -1,334 +1,369 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
 -  $Id: vidalia.wxs.in 3586 2009-02-24 05:46:46Z edmanm $
@@ -99,21 +99,22 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -  <?define MarbleSvgDataGuid="03E25BCA-4C58-4571-9F17-061D52877714" ?>
 -
 -  <Product Name="Vidalia @VERSION@" Id="$(var.VidaliaProductGuid)"
-+  <Product Name="Vidalia $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
-            Language="1033" Codepage="1252"
+-           Language="1033" Codepage="1252"
 -           Version="$(var.VidaliaVersion)" 
++  <Product Name="Vidalia $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
 +           Version="$(var.ThisProductVersion)"
             Manufacturer="vidalia-project.net"
 -           UpgradeCode="$(var.VidaliaUpgradeCode)">
++           Language="!(loc.LCID)"
 +           UpgradeCode="$(var.UpgradeCode)">
      
      <Package Id="*" Keywords="Installer"
 -             Description="Vidalia @VERSION@ Installer"
 +             Description="Vidalia $(var.ThisProductVersionDisp) Installer"
               Manufacturer="vidalia-project.net"
-              InstallerVersion="100" Compressed="yes"
+-             InstallerVersion="100" Compressed="yes"
 -             Languages="1033"  SummaryCodepage="1252" />
-+             Languages="1033"  SummaryCodepage="1252"
++             InstallerVersion="200" Compressed="yes"
 +             InstallPrivileges="limited" />
 +
 +    <!-- Properties used for variable replacement in translations. -->
@@ -225,8 +226,10 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +            </RegistryKey>
 +            <File Id="VidaliaExe" DiskId="1"
 +                  Name="vidalia.exe" Source="bin\vidalia-2d.exe" />
++<?ifndef NOMARBLE ?>
 +            <File Id="VidaliaMarbleExe" DiskId="1"
 +                  Name="vidalia-marble.exe" Source="bin\vidalia-marble.exe" />
++<?endif?>
 +          </Component>
  
 -      <!-- Vidalia-related documents -->
@@ -263,8 +266,10 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +                  Name="QtXml4.dll" Source="bin\QtXml4.dll" />
 +            <File Id="QtSvg4Dll" DiskId="1"
 +                  Name="QtSvg4.dll" Source="bin\QtSvg4.dll" />
++<?ifndef NOMARBLE ?>
 +            <File Id="MarbleQtWidgetDll" DiskId="1"
 +              Name="libmarblewidget.dll" Source="bin/libmarblewidget.dll" />
++<?endif ?>
 +          </Component>
  
 -      <!-- Qt-related library files -->
@@ -465,6 +470,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +              DiskId="1"
 +            /> 
 +          </Component>
++<?ifndef NOMARBLE ?>
 +          <Directory Id="LocalPluginsDir" Name="plugins">
 +            <!-- Marble plugin library file -->
 +            <Component Id="MarblePlugin" Guid="$(var.CurrMarblePluginGUID)">
@@ -506,9 +512,12 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +                </RegistryKey>
 +                <File Id="qsvg4.dll" DiskId="1"
 +                  Name="qsvg4.dll" Source="plugins/imageformats/qsvg4.dll" />
++                <File Id="qjpeg4.dll" DiskId="1"
++                  Name="qjpeg4.dll" Source="plugins/imageformats/qjpeg4.dll" />
 +              </Component>
 +            </Directory>
 +          </Directory>
++<?endif ?>
 +        </Directory>
 +      </Directory>
  
@@ -527,14 +536,16 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -                      Directory="ShortcutFolder" WorkingDirectory="INSTALLDIR"
 +                      Name="Vidalia" Target="[LocalProgramsInstDir]vidalia.exe"
 +                      Directory="ShortcutFolder" WorkingDirectory="LocalProgramsInstDir"
-+                      Icon="vidalia.ico" IconIndex="0" />
+                       Icon="vidalia.ico" IconIndex="0" />
++<?ifndef NOMARBLE ?>
 +            <Shortcut Id="VidaliaMarbleStartMenuShortcut"
 +                      Name="Vidalia Marble" Target="[LocalProgramsInstDir]vidalia-marble.exe"
 +                      Directory="ShortcutFolder" WorkingDirectory="LocalProgramsInstDir"
-                       Icon="vidalia.ico" IconIndex="0" />
++                      Icon="vidalia.ico" IconIndex="0" />
++<?endif ?>
              <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
            </Component>
-@@ -262,73 +277,80 @@
+         </Directory>
        </Directory>
  
        <Directory Id="DesktopFolder" Name="Desktop">
@@ -550,10 +561,12 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +                    Name="Vidalia" Target="[LocalProgramsInstDir]vidalia.exe"
 +                    Directory="DesktopFolder" WorkingDirectory="LocalProgramsInstDir"
 +                    Icon="vidalia.ico" IconIndex="0" />
++<?ifndef NOMARBLE ?>
 +          <Shortcut Id="VidaliaMarbleDesktopShortcut"
 +                    Name="Vidalia Marble" Target="[LocalProgramsInstDir]vidalia-marble.exe"
 +                    Directory="DesktopFolder" WorkingDirectory="LocalProgramsInstDir"
                      Icon="vidalia.ico" IconIndex="0" />
++<?endif ?>
          </Component>
        </Directory>
  
@@ -591,9 +604,11 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -        <ComponentGroupRef Id="MarbleData"/>
 +        <ComponentRef Id="GeoIPCache" />
 +        <ComponentRef Id="PolipoConfig" />
++<?ifndef NOMARBLE ?>
 +        <ComponentRef Id="MarblePlugin" />
 +        <ComponentRef Id="PluginDataDir" />
 +        <ComponentRef Id="PluginImageFormatsDir" />
++<?endif ?>
        </Feature>
        <Feature Id="Shortcuts" Title="Shortcuts"
                 AllowAdvertise="no" Absent="allow" Level="1"
@@ -788,8 +803,8 @@ diff -Naur a/src/tools/wixtool/CMakeLists.txt b/src/tools/wixtool/CMakeLists.txt
 +
 diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 --- a/src/tools/wixtool/wixtool.cpp	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/tools/wixtool/wixtool.cpp	2009-03-07 15:46:41.482073464 +0000
-@@ -0,0 +1,467 @@
++++ b/src/tools/wixtool/wixtool.cpp	2009-03-10 02:55:48.337230000 +0000
+@@ -0,0 +1,673 @@
 +/*
 +**  $Id$
 +**
@@ -812,6 +827,25 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +#define WIX_ATTR_ID  "Id"
 +#define WIX_ATTR_DIRACTION "uninstall"
 +#define WIX_ATTR_REGACTION "createAndRemoveOnUninstall"
++#define WIX_ATTR_VALUE "Value"
++#define WIX_ATTR_KEY "KeyPath"
++#define WIX_ATTR_GUID "Guid"
++#define WIX_ATTR_NAME "Name"
++#define WIX_ATTR_REG_TYPE "Type"
++#define WIX_ATTR_REG_NAME "Name"
++#define WIX_ATTR_REG_ROOT "Root"
++#define WIX_ATTR_REG_KEYPATH  "Key"
++#define WIX_ATTR_REG_ACTION  "Action"
++#define WIX_REG_KEY_TYPE "integer"
++#define WIX_TAG_FILE "File"
++#define WIX_TAG_DIR "Directory"
++#define WIX_TAG_FEATURE "Feature"
++#define WIX_TAG_COMPONENT "Component"
++#define WIX_TAG_COMPONENT_REF "ComponentRef"
++#define WIX_TAG_CREATEDIR "CreateFolder"
++#define WIX_TAG_REMOVEDIR "RemoveFolder"
++#define WIX_TAG_REGKEY "RegistryKey"
++#define WIX_TAG_REGVAL "RegistryValue"
 +
 +typedef void (*TraverseCallback)(void *cbdata, QDomElement e);
 +
@@ -837,6 +871,12 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +  QString  newprop;
 +  QString  newpropval;
 +} AddData;
++
++typedef struct s_UserLocalData {
++  QString      keypath;
++  QString      featureid;
++  QStringList  newcomps;
++} UserLocalData;
 +
 +bool
 +do_walkdoc(QDomNode  n,
@@ -1131,12 +1171,167 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +  return walkdoc(doc, &addfunc, &cbdata, errorMessage);
 +}
 +
++bool
++createRegLocalComponent(QDomElement e,
++ QString dirName,
++ QString keyPath)
++{ 
++  QDomElement nrk = e.ownerDocument().createElement(WIX_TAG_REGKEY);
++  QDomElement nrv = e.ownerDocument().createElement(WIX_TAG_REGVAL);
++  nrk.setAttribute(WIX_ATTR_REG_ROOT, "HKCU");
++  nrk.setAttribute(WIX_ATTR_REG_ACTION, "createAndRemoveOnUninstall");
++  nrk.setAttribute(WIX_ATTR_REG_KEYPATH, keyPath);
++  nrv.setAttribute(WIX_ATTR_REG_TYPE, WIX_REG_KEY_TYPE);
++  nrv.setAttribute(WIX_ATTR_REG_NAME, dirName);
++  nrv.setAttribute(WIX_ATTR_VALUE, "1");
++  nrv.setAttribute(WIX_ATTR_KEY, "yes");
++  nrk.appendChild(nrv);
++  e.appendChild(nrk);
++}
++
++bool
++createDirMgmtComponent(QDomElement e,
++ QString dirName)
++{
++  QDomElement nce = e.ownerDocument().createElement(WIX_TAG_CREATEDIR);
++  e.appendChild(nce);
++  nce = e.ownerDocument().createElement(WIX_TAG_REMOVEDIR);
++  nce.setAttribute("On", WIX_ATTR_DIRACTION);
++  nce.setAttribute(WIX_ATTR_ID, QString("Remove").append(dirName));
++  e.appendChild(nce);
++}
++
++void
++userlocalfunc(void *cbdata,
++ QDomElement e)
++{
++  UserLocalData *ulinfo = reinterpret_cast<UserLocalData *>(cbdata);
++  QString eid = e.attribute(WIX_ATTR_ID);
++
++  if (e.tagName().compare(WIX_TAG_FILE) == 0) {
++    e.removeAttribute(WIX_ATTR_KEY);
++  }
++  else if (e.tagName().compare(WIX_TAG_FEATURE) == 0) {
++    if (ulinfo->featureid.compare(e.attribute(WIX_ATTR_ID)) == 0) {
++      /* this is the target feature element for the new components, if any. */
++      QDomElement ne;
++      for (int i = 0; i < ulinfo->newcomps.count(); i++) {
++        QString currid = ulinfo->newcomps[i];
++        ne = e.ownerDocument().createElement(WIX_TAG_COMPONENT_REF);
++        ne.setAttribute(WIX_ATTR_ID, currid);
++        e.appendChild(ne);
++      }
++    }
++  }
++  else if (e.tagName().compare(WIX_TAG_DIR) == 0) {
++    QString dirName = e.attribute(WIX_ATTR_NAME);
++    QString dirId = e.attribute(WIX_ATTR_ID);
++    /* find all child components for this dir and see if it contains:
++     * create/remove folder elements, a registry element
++     */
++    if ( e.hasChildNodes() ) {
++      QDomElement fc;
++      bool  hasComponent = false;
++      bool  hasRegKey;
++      bool  hasDirMgmt = false;
++      QDomNodeList subnodes = e.childNodes();
++      for (int i = 0; i < subnodes.count(); i++) {
++        hasRegKey = false;
++        if (subnodes.item(i).isElement()) {
++          QDomElement ce = subnodes.item(i).toElement();
++          if (ce.tagName().compare(WIX_TAG_COMPONENT) == 0) {
++            if (!hasComponent) {
++              hasComponent = true;
++              fc = ce;
++            }
++            QDomNodeList compnodes = ce.childNodes();
++            for (int j = 0; j < compnodes.count(); j++) {
++              if (compnodes.item(j).isElement()) {
++                QDomElement compe = compnodes.item(j).toElement();
++                if (compe.tagName().compare(WIX_TAG_REGKEY) == 0) {
++                  hasRegKey = true;
++                }
++                else if (compe.tagName().compare(WIX_TAG_CREATEDIR) == 0) {
++                  hasDirMgmt = true;
++                }
++              }
++            }
++            if (!hasRegKey) {
++              createRegLocalComponent(ce, QString("RK").append(ce.attribute(WIX_ATTR_ID)), ulinfo->keypath);
++            }
++          }
++        }
++      }
++      if (hasComponent) {
++        /* If no registry based key path exists, create it under the
++         * first component for this directory element.
++         */
++        QString compname = fc.attribute(WIX_ATTR_ID);
++        if (!hasDirMgmt) {
++          createDirMgmtComponent(fc, compname);
++        }
++      }
++      else {
++        /* Certain system directories must be ignored; we don't manage them. */
++        if (dirId.compare("LocalAppDataFolder") &&
++            dirId.compare("AppDataFolder") &&
++            dirId.compare("CommonAppDataFolder") &&
++            dirId.compare("CommonFilesFolder") &&
++            dirId.compare("DesktopFolder") &&
++            dirId.compare("PersonalFolder") &&
++            dirId.compare("ProgramFilesFolder") &&
++            dirId.compare("ProgramMenuFolder") &&
++            dirId.compare("StartMenuFolder") &&
++            dirId.compare("StartupFolder") &&
++            dirId.compare("SystemFolder") &&
++            dirId.compare("TempFolder") &&
++            dirId.compare("WindowsFolder") ) {
++          /* if there is no component under this dir parent then we
++           * must create a component for the sole purpose of dir
++           * creation with the requisite registry key path.
++           */
++          QDomElement ne = e.ownerDocument().createElement(WIX_TAG_COMPONENT);
++          QString compId = QString("ULDirComp_").append(dirName);
++          ne.setAttribute(WIX_ATTR_GUID, "*");
++          ne.setAttribute(WIX_ATTR_ID, compId);
++          e.appendChild(ne);
++          createDirMgmtComponent(ne, dirName);
++          createRegLocalComponent(ne, QString("DRK").append(dirName), ulinfo->keypath);
++          ulinfo->newcomps.append(compId);
++        }
++      }
++    }
++  }
++}
++
++/** Make modifications to requested documents.
++ * returns false on error and <b>errorMessage</b> will be set.
++ */
++bool
++docuserlocal(QDomDocument *doc,
++  QString argument,
++  QString *errorMessage)
++{
++  Q_ASSERT(doc);
++  Q_ASSERT(errorMessage);
++  UserLocalData  cbdata;
++
++  QStringList ulinfo = argument.split(":");
++  if (ulinfo.count() < 2) {
++    *errorMessage = "Invalid argument for userlocal command: " + argument;
++    return false;
++  }
++  cbdata.keypath = ulinfo[0];
++  cbdata.featureid = ulinfo[1];
++  return walkdoc(doc, &userlocalfunc, &cbdata, errorMessage);
++}
++
 +/** Display application usage and exit. */
 +void
 +print_usage_and_exit()
 +{
 +  QTextStream error(stderr);
-+  error << "usage: wixtool <command> [-q] -i <infile> -o <outfile> <Arg0> ... <ArgN>" << endl;
++  error << "usage: wixtool <command> [-q] -i <infile> -o <outfile> <Arg0> [... <ArgN>]" << endl;
 +  error << "  command one of: " << endl;
 +  error << "    splice        Splice children from one document into another." << endl;
 +  error << "    replace       Replace elements or attributes in a document." << endl;
@@ -1156,7 +1351,7 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +  error << "    Add properties or child elements to target" << endl;
 +  error << "    If newtagname is empty only properties added to dest" << endl;
 +  error << endl;
-+  error << "  userlocal args: [tagname][:Id]" << endl;
++  error << "  userlocal arg:  <registry key path>:<dest feature id>" << endl;
 +  error << "    Convert KeyPath File elements into the per user local idiom" << endl;
 +  error << "    with corresponding Create/RemoveDir and RegistryKey elements." << endl;
 +  error << endl;
@@ -1186,7 +1381,8 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +  command = argv[1];
 +  if ( command.compare("splice", Qt::CaseInsensitive) &&
 +       command.compare("replace", Qt::CaseInsensitive) &&
-+       command.compare("add", Qt::CaseInsensitive) ) {
++       command.compare("add", Qt::CaseInsensitive) &&
++       command.compare("userlocal", Qt::CaseInsensitive) ) {
 +    print_usage_and_exit();
 +  }
 +
@@ -1217,6 +1413,14 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +    return 2;
 +  }
 +
++  /* Make sure the outfile does not exist before we use it. */
++  if (QFile::exists(outfile)) {
++    if (!QFile::remove(outfile)) {
++      error << QString("Unable to truncate outfile '%1'\n").arg(outfile);
++      return 2;
++    }
++  }
++
 +  QDomDocument doc;
 +  QString parseError;
 +  int  badline, badcol;
@@ -1226,19 +1430,36 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +    return 3;
 +  }
 +
-+  for (int i = 0; i < commandargs.count(); i++) {
-+    if (!command.compare("splice", Qt::CaseInsensitive)) {
-+      if (!docsplice(&doc, commandargs[i], &errorMessage)) {
-+        error << QString("Unable to process splice command '%1': %2\n")
-+                        .arg(commandargs[i]).arg(errorMessage);
-+        return 4;
++  if (!command.compare("userlocal", Qt::CaseInsensitive)) {
++    if (!docuserlocal(&doc, commandargs[0], &errorMessage)) {
++      error << QString("Unable to convert document components to user local: %1\n")
++                          .arg(errorMessage);
++      return 4;
++    }
++  }
++  else {
++    for (int i = 0; i < commandargs.count(); i++) {
++      if (!command.compare("splice", Qt::CaseInsensitive)) {
++        if (!docsplice(&doc, commandargs[i], &errorMessage)) {
++          error << QString("Unable to process splice command '%1': %2\n")
++                          .arg(commandargs[i]).arg(errorMessage);
++          return 4;
++        }
 +      }
-+    }
-+    else if (!command.compare("replace", Qt::CaseInsensitive)) {
-+        return 4;
-+    }
-+    else if (!command.compare("add", Qt::CaseInsensitive)) {
-+        return 4;
++      else if (!command.compare("replace", Qt::CaseInsensitive)) {
++        if (!docreplace(&doc, commandargs[i], &errorMessage)) {
++          error << QString("Unable to process replace command '%1': %2\n")
++                          .arg(commandargs[i]).arg(errorMessage);
++          return 4;
++        }
++      }
++      else if (!command.compare("add", Qt::CaseInsensitive)) {
++        if (!docadd(&doc, commandargs[i], &errorMessage)) { 
++          error << QString("Unable to process add command '%1': %2\n")
++                          .arg(commandargs[i]).arg(errorMessage);
++          return 4;
++        }
++      }
 +    }
 +  }
 +

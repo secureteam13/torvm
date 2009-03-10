@@ -40,6 +40,7 @@ Section "TorVM" TorVM
 SectionEnd
 
 Function ExtractPackages
+	File "license.msi"
 	File "torvm.msi"
 	File "torbutton.msi"
 	File "thandy.msi"
@@ -48,6 +49,7 @@ Function ExtractPackages
 FunctionEnd
 
 Function RunInstallers
+	ExecWait 'msiexec /i "$INSTDIR\license.msi" /qn'
 	ExecWait 'msiexec /i "$INSTDIR\torvm.msi" BUNDLE=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\polipo.msi" NOSC=1 /qn'

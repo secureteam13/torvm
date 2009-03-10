@@ -199,10 +199,12 @@ if [[ "$1" != "dobuild" ]]; then
   else
     echo "BUILD_COMPLETE" >> build.log
   fi
+  # clean up terminal cntrl chars
+  cat build.log | sed 's/[[:cntrl:]]//g' | sed 's/\[[0-9]*m//g' | sed 's/\][0-9]*m//g' > build.log.txt
   if [[ "$BUILD_SCP_USER" != "" ]]; then
     echo "Transferring build to destination ${BUILD_SCP_HOST}:${bld_dsub} ..."
     scp -o BatchMode=yes -o CheckHostIP=no -o StrictHostKeyChecking=no \
-        build.log "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_dsub}/win32build.log"
+        build.log.txt "${BUILD_SCP_USER}@${BUILD_SCP_HOST}:${bld_dsub}/win32build.log"
   fi
   if [[ "$AUTO_SHUTDOWN" == "TRUE" ]]; then
     echo "Invoking automated shutdown ..."
@@ -994,12 +996,13 @@ cp $VMHDD_IMAGE $bdlibdir/
 TOR_WXS_DIR=contrib
 # Suppress logo and irrelevant warnings about ALLUSERS path variation
 LIGHT_OPTS="-nologo -sw1076"
+CANDLE_OPTS="-nologo"
 WIX_UI=/wix/WixUIExtension.dll
 WIXSRC_WXLDIR=/src/$WIXSRC_DIR/src/ext/UIExtension/wixlib
 DEF_WXL_LANG=en-us
 WXL_LANGS="cs-cz de-de es-es fr-fr hu-hu it-it ja-jp nl-nl pl-pl ru-ru uk-ua en-us"
 # XXX currently problems with WiX handling of: zh_CN zh_TW
-VIDALIA_LANGS="cs de es fa fi fr he it nl pl pt ro ru sv en"
+VIDALIA_LANGS="cs de es fa fi fr he it nl pl pt ro ru sv"
 WIX_ALL_LOC_LINK=""
 for LANG in $WXL_LANGS; do
   WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc WixUI_${LANG}.wxl"
@@ -1007,7 +1010,7 @@ done
 for LANG in $VIDALIA_LANGS; do
   WIX_ALL_LOC_LINK="${WIX_ALL_LOC_LINK} -loc vidalia_${LANG}.wxl"
 done
-WIX_DEFAULT_LOC_LINK="-cultures:en-us -loc vidalia_en.wxl"
+WIX_DEFAULT_LOC_LINK="-loc WixUI_en-us.wxl -loc vidalia_en.wxl"
 
 # Building locale specific package variants results in aprox. 300MB of MSI packages.
 if [[ "$BUILD_IND_LANGS" == "" ]]; then
@@ -1020,7 +1023,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cd /src
   tar zxf pkg.tgz
   if [ -f /usr/src/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
-    echo "Creating Vidalia MSI package ..."
+    echo "Creating Vidalia MSI packages ..."
     cd /src/$VIDALIA_DIR
     for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do
       cp /$sysdrive/Qt/$QT_VER/bin/$FILE bin/
@@ -1039,7 +1042,6 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       cp $MARBLE_DEST/plugins/*.dll plugins/
       cp $MARBLE_DEST/plugins/*.dll bin/
       cp /$sysdrive/Qt/$QT_VER/plugins/imageformats/*.dll plugins/imageformats/
-      cp /$sysdrive/Qt/$QT_VER/plugins/imageformats/*.dll bin/
     fi
     if [[ "$DEBUG_NO_STRIP" == "" ]]; then
       echo "Stripping debug symbols from binaries and libraries ..."
@@ -1052,33 +1054,99 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       strip plugins/imageformats/*.dll
     fi
 
-    # typical work flow using generated component fragments from heat.exe:
-    # heat.exe dir $pkgdir -gg -ke -sfrag -nologo -out "${pkgdir}.wxs" -template:product
-    # tail +4c $out > $tmp, dos2unix $tmp
-    # wixtool.exe splice -i prod.wxs -o out.wxs Directory:DirName=heat.wxs:Directory:dirname
-    # wixtool.exe splice -i out.wxs -o final.wxs Feature:MainApplication=heat.wxs:Feature:ProductFeature
-    # light.exe -sloc -out vid.wixout -xo -cc cabcache WixUI_Custom.wixobj vidalia.wixobj -ext /wix/WixUIExtension.dll
-    # light.exe "-cultures:es-es;de-de;en-us" -loc WixUI_es-es.wxl -loc WixUI_de-de.wxl -loc WixUI_en-us.wxl -loc vidalia_es.wxl -loc vidalia_de.wxl -loc vidalia_en.wxl -out test.msi -cc cabcache -reusecab vid.wixout
-
     cp pkg/win32/*.vbs ./
     cp pkg/win32/default-*.bmp ./
     cp $WIXSRC_WXLDIR/*.wxl ./
     cp pkg/win32/*.wxl ./
-    candle.exe pkg/win32/*.wxs
-    light.exe $LIGHT_OPTS -out vidalia.msi vidalia.wixobj WixUI_Custom.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+    candle.exe $CANDLE_OPTS pkg/win32/*.wxs
+    cp src/tools/wixtool/wixtool.exe ./
+
+    # build the large marble variant first, subsequent pkgs trim from here.
+    if [ -d $MARBLE_DEST ]; then
+      echo "Creating full marble data Vidalia package ..."
+      cp -a $MARBLE_DEST/data ./
+      tar cf save-full-data.tar data/maps/earth/srtm data/landcolors.leg data/seacolors.leg data/maps/earth/bluemarble data/maps/earth/citylights data/mwdbii data/placemarks data/stars data/svg
+      rm -rf data
+      tar xf save-full-data.tar; rm save-full-data.tar
+      heat.exe dir data -gg -ke -sfrag -nologo -out fulldata-dir.wxs -template:product
+      if [ ! -f fulldata-dir.wxs ]; then
+        echo "Failed to generate directory tree component for full Marble data dir."
+      else
+        # whatever WiX is putting in those first four bytes causes parser havoc
+        tail +4c fulldata-dir.wxs > fulldata-dir.wxs.tmp; dos2unix fulldata-dir.wxs.tmp; cat fulldata-dir.wxs.tmp > fulldata-dir.wxs; rm -f fulldata-dir.wxs.tmp
+        wixtool.exe splice -i pkg/win32/vidalia.wxs -o fulldata-tmpdir.wxs Directory:LocalPluginsDataDir=fulldata-dir.wxs:Directory:data
+        wixtool.exe splice -i fulldata-tmpdir.wxs -o fulldata-tmpall.wxs Feature:MainApplication=fulldata-dir.wxs:Feature:ProductFeature
+        wixtool.exe userlocal -i fulldata-tmpall.wxs -o fulldata-all.wxs "Software/Vidalia:MainApplication"
+        rm -f fulldata-tmpdir.wxs fulldata-tmpall.wxs
+        candle.exe $CANDLE_OPTS fulldata-all.wxs
+        WIX_CAB_CACHE=_vid.cabcache
+        WIX_LINKOUT=_vid.wixout
+        if [ -e $WIX_CAB_CACHE ]; then
+          rm -rf $WIX_CAB_CACHE
+        fi 
+        if [ -e $WIX_LINKOUT ]; then
+          rm -rf $WIX_LINKOUT
+        fi
+        light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj fulldata-all.wixobj -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out vidalia-marble-full.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
+        if [ -f vidalia-marble-full.msi ]; then
+          cp vidalia-marble-full.msi $bundledir
+          cp vidalia-marble-full.msi ../pkg/
+          ls -l vidalia-marble-full.msi
+        else
+          echo "ERROR: unable to build vidalia full marble MSI installer."
+        fi
+      fi
+      echo "Creating reduced marble data Vidalia package ..."
+      tar cf save-min-data.tar data/landcolors.leg data/seacolors.leg data/maps/earth/bluemarble/bluemarble.dgml data/maps/earth/citylights/citylights.dgml data/maps/earth/srtm/srtm.dgml data/mwdbii data/placemarks/baseplacemarks.cache data/placemarks/boundaryplacemarks.cache data/placemarks/elevplacemarks.cache data/stars/stars.dat data/svg/worldmap.svg 
+      rm -rf data
+      tar xf save-min-data.tar; rm save-min-data.tar
+      heat.exe dir data -gg -ke -sfrag -nologo -out mindata-dir.wxs -template:product
+      if [ ! -f mindata-dir.wxs ]; then
+        echo "Failed to generate directory tree component for minimal Marble data dir."
+      else
+        tail +4c mindata-dir.wxs > mindata-dir.wxs.tmp; dos2unix mindata-dir.wxs.tmp; cat mindata-dir.wxs.tmp > mindata-dir.wxs; rm -f mindata-dir.wxs.tmp
+        wixtool.exe splice -i pkg/win32/vidalia.wxs -o mindata-tmpdir.wxs Directory:LocalPluginsDataDir=mindata-dir.wxs:Directory:data
+        wixtool.exe splice -i mindata-tmpdir.wxs -o mindata-tmpall.wxs Feature:MainApplication=mindata-dir.wxs:Feature:ProductFeature
+        wixtool.exe userlocal -i mindata-tmpall.wxs -o mindata-all.wxs "Software/Vidalia:MainApplication"
+        rm -f mindata-tmpdir.wxs mindata-tmpall.wxs
+        candle.exe $CANDLE_OPTS mindata-all.wxs
+        rm -rf $WIX_CAB_CACHE
+        rm -rf $WIX_LINKOUT
+        light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj mindata-all.wixobj -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out vidalia-marble.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
+        if [ -f vidalia-marble.msi ]; then
+          cp vidalia-marble.msi $bundledir
+          cp vidalia-marble.msi ../pkg/
+          ls -l vidalia-marble.msi
+        else
+          echo "ERROR: unable to build vidalia minimal marble MSI installer."
+        fi
+      fi
+    fi
+
+    echo "Linking minimal Vidalia package ..."
+    WIX_CAB_CACHE=_vid.cabcache
+    WIX_LINKOUT=_vid.wixout
+    if [ -e $WIX_CAB_CACHE ]; then
+      rm -rf $WIX_CAB_CACHE
+    fi
+    if [ -e $WIX_LINKOUT ]; then
+      rm -rf $WIX_LINKOUT
+    fi
+    candle.exe $CANDLE_OPTS -dNOMARBLE pkg/win32/vidalia.wxs
+    light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj vidalia.wixobj -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out vidalia.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
     if [ -f vidalia.msi ]; then
       cp vidalia.msi $bundledir
       cp vidalia.msi ../pkg/
+      cp vidalia.msi vidalia-intl.msi
       cp -a bin ../pkg/
       ls -l vidalia.msi
     else
       echo "ERROR: unable to build vidalia MSI installer."
     fi
-    # the null LCID/codepage should actually be run through ascii filter to be sure.
-    cp WixUI_en-us.wxl WixUI_nullcp.wxl
-    cp vidalia_en.wxl vidalia_nullcp.wxl
-    cp WixUI_nullcp.wxl vidalia_nullcp.wxl ../pkg/
-    light.exe $LIGHT_OPTS -out vidalia-intl.msi vidalia.wixobj WixUI_Custom.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+    export BASEMSI=""
     if [ -f vidalia-intl.msi ]; then
       export BASEMSI=vidalia-intl.msi
     fi
@@ -1093,14 +1161,14 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         done
         outfile="vidalia-${LANG}.msi"
         echo "Linking localized $outfile ..."
-        light.exe $LIGHT_OPTS -out $outfile vidalia.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
         if [ -f $outfile ]; then
           cp $outfile $bundledir
           cp $outfile ../pkg/
           ls -l $outfile
           if [ -f $BASEMSI ]; then
             echo "Adding language $LANG as transform against minimal MSI package ..."
-            cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+            cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
           fi
         else
           echo "ERROR: unable to link localized $outfile vidalia MSI installer."
@@ -1132,7 +1200,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   done
   cp -a $ddir ./
   # XXX replace this with Matt's torbutton NSIS magic
-  candle.exe *.wxs
+  candle.exe $CANDLE_OPTS *.wxs
 
   echo "Building Tor Vidalia bundle license docs package ..."
   cp -a $licensedir ./LicenseDocs
@@ -1144,9 +1212,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     # whatever WiX is putting in those first four bytes causes parser havoc
     tail +4c license-dir.wxs > license-dir.wxs.tmp; dos2unix license-dir.wxs.tmp; cat license-dir.wxs.tmp > license-dir.wxs; rm -f license-dir.wxs.tmp
     wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:LicenseDocs
-    wixtool.exe splice -i license-tmpdir.wxs -o license-all.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
-    rm -f license-tmpdir.wxs
-    candle.exe license-all.wxs
+    wixtool.exe splice -i license-tmpdir.wxs -o license-tmpall.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
+    wixtool.exe userlocal -i license-tmpall.wxs -o license-all.wxs "Software/Tor Vidalia License Docs:MainApplication"
+    rm -f license-tmpdir.wxs license-tmpall.wxs
+    candle.exe $CANDLE_OPTS license-all.wxs
     echo "Linking Tor Vidalia bundle license docs package ..."
     light.exe $LIGHT_OPTS -out license.msi WixUI_Custom.wixobj license-all.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
     if [ -f license.msi ]; then
@@ -1158,20 +1227,46 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking torvm MSI installer package ..."
-  light.exe $LIGHT_OPTS -out torvm.msi WixUI_Custom.wixobj torvm.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+  mv bin save-bin
+  mv Tor_VM/bin ./
+  mv Tor_VM/lib ./
+  mv Tor_VM/state ./
+  mv Tor_VM/torvm.exe ./
+  heat.exe dir bin -gg -ke -sfrag -nologo -out torvm-bin.wxs -template:product
+  heat.exe dir lib -gg -ke -sfrag -nologo -out torvm-lib.wxs -template:product
+  heat.exe dir state -gg -ke -sfrag -nologo -out torvm-state.wxs -template:product
+  tail +4c torvm-bin.wxs > torvm-bin.wxs.tmp; dos2unix torvm-bin.wxs.tmp; cat torvm-bin.wxs.tmp > torvm-bin.wxs; rm -f torvm-bin.wxs.tmp
+  tail +4c torvm-lib.wxs > torvm-lib.wxs.tmp; dos2unix torvm-lib.wxs.tmp; cat torvm-lib.wxs.tmp > torvm-lib.wxs; rm -f torvm-lib.wxs.tmp
+  tail +4c torvm-state.wxs > torvm-state.wxs.tmp; dos2unix torvm-state.wxs.tmp; cat torvm-state.wxs.tmp > torvm-state.wxs; rm -f torvm-state.wxs.tmp
+  wixtool.exe splice -i torvm.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-bin.wxs:Directory:bin
+  wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-bin.wxs:Feature:ProductFeature
+  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-lib.wxs:Directory:lib
+  wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-lib.wxs:Feature:ProductFeature
+  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-state.wxs:Directory:state
+  wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-state.wxs:Feature:ProductFeature
+  wixtool.exe userlocal -i torvm-tmpall.wxs -o torvm-all.wxs "Software/Tor VM:MainApplication"
+  rm -f torvm-tmpdir.wxs torvm-tmpall.wxs
+  candle.exe $CANDLE_OPTS torvm-all.wxs
+  WIX_CAB_CACHE=_torvm.cabcache
+  WIX_LINKOUT=_torvm.wixout
+  if [ -e $WIX_CAB_CACHE ]; then
+    rm -rf $WIX_CAB_CACHE
+  fi
+  if [ -e $WIX_LINKOUT ]; then
+    rm -rf $WIX_LINKOUT
+  fi
+  light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj torvm-all.wixobj -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out torvm.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
   if [ -f torvm.msi ]; then
     cp torvm.msi $bundledir
+    cp torvm.msi torvm-intl.msi
     ls -l torvm.msi
   else
     echo "ERROR: unable to build Tor VM MSI installer."
   fi
-  echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe $LIGHT_OPTS -out torvm-intl.msi WixUI_Custom.wixobj torvm.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  export BASEMSI=""
   if [ -f torvm-intl.msi ]; then
     export BASEMSI=torvm-intl.msi
-  else
-    echo "ERROR: unable to link minimal zero codepage Tor VM MSI installer."
-    export BASEMSI=""
   fi
   if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
@@ -1184,13 +1279,13 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="torvm-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe $LIGHT_OPTS -out $outfile torvm.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
         if [ -f "$BASEMSI" ]; then
           echo "Adding language $LANG as transform against minimal MSI package ..."
-          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
         fi
       else
         echo "ERROR: unable to link localized $outfile MSI installer."
@@ -1200,22 +1295,30 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
   fi
+  mv bin lib state torvm.exe Tor_VM/
+  mv save-bin bin
 
   echo "Linking tor MSI installer package ..."
-  light.exe $LIGHT_OPTS -out tor.msi WixUI_Custom.wixobj tor.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+  WIX_CAB_CACHE=_tor.cabcache
+  WIX_LINKOUT=_tor.wixout
+  if [ -e $WIX_CAB_CACHE ]; then
+    rm -rf $WIX_CAB_CACHE
+  fi
+  if [ -e $WIX_LINKOUT ]; then
+    rm -rf $WIX_LINKOUT
+  fi
+  light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj tor.wixobj -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out tor.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
   if [ -f tor.msi ]; then
     cp tor.msi $bundledir
+    cp tor.msi tor-intl.msi
     ls -l tor.msi
   else
     echo "ERROR: unable to build Tor MSI installer."
   fi
-  echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe $LIGHT_OPTS -out tor-intl.msi WixUI_Custom.wixobj tor.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  export BASEMSI=""
   if [ -f tor-intl.msi ]; then
     export BASEMSI=tor-intl.msi
-  else
-    echo "ERROR: unable to link minimal zero codepage Tor VM MSI installer."
-    export BASEMSI=""
   fi
   if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
@@ -1228,13 +1331,13 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="tor-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe $LIGHT_OPTS -out $outfile tor.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
         if [ -f "$BASEMSI" ]; then
           echo "Adding language $LANG as transform against minimal MSI package ..."
-          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
         fi
       else
         echo "ERROR: unable to link localized $outfile MSI installer."
@@ -1246,20 +1349,26 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking polipo MSI installer package ..."
-  light.exe $LIGHT_OPTS -out polipo.msi WixUI_Custom.wixobj polipo.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+  WIX_CAB_CACHE=_polipo.cabcache
+  WIX_LINKOUT=_polipo.wixout
+  if [ -e $WIX_CAB_CACHE ]; then
+    rm -rf $WIX_CAB_CACHE
+  fi
+  if [ -e $WIX_LINKOUT ]; then
+    rm -rf $WIX_LINKOUT
+  fi
+  light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj polipo.wixobj -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out polipo.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
   if [ -f polipo.msi ]; then
     cp polipo.msi $bundledir
+    cp polipo.msi polipo-intl.msi
     ls -l polipo.msi
   else
     echo "ERROR: unable to build polipo MSI installer."
   fi
-  echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe $LIGHT_OPTS -out polipo-intl.msi WixUI_Custom.wixobj polipo.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  export BASEMSI=""
   if [ -f polipo-intl.msi ]; then
     export BASEMSI=polipo-intl.msi
-  else
-    echo "ERROR: unable to link minimal zero codepage Polipo MSI installer."
-    export BASEMSI=""
   fi
   if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
@@ -1272,13 +1381,13 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done 
       outfile="polipo-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe $LIGHT_OPTS -out $outfile polipo.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
         if [ -f "$BASEMSI" ]; then
           echo "Adding language $LANG as transform against minimal MSI package ..."
-          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
         fi
       else
         echo "ERROR: unable to link localized $outfile MSI installer."
@@ -1292,20 +1401,26 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f /src/$TORBUTTON_FILE ]; then
     cp /src/$TORBUTTON_FILE torbutton.xpi
     echo "Linking torbutton MSI installer package ..."
-    light.exe $LIGHT_OPTS -out torbutton.msi WixUI_Custom.wixobj torbutton.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+    WIX_CAB_CACHE=_torbutton.cabcache
+    WIX_LINKOUT=_torbutton.wixout
+    if [ -e $WIX_CAB_CACHE ]; then
+      rm -rf $WIX_CAB_CACHE
+    fi
+    if [ -e $WIX_LINKOUT ]; then
+      rm -rf $WIX_LINKOUT
+    fi
+    light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj torbutton.wixobj -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out torbutton.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
     if [ -f torbutton.msi ]; then
       cp torbutton.msi $bundledir
+      cp torbutton.msi torbutton-intl.msi
       ls -l torbutton.msi
     else
       echo "ERROR: unable to build torbutton MSI installer."
     fi
-    echo "Linking minimal zero codepage MSI installer package ..."
-    light.exe $LIGHT_OPTS -out torbutton-intl.msi WixUI_Custom.wixobj torbutton.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl  -ext $WIX_UI
+    export BASEMSI=""
     if [ -f torbutton-intl.msi ]; then
       export BASEMSI=torbutton-intl.msi
-    else
-      echo "ERROR: unable to link minimal zero codepage TorButton MSI installer."
-      export BASEMSI=""
     fi
     if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
       for LANG in $VIDALIA_LANGS; do
@@ -1318,13 +1433,13 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         done
         outfile="torbutton-${LANG}.msi"
         echo "Linking localized $outfile ..."
-        light.exe $LIGHT_OPTS -out $outfile torbutton.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+        light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
         if [ -f $outfile ]; then
           cp $outfile $bundledir
           ls -l $outfile
           if [ -f "$BASEMSI" ]; then
             echo "Adding language $LANG as transform against minimal MSI package ..."
-            cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+            cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
           fi
         else
           echo "ERROR: unable to link localized $outfile MSI installer."
@@ -1337,20 +1452,26 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
 
   echo "Linking thandy MSI installer package ..."
-  light.exe $LIGHT_OPTS -out thandy.msi WixUI_Custom.wixobj thandy.wixobj $WIX_DEFAULT_LOC_LINK -ext $WIX_UI
+  WIX_CAB_CACHE=_thandy.cabcache
+  WIX_LINKOUT=_thandy.wixout
+  if [ -e $WIX_CAB_CACHE ]; then
+    rm -rf $WIX_CAB_CACHE
+  fi
+  if [ -e $WIX_LINKOUT ]; then
+    rm -rf $WIX_LINKOUT
+  fi
+  light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj thandy.wixobj -ext $WIX_UI
+  light.exe $LIGHT_OPTS -out thandy.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
   if [ -f thandy.msi ]; then
     cp thandy.msi $bundledir
+    cp thandy.msi thandy-intl.msi
     ls -l thandy.msi
   else
     echo "ERROR: unable to build Thandy MSI installer."
   fi
-  echo "Linking minimal zero codepage MSI installer package ..."
-  light.exe $LIGHT_OPTS -out thandy-intl.msi WixUI_Custom.wixobj thandy.wixobj -loc WixUI_nullcp.wxl -loc vidalia_nullcp.wxl -ext $WIX_UI
+  export BASEMSI=""
   if [ -f thandy-intl.msi ]; then
     export BASEMSI=thandy-intl.msi
-  else
-    echo "ERROR: unable to link minimal zero codepage Thandy MSI installer."
-    export BASEMSI=""
   fi
   if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
@@ -1363,13 +1484,13 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done
       outfile="thandy-${LANG}.msi"
       echo "Linking localized $outfile ..."
-      light.exe $LIGHT_OPTS -out $outfile thandy.wixobj WixUI_Custom.wixobj -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -ext $WIX_UI
+      light.exe $LIGHT_OPTS -out $outfile -cc $WIX_CAB_CACHE -cultures:$WIXCULTURE -loc "vidalia_${LANG}.wxl" -reusecab $WIX_LINKOUT -ext $WIX_UI
       if [ -f $outfile ]; then
         cp $outfile $bundledir
         ls -l $outfile
         if [ -f "$BASEMSI" ]; then
           echo "Adding language $LANG as transform against minimal MSI package ..."
-          cscript.exe mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
+          cscript.exe //Nologo mktransform.vbs "$LANG" "$BASEMSI" "$outfile"
         fi
       else
         echo "ERROR: unable to link localized $outfile MSI installer."

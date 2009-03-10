@@ -6,12 +6,6 @@
   
   <?define CurrProductGUID="8b88858f-1d36-461c-9541-e6ffddeb8e69" ?>
   <?define CurrExecutableGUID="f41f7690-d4e6-4c14-a754-fde93b98bb7b" ?>
-  <?define CurrQemuGUID="9a986ae8-1c05-41f8-bd26-4e3d951dc446" ?>
-  <?define CurrBiosGUID="1671260a-0b61-4351-ba93-556fddefd4ce" ?>
-  <?define CurrPThreadLibsGUID="c5960568-ffc8-4c5c-8253-9954d095afdc" ?>
-  <?define CurrDiskImageGUID="72e2fe60-9aac-473b-890e-07ea827b42ce" ?>
-  <?define CurrDocumentsGUID="1163f2e3-a0d0-4f6c-a412-dc27f8e9b338" ?>
-  <?define CurrConfigFileGUID="cd65d655-faba-46d5-b9a8-3958335e9e08" ?>
   <?define CurrStartMenuGUID="928c4898-19e4-4b7a-ad02-95aadb80d3ba" ?>
   <?define CurrDesktopGUID="cc7b92b8-45a5-4958-b530-5e10a2582902" ?>
   <?define CurrDocsOnDesktopGUID="e032e77d-dbfe-4fe8-a2a4-84b5ff20e6af" ?>
@@ -32,7 +26,8 @@
     <Media Id="1" Cabinet="TorVM.cab" CompressionLevel="high"
            EmbedCab="yes" DiskPrompt="CD-ROM #1" />
     <Property Id="DiskPrompt" Value="Tor VM $(var.ThisProductVersionDisp) Installation Volume [1]" />
-    <Property Id="ALLUSERS" Secure="yes"/>
+    <Property Id="ALLUSERS" Secure="yes" />
+    <Property Id="BUNDLE" Secure="yes" />
     <Property Id="ReinstallModeText">omus</Property>
 
     <!-- Associate this package with the upgrade code for this series
@@ -65,62 +60,7 @@
             <RegistryValue Name="Version" Value="$(var.ThisProductVersionDisp)" Type="string" KeyPath="yes" />
           </RegistryKey>
           <File Id="TorVMExe" DiskId="1"
-                Name="torvm.exe" Source="Tor_VM\torvm.exe" />
-        </Component>
-
-        <!-- Qemu-related files -->
-        <Component Id="Qemu" Guid="$(var.CurrQemuGUID)">
-          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
-            <RegistryValue Name="Qemu" Value="1" Type="integer" KeyPath="yes" />
-          </RegistryKey>
-          <File Id="QemuEXE" DiskId="1"
-                Name="qemu.exe" Source="Tor_VM/bin/qemu.exe" />
-          <File Id="DevconEXE" DiskId="1"
-                Name="devcon.exe" Source="Tor_VM/bin/devcon.exe" />
-          <File Id="SDLDll" DiskId="1"
-                Name="SDL.dll" Source="Tor_VM/lib/SDL.dll" />
-          <File Id="NPFDriver" DiskId="1"
-                Name="tornpf.sys" Source="Tor_VM/lib/tornpf.sys" />
-          <File Id="PcapDll" DiskId="1"
-                Name="torpcap.dll" Source="Tor_VM/lib/torpcap.dll" />
-          <File Id="PacketDll" DiskId="1"
-                Name="torpkt.dll" Source="Tor_VM/lib/torpkt.dll" />
-          <File Id="TapInf" DiskId="1"
-                Name="tortap91.inf" Source="Tor_VM/lib/tortap91.inf" />
-          <File Id="TapDriver" DiskId="1"
-                Name="tortap91.sys" Source="Tor_VM/lib/tortap91.sys" />
-        </Component>
-
-        <!-- pthread library files -->
-        <Component Id="PThreadLibrary" Guid="$(var.CurrPThreadLibsGUID)">
-          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
-            <RegistryValue Name="PThreadLibrary" Value="1" Type="integer" KeyPath="yes" />
-          </RegistryKey>
-          <File Id="pthreadsDll" DiskId="1"
-                Name="pthreadGC2.dll" Source="Tor_VM/lib/pthreadGC2.dll" />
-        </Component>
-
-        <!-- Qemu BIOS files -->
-        <Component Id="Bios" Guid="$(var.CurrBiosGUID)">
-          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
-            <RegistryValue Name="Bios" Value="1" Type="integer" KeyPath="yes" />
-          </RegistryKey>
-          <File Id="zlibdll" DiskId="1"
-                Name="zlib1.dll" Source="bin\zlib1.dll" />
-        </Component>
-
-        <Component Id="DiskImage" Guid="$(var.CurrDiskImageGUID)">
-          <RegistryKey Root="HKCU" Key="Software\Tor VM" Action="createAndRemoveOnUninstall">
-            <RegistryValue Name="DiskImageFile" Value="1" Type="integer" KeyPath="yes" />
-          </RegistryKey>
-          <File
-            Id="DiskImageFile"
-            Name="hdd.img"
-            Source="Tor_VM/lib/hdd.img"
-            Vital="yes"
-            ReadOnly="no"
-            DiskId="1"
-          /> 
+                Name="torvm.exe" Source="torvm.exe" />
         </Component>
 
         </Directory>
@@ -170,10 +110,6 @@
                AllowAdvertise="no" Absent="disallow" Level="1"
                Description="Main application">
         <ComponentRef Id="TorVMExecutable" />
-        <ComponentRef Id="Qemu" />
-        <ComponentRef Id="PThreadLibrary" />
-        <ComponentRef Id="Bios" />
-        <ComponentRef Id="DiskImage" />
       </Feature>
       <Feature Id="Shortcuts" Title="Shortcuts"
                AllowAdvertise="no" Absent="allow" Level="1"
@@ -204,7 +140,7 @@
     <!-- Set the UI options -->
     <UIRef Id="WixUI_Custom" />
     <Icon Id="torvm.ico" SourceFile="torvm.ico" />
-    <WixVariable Id="WixUIBannerBmp" Value="header.bmp" />
-    <WixVariable Id="WixUIDialogBmp" Value="welcome.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="default-header.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="default-welcome.bmp" />
   </Product>
 </Wix>

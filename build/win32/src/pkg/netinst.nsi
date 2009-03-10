@@ -40,11 +40,13 @@ Section "TorVM" TorVM
 SectionEnd
 
 Function ExtractPackages
+	File "license.msi"
 	File "thandy.msi"
 FunctionEnd
 
 Function RunInstallers
-	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" ALLUSERS=1 NOSC=1 /qn'
+	ExecWait 'msiexec /i "$INSTDIR\license.msi" /qn'
+	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
