@@ -112,7 +112,7 @@ The first time the minimal Marble version is run the image tiles will be generat
  The package repair option for data files is only available in the full Marble data
  package.
      <mediaobject>
-      <imageobject><imagedata fileref="img/marbledata.png" format="png" /></imageobject>
+      <imageobject><imagedata fileref="img/marblegen.png" format="png" /></imageobject>
      </mediaobject>
    </para><para><literallayout>
 
