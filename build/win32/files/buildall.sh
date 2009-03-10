@@ -1066,7 +1066,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       echo "Creating full marble data Vidalia package ..."
       cp -a $MARBLE_DEST/data ./
       tar cf save-full-data.tar data/maps/earth/srtm data/landcolors.leg data/seacolors.leg data/maps/earth/bluemarble data/maps/earth/citylights data/mwdbii data/placemarks data/stars data/svg
-      rm -rf data
+      rm -rf data;rmdir data
       tar xf save-full-data.tar; rm save-full-data.tar
       heat.exe dir data -gg -ke -sfrag -nologo -out fulldata-dir.wxs -template:product
       if [ ! -f fulldata-dir.wxs ]; then
@@ -1098,8 +1098,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         fi
       fi
       echo "Creating reduced marble data Vidalia package ..."
-      tar cf save-min-data.tar data/landcolors.leg data/seacolors.leg data/maps/earth/bluemarble/bluemarble.dgml data/maps/earth/citylights/citylights.dgml data/maps/earth/srtm/srtm.dgml data/mwdbii data/placemarks/baseplacemarks.cache data/placemarks/boundaryplacemarks.cache data/placemarks/elevplacemarks.cache data/stars/stars.dat data/svg/worldmap.svg 
-      rm -rf data
+      cp /src/$MARBLE_DIR/src/tilecreator/data/maps/earth/srtm/srtm.jpg data/maps/earth/srtm/
+      tar cf save-min-data.tar data/landcolors.leg data/seacolors.leg data/maps/earth/bluemarble/bluemarble.dgml data/maps/earth/citylights/citylights.dgml data/maps/earth/srtm/srtm.dgml data/maps/earth/srtm/srtm.jpg data/mwdbii data/placemarks/baseplacemarks.cache data/placemarks/boundaryplacemarks.cache data/placemarks/elevplacemarks.cache data/stars/stars.dat data/svg/worldmap.svg 
+      rm -rf data;rmdir data
       tar xf save-min-data.tar; rm save-min-data.tar
       heat.exe dir data -gg -ke -sfrag -nologo -out mindata-dir.wxs -template:product
       if [ ! -f mindata-dir.wxs ]; then
