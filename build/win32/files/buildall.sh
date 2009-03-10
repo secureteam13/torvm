@@ -1238,11 +1238,11 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   tail +4c torvm-bin.wxs > torvm-bin.wxs.tmp; dos2unix torvm-bin.wxs.tmp; cat torvm-bin.wxs.tmp > torvm-bin.wxs; rm -f torvm-bin.wxs.tmp
   tail +4c torvm-lib.wxs > torvm-lib.wxs.tmp; dos2unix torvm-lib.wxs.tmp; cat torvm-lib.wxs.tmp > torvm-lib.wxs; rm -f torvm-lib.wxs.tmp
   tail +4c torvm-state.wxs > torvm-state.wxs.tmp; dos2unix torvm-state.wxs.tmp; cat torvm-state.wxs.tmp > torvm-state.wxs; rm -f torvm-state.wxs.tmp
-  wixtool.exe splice -i torvm.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-bin.wxs:Directory:bin
+  wixtool.exe splice -i torvm.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-bin.wxs:Directory:TARGETDIR
   wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-bin.wxs:Feature:ProductFeature
-  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-lib.wxs:Directory:lib
+  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-lib.wxs:Directory:TARGETDIR
   wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-lib.wxs:Feature:ProductFeature
-  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-state.wxs:Directory:state
+  wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-state.wxs:Directory:TARGETDIR
   wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-state.wxs:Feature:ProductFeature
   wixtool.exe userlocal -i torvm-tmpall.wxs -o torvm-all.wxs "Software/Tor VM:MainApplication"
   rm -f torvm-tmpdir.wxs torvm-tmpall.wxs
