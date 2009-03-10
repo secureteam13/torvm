@@ -1299,6 +1299,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   mv save-bin bin
 
   echo "Linking tor MSI installer package ..."
+  candle.exe $CANDLE_OPTS -dEXTLICENSE tor.wxs
   WIX_CAB_CACHE=_tor.cabcache
   WIX_LINKOUT=_tor.wixout
   if [ -e $WIX_CAB_CACHE ]; then

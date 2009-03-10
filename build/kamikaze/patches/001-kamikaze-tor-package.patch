@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-02-01 09:59:07.191839112 +0000
++++ b/package/tor/Makefile	2009-03-10 07:00:07.492772805 +0000
 @@ -0,0 +1,112 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -14,13 +14,13 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.11-alpha
++PKG_VERSION:=0.2.1.13-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=c8477aef2c874c7bfd5a1cd6a9e08ade
++PKG_MD5SUM:=eb229b45b23bdf24a7a150332b3c526e
 +# XXX MD5 must die ... maybe time for debian embedded
 +
 +include $(INCLUDE_DIR)/package.mk
