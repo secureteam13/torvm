@@ -1177,6 +1177,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done
       if [ -f $BASEMSI ]; then
         cp $BASEMSI ../pkg/
+        cp $BASEMSI $bundledir
+        echo "Completed multi-lingual package transforms for $BASEMSI"
+        ls -l $BASEMSI
       fi
     fi
   fi
@@ -1295,6 +1298,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
+    echo "Completed multi-lingual package transforms for $BASEMSI"
+    ls -l "$BASEMSI"
   fi
   mv bin lib state torvm.exe Tor_VM/
   mv save-bin bin
@@ -1348,6 +1353,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
+    echo "Completed multi-lingual package transforms for $BASEMSI"
+    ls -l "$BASEMSI"
   fi
 
   echo "Linking polipo MSI installer package ..."
@@ -1398,6 +1405,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
+    echo "Completed multi-lingual package transforms for $BASEMSI"
+    ls -l "$BASEMSI"
   fi
 
   if [ -f /src/$TORBUTTON_FILE ]; then
@@ -1450,6 +1459,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     fi
     if [ -f "$BASEMSI" ]; then
       cp "$BASEMSI" $bundledir
+      echo "Completed multi-lingual package transforms for $BASEMSI"
+      ls -l "$BASEMSI"
     fi
   fi
 
@@ -1501,6 +1512,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   fi
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
+    echo "Completed multi-lingual package transforms for $BASEMSI"
+    ls -l "$BASEMSI"
   fi
 
   echo "Creating Tor VM bundle installer executable ..."
