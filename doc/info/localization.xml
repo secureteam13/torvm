@@ -88,6 +88,15 @@ TRANSFORMS=:sv
    <title>Example TRANSFORMS</title>
 
    <para>
+msiexec /i vidalia-intl.msi TRANSFORMS=:pl
+     <mediaobject>
+      <imageobject><imagedata fileref="img/vidalia-pl.png" format="png" /></imageobject>
+     </mediaobject>
+   </para><para><literallayout>
+   
+   </literallayout></para>
+
+   <para>
 msiexec /i tor-intl.msi TRANSFORMS=:de
      <mediaobject>
       <imageobject><imagedata fileref="img/tor-de.png" format="png" /></imageobject>
