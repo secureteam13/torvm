@@ -1079,8 +1079,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         wixtool.exe userlocal -i fulldata-tmpall.wxs -o fulldata-all.wxs "Software/Vidalia:MainApplication"
         rm -f fulldata-tmpdir.wxs fulldata-tmpall.wxs
         candle.exe $CANDLE_OPTS fulldata-all.wxs
-        WIX_CAB_CACHE=_vid.cabcache
-        WIX_LINKOUT=_vid.wixout
+        WIX_CAB_CACHE=_vidmrbl.cabcache
+        WIX_LINKOUT=_vidmrbl.wixout
         if [ -e $WIX_CAB_CACHE ]; then
           rm -rf $WIX_CAB_CACHE
         fi 
@@ -1127,8 +1127,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     fi
 
     echo "Linking minimal Vidalia package ..."
-    WIX_CAB_CACHE=_vid.cabcache
-    WIX_LINKOUT=_vid.wixout
+    WIX_CAB_CACHE=_vidintl.cabcache
+    WIX_LINKOUT=_vidintl.wixout
     if [ -e $WIX_CAB_CACHE ]; then
       rm -rf $WIX_CAB_CACHE
     fi

@@ -217,7 +217,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3606
+VIDALIA_VER=3616
 
 # for package resources
 TORSVN_NAME=tor-latest
