@@ -140,7 +140,7 @@ if [[ "$1" != "dobuild" ]]; then
   export VIDALIA_FILE=vidalia-latest.tar.gz
   export VIDALIA_DIR=vidalia-latest
   # XXX need to resolve why this wont build against the installed marble, only the build tree
-  export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release"
+  export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release -DUSE_AUTOUPDATE=1"
   export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
   
   export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
