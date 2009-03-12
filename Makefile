@@ -44,7 +44,7 @@ export DLDIR
 export WDLDIR
 export SDLDIR
 
-default all: prereq import buildtree buildkern buildw32
+default all: prereq import buildtree buildkern buildlicense buildw32
 
 #XXX move this into configure
 prereq: Makefile
@@ -145,6 +145,11 @@ buildkern: buildtree
 		exit 1; \
 	fi
 
+buildlicense: buildkern
+	@echo "Generating License and other legal documentation archive ..."; \
+	$(SHELL) build/kamikaze/scripts/genlicense.sh build/kamikaze/$(TGTNAME)/build_dir kernel-license-docs.tgz ; \
+	if [ -f kernel-license-docs.tgz ]; then mv kernel-license-docs.tgz build/kamikaze/; fi;
+
 # XXX: add instructions for automated win32 package builds with a vm using these hooks.
 # see https://data.peertech.org/torbld
 W32MK=WDLDIR=$(WDLDIR) all
@@ -161,7 +166,7 @@ ifneq (,$(W32AUTO_BUILD_CMD))
   W32MK:=W32AUTO_BUILD_CMD="$(W32AUTO_BUILD_CMD)" $(W32MK)
 endif
 
-# NOTE: for now this is not dependent on buildkern though maybe it should be...
+# NOTE: for now this is not dependent on buildkern/buildlicense though maybe it should be...
 buildw32: 
 	@cd build/win32; \
 	chown -R $(BUSER):$(BGROUP) . ; \
@@ -171,5 +176,5 @@ buildw32:
 		exit 1; \
 	fi
 
-.PHONY: clean prereq import buildkern buildw32
+.PHONY: clean prereq import buildkern buildlicense buildw32
 

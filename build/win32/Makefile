@@ -217,7 +217,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3616
+VIDALIA_VER=3617
 
 # for package resources
 TORSVN_NAME=tor-latest
@@ -323,6 +323,9 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	mkdir -p $(ISODIR)/dl/src; \
 	mkdir $(ISODIR)/bin; \
 	mkdir $(ISODIR)/add; \
+	if [ -e ../kamikaze/kernel-license-docs.tgz ]; then \
+		cp ../kamikaze/kernel-license-docs.tgz $(ISODIR)/add/; \
+	fi; \
 	if [ -e ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz ]; then \
 		cp ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
 	fi; \

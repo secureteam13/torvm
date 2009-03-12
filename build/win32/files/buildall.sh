@@ -8,6 +8,7 @@ if [[ "$1" != "dobuild" ]]; then
 
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
+  export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
   
   # set sysdrive, ddir, and brootdir in parent env if needed.
   if [[ "$sysdrive" == "" ]]; then
@@ -990,6 +991,15 @@ fi
 # don't forget the kernel and virtual disk
 cp $KERNEL_IMAGE $bdlibdir/
 cp $VMHDD_IMAGE $bdlibdir/
+
+# add VM kernel license docs, if present
+if [ -f $KERNEL_LICENSE_DOCS ]; then
+  cd $licensedir
+  mkdir VMKernel
+  cd VMKernel
+  tar zxf $KERNEL_LICENSE_DOCS
+fi
+cd /src
 
 
 # Microsoft Installer package build
