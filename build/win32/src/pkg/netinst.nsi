@@ -2,7 +2,7 @@
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
   
-!define VERSION "0.0.2.0"
+!define VERSION "0.0.1.0"
 !define INSTALLER "TorVMNetInstaller.exe"
 !define WEBSITE "https://www.torproject.org/"
 !define LICENSE "LICENSE"
@@ -50,11 +50,11 @@ Function RunInstallers
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Vidalia Marble Updates" /bundleinfo/vidalia-marble/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Vidalia Marble Updates" /bundleinfo/vidalia-marble/win32/'
 FunctionEnd
 
 Function LaunchTorVM
