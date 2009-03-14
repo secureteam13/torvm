@@ -5,24 +5,30 @@
   <?define UpgradeCode="bda6a744-0815-4fdc-88a8-d40d8c154133" ?>
   <?define CurrProductGUID="43b6b534-8148-4813-8d22-4da1df4783c3" ?>
   <?define CurrDocsOnDesktopGUID="d20d7258-1e4a-4d26-a2f4-e08a939a0ae8" ?>
+  <?define CurrLocalProgramsGUID="71bddb5a-1aee-4dc8-bc39-63b38d12a7dd" ?>
 
-  <Product Name="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
+  <Product Name="Tor License Documents $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
            Language="!(loc.LCID)"
            Version="$(var.ThisProductVersion)"
            Manufacturer="www.torproject.org"
            UpgradeCode="$(var.UpgradeCode)">
     
     <Package Id="*" Keywords="Installer"
-             Description="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp) Installer"
+             Description="Tor License $(var.ThisProductVersionDisp) Installer"
              Manufacturer="www.torproject.org"
              InstallerVersion="200" Compressed="yes"
              InstallPrivileges="limited" />
 
     <Media Id="1" Cabinet="License.cab" CompressionLevel="high"
            EmbedCab="yes" DiskPrompt="CD-ROM #1" />
-    <Property Id="DiskPrompt" Value="Tor Vidalia Bundle License Docs $(var.ThisProductVersionDisp) Installation Volume [1]" />
+    <Property Id="DiskPrompt" Value="Tor License $(var.ThisProductVersionDisp) Installation Volume [1]" />
     <Property Id="ALLUSERS" Secure="yes"/>
     <Property Id="ReinstallModeText">omus</Property>
+
+    <!-- To avoid placing shortcuts all over the desktop / start menu during a
+    silent installation the NOSC=1 option can be passed to omit shortcuts.
+      -->
+    <Property Id="NOSC" Secure="yes"/>
 
     <!-- Associate this package with the upgrade code for this series
     to ensure that upgrade installations by Thandy or other means work
@@ -43,36 +49,54 @@
 
 
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder" Name="ProgramFiles">
-        <Directory Id="ProgramsInstDir" Name="Tor Vidalia License Docs">
+      <Directory Id="LocalAppDataFolder" Name="LocalAppData">
+        <Directory Id="LocalProgramsFolder" Name="Programs">
+
+          <!-- Until proper support for per-user installs is available we manage Programs folder.
+          Note that this directory will be left in place if it is in use by any other app.
+            -->
+          <Component Id="LocalProgramsFolderRef" Guid="$(var.CurrLocalProgramsGUID)">
+            <CreateFolder />
+            <RemoveFolder Id="RemoveLocalProgramsFolder" On="uninstall" />
+            <RegistryKey Root="HKCU" Key="Software\Tor License" Action="createAndRemoveOnUninstall">
+              <RegistryValue Name="Version" Value="$(var.ThisProductVersion)" Type="string" KeyPath="yes" />
+            </RegistryKey>
+          </Component>
+
+        <Directory Id="ProgramsInstDir" Name="Tor License">
         </Directory>
       </Directory>
+    </Directory>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" Name="Desktop">
         <Component Id="AddTorDocsToDesktop" Guid="$(var.CurrDocsOnDesktopGUID)">
-          <RegistryKey Root="HKCU" Key="Software\Tor Vidalia License Docs" Action="createAndRemoveOnUninstall">
+          <Condition><![CDATA[NOSC <> 1]]> </Condition>
+          <RegistryKey Root="HKCU" Key="Software\Tor License" Action="createAndRemoveOnUninstall">
             <RegistryValue Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
           </RegistryKey>
           <Shortcut Id="TorDocsDesktopShortcut"
-                    Name="Tor Vidalia License Docs" Target="[ProgramsInstDir]"
+                    Name="Tor License Documents" Target="[ProgramsInstDir]"
                     Directory="DesktopFolder" WorkingDirectory="ProgramsInstDir" />
         </Component>
       </Directory>
     </Directory>
 
     <!-- Build up the feature hierarchy -->
-    <Feature Id="Complete" Title="Tor Vidalia License Docs"
+    <Feature Id="Complete" Title="Tor License Documents"
              Level="1" Display="expand"
-             Description="Tor Vidalia License Docs">
-      <Feature Id="MainApplication" Title="Tor Vidalia License Docs $(var.ThisProductVersionDisp)"
+             Description="Tor License Documents">
+      <Feature Id="MainApplication" Title="Tor License Documents $(var.ThisProductVersionDisp)"
                AllowAdvertise="no" Absent="disallow" Level="1"
                Description="Main application">
+        <ComponentRef Id="LocalProgramsFolderRef" />
       </Feature>
       <Feature Id="Shortcuts" Title="Shortcuts"
                AllowAdvertise="no" Absent="allow" Level="1"
-               Description="Add a shortcut to Desktop.">
+               Description="Add a shortcut to your Desktop.">
         <Feature Id="DesktopShortcuts" Title="Add to Desktop"
                  AllowAdvertise="no" Absent="allow" Level="1"
-                 Description="Add Tor Docs to your Desktop">
+                 Description="Add shortcut to your Desktop">
           <ComponentRef Id="AddTorDocsToDesktop" />
         </Feature>
       </Feature>

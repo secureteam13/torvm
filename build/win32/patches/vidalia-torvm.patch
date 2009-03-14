@@ -31,8 +31,8 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 --- a/pkg/win32/vidalia.wxs.in	2009-02-24 05:46:46.615879000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-03-09 16:26:33.282871496 +0000
-@@ -1,334 +1,369 @@
++++ b/pkg/win32/vidalia.wxs.in	2009-03-13 15:44:34.818550312 +0000
+@@ -1,334 +1,371 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
 -  $Id: vidalia.wxs.in 3586 2009-02-24 05:46:46Z edmanm $
@@ -514,6 +514,8 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +                  Name="qsvg4.dll" Source="plugins/imageformats/qsvg4.dll" />
 +                <File Id="qjpeg4.dll" DiskId="1"
 +                  Name="qjpeg4.dll" Source="plugins/imageformats/qjpeg4.dll" />
++                <File Id="qico4.dll" DiskId="1"
++                  Name="qico4.dll" Source="plugins/imageformats/qico4.dll" />
 +              </Component>
 +            </Directory>
 +          </Directory>
@@ -1492,6 +1494,79 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +  return 0;
 +}
 +
+diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
+--- a/src/torcontrol/torcontrol.cpp	2009-02-24 03:20:58.105033000 +0000
++++ b/src/torcontrol/torcontrol.cpp	2009-03-13 18:41:09.504913168 +0000
+@@ -73,16 +73,22 @@
+ void
+ TorControl::start(const QString &tor, const QStringList &args)
+ {
++  if (tor.length() == 0) {
++    _torProcess = 0;
++    emit started();
++  }
+   if (isRunning()) {
+     emit started();
+   } else {
+ #if defined(Q_OS_WIN32)
+     /* If the Tor service is installed, run that. Otherwise, start a new
+      * Tor process. */
+-    if (TorService::isSupported() && _torService->isInstalled())
++    if (TorService::isSupported() && _torService->isInstalled()) {
+       _torService->start();
+-    else
++    }
++    else {
+       _torProcess->start(expand_filename(tor), args);
++    }
+ #else
+     /* Start a new Tor process */
+     _torProcess->start(expand_filename(tor), args);
+@@ -95,11 +101,17 @@
+ TorControl::stop(QString *errmsg)
+ {
+   bool rc = false;
+-  if (_controlConn->isConnected())
+-    rc = signal(TorSignal::Halt, errmsg);
+-  if (!rc)
+-    rc = _torProcess->stop(errmsg);
+-  return rc;
++  if (_torProcess) {
++    if (_controlConn->isConnected())
++      rc = signal(TorSignal::Halt, errmsg);
++    if (!rc)
++      rc = _torProcess->stop(errmsg);
++    return rc;
++  }
++  else {
++    disconnect();
++  }
++  return true;
+ }
+ 
+ /** Emits a signal that the Tor process stopped */
+@@ -118,6 +130,7 @@
+ bool
+ TorControl::isVidaliaRunningTor()
+ {
++  if (!_torProcess) { return false; }
+   return (_torProcess->state() != QProcess::NotRunning);
+ }
+ 
+@@ -125,8 +138,11 @@
+ bool
+ TorControl::isRunning()
+ {
+-  return (_torProcess->state() != QProcess::NotRunning
+-            || _controlConn->isConnected());
++  if (!_torProcess)
++    return true;
++  if (_controlConn->isConnected())
++    return true;
++  return (_torProcess->state() != QProcess::NotRunning);
+ }
+ 
+ /** Called when Tor has printed a log message to stdout. */
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
 +++ b/src/vidalia/config/torsettings.cpp	2009-03-07 03:57:41.693104376 +0000
@@ -1544,8 +1619,8 @@ diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidalia
  #else
 diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
 --- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
-+++ b/src/vidalia/network/geoipresolver.cpp	2009-03-07 03:57:41.694104224 +0000
-@@ -24,13 +24,13 @@
++++ b/src/vidalia/network/geoipresolver.cpp	2009-03-13 16:51:51.257918256 +0000
+@@ -24,25 +24,31 @@
  #endif
  
  /** Host for the geo ip information. */ 
@@ -1562,7 +1637,12 @@ diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipre
  
  
  /** Default constructor. */
-@@ -42,7 +42,13 @@
+ GeoIpResolver::GeoIpResolver()
+ {
+-  _socksAddr = QHostAddress::LocalHost;
++  _socksAddr = Vidalia::torAddress();
+   _socksPort = 9050;
+ 
  #if defined(USE_QSSLSOCKET)
    QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
    if (! QSslSocket::addDefaultCaCertificates(":/geoip/cacert_root.crt"))
@@ -1707,8 +1787,24 @@ diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
  QString
 diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
 --- a/src/vidalia/vidalia.cpp	2009-02-24 04:56:35.504853000 +0000
-+++ b/src/vidalia/vidalia.cpp	2009-03-07 03:57:41.699103464 +0000
-@@ -89,6 +89,11 @@
++++ b/src/vidalia/vidalia.cpp	2009-03-13 18:43:07.266010760 +0000
+@@ -45,6 +45,7 @@
+ #define ARG_PIDFILE    "pidfile"  /**< Location and name of our pidfile.*/
+ #define ARG_LOGFILE    "logfile"  /**< Location of our logfile.         */
+ #define ARG_LOGLEVEL   "loglevel" /**< Log verbosity.                   */
++#define ARG_TORADDR    "tor-address" /**< Tor bound addr.                   */
+ #define ARG_READ_PASSWORD_FROM_STDIN  \
+   "read-password-from-stdin" /**< Read password from stdin. */
+ 
+@@ -55,6 +56,7 @@
+ TorControl* Vidalia::_torControl = 0;  /**< Main TorControl object.          */
+ Log Vidalia::_log;
+ QList<QTranslator *> Vidalia::_translators;
++QHostAddress Vidalia::_torAddress = QHostAddress::LocalHost;
+ 
+ /** Catches debugging messages from Qt and sends them to Vidalia's logs. If Qt
+  * emits a QtFatalMsg, we will write the message to the log and then abort().
+@@ -89,6 +91,11 @@
  Vidalia::Vidalia(QStringList args, int &argc, char **argv)
  : QApplication(argc, argv)
  {
@@ -1720,7 +1816,15 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
    qInstallMsgHandler(qt_msg_handler);
  
    /* Read in all our command-line arguments. */
-@@ -125,12 +130,8 @@
+@@ -120,17 +127,16 @@
+   /* Set the GUI style appropriately. */
+   setStyle(_args.value(ARG_GUISTYLE));
+ 
++  if (_args.contains(ARG_TORADDR))
++    _torAddress = QHostAddress(_args.value(ARG_TORADDR));
++
+   /* Creates a TorControl object, used to talk to Tor. */
+   _torControl = new TorControl();
  
  #ifdef USE_MARBLE
    /* Tell Marble where to stash its generated data */
@@ -1735,3 +1839,37 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  #endif
  }
  
+@@ -346,6 +352,13 @@
+ #endif
+ }
+ 
++/** Returns the IP address Tor is bound to. */
++QHostAddress
++Vidalia::torAddress()
++{
++  return _torAddress;
++}
++
+ /** Returns the location of Vidalia's pid file. */
+ QString
+ Vidalia::pidFile()
+diff -Naur a/src/vidalia/vidalia.h b/src/vidalia/vidalia.h
+--- a/src/vidalia/vidalia.h	2009-01-12 03:33:41.473092000 +0000
++++ b/src/vidalia/vidalia.h	2009-03-13 18:42:45.044388960 +0000
+@@ -82,6 +82,8 @@
+   static QString dataDirectory();
+   /** Returns the default location of Vidalia's data directory. */
+   static QString defaultDataDirectory();
++  /** Returns the IP address for reaching Tor. */
++  static QHostAddress torAddress();
+   
+   /** Returns the location of Vidalia's pid file. */
+   static QString pidFile();
+@@ -156,6 +158,7 @@
+   static TorControl* _torControl;      /**< Vidalia's main TorControl object.*/
+   static Log _log; /**< Logs debugging messages to file or stdout. */
+   static QList<QTranslator *> _translators; /**< List of installed translators. */
++  static QHostAddress  _torAddress;
+ };
+ 
+ #endif

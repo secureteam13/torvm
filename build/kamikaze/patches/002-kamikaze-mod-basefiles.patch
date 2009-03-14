@@ -1229,8 +1229,8 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-02-01 09:43:52.954824264 +0000
-@@ -1,88 +1,198 @@
++++ b/package/base-files/files/etc/preinit	2009-03-13 14:59:05.237509704 +0000
+@@ -1,88 +1,206 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
@@ -1266,12 +1266,20 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
  
 -size=$(awk '/MemTotal:/ {l=5242880;mt=($2*1024);print((s=mt/2)<l)&&(mt>l)?mt-l:s}' /proc/meminfo)
 -mount tmpfs /tmp -t tmpfs -o size=$size,nosuid,nodev,mode=1777
++# if we don't have /proc something is very wrong.
++# abort to shell as this is likely a test kernel image.
++if [ ! -d /proc/self ]; then
++  d "ERROR: unable to access /proc , aborting init."
++  exec /bin/sh
++fi
++
 +syslogd >/dev/null 2>&1
 +# do we need it? klogd -c 1 >/dev/null 2>&1
 +
 +clear;echo
 +d "Initializing ..."
 +
++# XXX set from cmdline
 +hostname "Tor_VM" >/dev/null 2>&1
  
  if grep devfs /proc/filesystems > /dev/null; then
@@ -1458,7 +1466,7 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  d "Remember to start Tor via /etc/init.d/tor start when ready."
 +else
 +  echo " done."
-+  dn "Starting tor ... "
++  dn "Starting Tor ... "
 +  /etc/init.d/tor start
 +  echo "done."
 +  echo

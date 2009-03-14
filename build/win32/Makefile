@@ -224,13 +224,13 @@ TORSVN_NAME=tor-latest
 TORSVN_TGZ=$(TORSVN_NAME).tar.gz
 TORSVN_SVN=https://tor-svn.freehaven.net/svn/tor/
 TORSVN_BR=trunk
-TORSVN_VER=18849
+TORSVN_VER=18924
 
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
 TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
-TORBUTTON_VER=18834
+TORBUTTON_VER=18976
 
 # XXX add / switch to signed tags one key mgmt resolved
 PYCRYPTO_NAME=pycrypto-latest
@@ -349,6 +349,8 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/*.vbs $(ISODIR)/bin/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
+	cp files/defvidalia.conf $(ISODIR)/add/; \
+	cp files/defpolipo.conf $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \

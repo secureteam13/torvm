@@ -9,6 +9,7 @@ if [[ "$1" != "dobuild" ]]; then
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
   export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
+  export TVM_VIDCONF=/src/add/defvidalia.conf
   
   # set sysdrive, ddir, and brootdir in parent env if needed.
   if [[ "$sysdrive" == "" ]]; then
@@ -1001,6 +1002,10 @@ if [ -f $KERNEL_LICENSE_DOCS ]; then
 fi
 cd /src
 
+if [ -f $TVM_VIDCONF ]; then
+  cp $TVM_VIDCONF $bdlibdir/
+fi
+
 
 # Microsoft Installer package build
 TOR_WXS_DIR=contrib
@@ -1227,7 +1232,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     tail +4c license-dir.wxs > license-dir.wxs.tmp; dos2unix license-dir.wxs.tmp; cat license-dir.wxs.tmp > license-dir.wxs; rm -f license-dir.wxs.tmp
     wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:LicenseDocs
     wixtool.exe splice -i license-tmpdir.wxs -o license-tmpall.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
-    wixtool.exe userlocal -i license-tmpall.wxs -o license-all.wxs "Software/Tor Vidalia License Docs:MainApplication"
+    wixtool.exe userlocal -i license-tmpall.wxs -o license-all.wxs "Software/Tor License:MainApplication"
     rm -f license-tmpdir.wxs license-tmpall.wxs
     candle.exe $CANDLE_OPTS license-all.wxs
     echo "Linking Tor Vidalia bundle license docs package ..."

@@ -19,13 +19,13 @@ diff -Naur a/target/linux/x86/Makefile b/target/linux/x86/Makefile
  
 diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 --- a/target/linux/x86/config-2.6.27	2008-12-10 01:39:29.530827000 +0000
-+++ b/target/linux/x86/config-2.6.27	2009-02-10 13:21:55.274840920 +0000
-@@ -1,8 +1,10 @@
++++ b/target/linux/x86/config-2.6.27	2009-03-14 14:08:31.048979984 +0000
+@@ -1,8 +1,11 @@
 +CONFIG_LOCALVERSION="-torvm"
++CONFIG_INITRAMFS_SOURCE=""
 +# CONFIG_BSD_PROCESS_ACCT is not set
  # CONFIG_3C515 is not set
--CONFIG_4KSTACKS=y
-+# CONFIG_4KSTACKS is not set
+ CONFIG_4KSTACKS=y
  # CONFIG_60XX_WDT is not set
  # CONFIG_64BIT is not set
 -CONFIG_8139TOO=m
@@ -33,7 +33,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_8139TOO_8129 is not set
  CONFIG_8139TOO_PIO=y
  # CONFIG_8139TOO_TUNE_TWISTER is not set
-@@ -20,23 +22,23 @@
+@@ -20,18 +23,18 @@
  CONFIG_ARCH_HAS_CPU_RELAX=y
  # CONFIG_ARCH_HAS_ILOG2_U32 is not set
  # CONFIG_ARCH_HAS_ILOG2_U64 is not set
@@ -56,13 +56,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_ATA_NONSTANDARD is not set
  # CONFIG_AUDIT_ARCH is not set
  CONFIG_BASE_SMALL=0
- # CONFIG_BINFMT_AOUT is not set
--CONFIG_BINFMT_MISC=y
-+# CONFIG_BINFMT_MISC is not set
- CONFIG_BITREVERSE=y
- # CONFIG_BLK_DEV_4DRIVES is not set
- # CONFIG_BLK_DEV_ALI14XX is not set
-@@ -50,42 +52,26 @@
+@@ -50,42 +53,26 @@
  CONFIG_BLK_DEV_IDEDMA_SFF=y
  CONFIG_BLK_DEV_IDEPCI=y
  # CONFIG_BLK_DEV_QD65XX is not set
@@ -77,9 +71,8 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 +# CONFIG_CARDBUS is not set
  CONFIG_CLASSIC_RCU=y
 -CONFIG_CLOCKSOURCE_WATCHDOG=y
--CONFIG_COMPAT_VDSO=y
+ CONFIG_COMPAT_VDSO=y
 -CONFIG_CONSOLE_TRANSLATIONS=y
-+# CONFIG_COMPAT_VDSO is not set
  # CONFIG_CPU5_WDT is not set
 -CONFIG_CPU_FREQ=y
 -# CONFIG_CPU_FREQ_DEBUG is not set
@@ -114,7 +107,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_DEFAULT_IO_DELAY_TYPE=0
  # CONFIG_DELL_RBU is not set
  # CONFIG_DEPCA is not set
-@@ -95,7 +81,7 @@
+@@ -95,7 +82,7 @@
  CONFIG_DNOTIFY=y
  CONFIG_DOUBLEFAULT=y
  CONFIG_DUMMY_CONSOLE=y
@@ -123,7 +116,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_E1000_DISABLE_PACKET_SPLIT is not set
  CONFIG_EARLY_PRINTK=y
  # CONFIG_EDAC is not set
-@@ -111,13 +97,11 @@
+@@ -111,13 +98,11 @@
  # CONFIG_EUROTECH_WDT is not set
  CONFIG_EXT2_FS=y
  CONFIG_FAST_CMPXCHG_LOCAL=y
@@ -139,7 +132,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_GENERIC_CLOCKEVENTS_BUILD=y
  CONFIG_GENERIC_CMOS_UPDATE=y
  # CONFIG_GENERIC_CPU is not set
-@@ -133,23 +117,20 @@
+@@ -133,46 +118,45 @@
  CONFIG_HAS_DMA=y
  CONFIG_HAS_IOMEM=y
  CONFIG_HAS_IOPORT=y
@@ -171,7 +164,10 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_HAVE_UNSTABLE_SCHED_CLOCK=y
  CONFIG_HID=y
  CONFIG_HID_SUPPORT=y
-@@ -158,21 +139,18 @@
++CONFIG_NOHIGHMEM=y
++# CONFIG_RESOURCES_64BIT is not set
+ # CONFIG_HIGHMEM4G is not set
+ # CONFIG_HIGHMEM64G is not set
  # CONFIG_HIGH_RES_TIMERS is not set
  # CONFIG_HPET_TIMER is not set
  # CONFIG_HP_WATCHDOG is not set
@@ -179,6 +175,9 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 +# CONFIG_HT_IRQ is not set
  # CONFIG_HUGETLBFS is not set
 -CONFIG_HWMON=m
++# CONFIG_RELOCATABLE is not set
++# CONFIG_HOTPLUG_CPU is not set
++# CONFIG_NETFILTER_NETLINK_LOG is not set
 +# CONFIG_HWMON is not set
  # CONFIG_HWMON_DEBUG_CHIP is not set
 -CONFIG_HWMON_VID=m
@@ -197,7 +196,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_I6300ESB_WDT is not set
  # CONFIG_I82365 is not set
  # CONFIG_I8K is not set
-@@ -184,15 +162,9 @@
+@@ -184,15 +168,9 @@
  CONFIG_IDE_GENERIC=y
  # CONFIG_IDE_PROC_FS is not set
  CONFIG_IDE_TIMINGS=y
@@ -213,7 +212,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_IOMMU_HELPER is not set
  CONFIG_IO_DELAY_0X80=y
  # CONFIG_IO_DELAY_0XED is not set
-@@ -210,21 +182,23 @@
+@@ -210,26 +188,24 @@
  # CONFIG_IT8712F_WDT is not set
  # CONFIG_ITCO_WDT is not set
  CONFIG_KALLSYMS=y
@@ -235,12 +234,17 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 +CONFIG_LEDS_NET48XX=y
  # CONFIG_LEDS_WRAP is not set
  CONFIG_LOCK_KERNEL=y
+-CONFIG_M386=y
 +CONFIG_LZO_COMPRESS=y
 +CONFIG_LZO_DECOMPRESS=y
- CONFIG_M386=y
  # CONFIG_M486 is not set
- # CONFIG_M586 is not set
-@@ -239,35 +213,32 @@
+-# CONFIG_M586 is not set
+-# CONFIG_M586MMX is not set
+-# CONFIG_M586TSC is not set
+ # CONFIG_M686 is not set
+ # CONFIG_MACHZ_WDT is not set
+ # CONFIG_MACINTOSH_DRIVERS is not set
+@@ -239,35 +215,32 @@
  # CONFIG_MCRUSOE is not set
  # CONFIG_MCYRIXIII is not set
  # CONFIG_MDA_CONSOLE is not set
@@ -291,7 +295,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_MOUSE_SERIAL is not set
  # CONFIG_MOUSE_VSXXXAA is not set
  # CONFIG_MPENTIUM4 is not set
-@@ -275,38 +246,7 @@
+@@ -275,38 +248,6 @@
  # CONFIG_MPENTIUMIII is not set
  # CONFIG_MPENTIUMM is not set
  # CONFIG_MPSC is not set
@@ -327,11 +331,10 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 -# CONFIG_MTD_ROM is not set
 -# CONFIG_MTD_SLRAM is not set
 -# CONFIG_MTD_TS5500 is not set
-+# CONFIG_MTD is not set
  CONFIG_MTRR=y
  # CONFIG_MTRR_SANITIZER is not set
  # CONFIG_MVIAC3_2 is not set
-@@ -315,24 +255,23 @@
+@@ -315,24 +256,23 @@
  # CONFIG_MWINCHIP3D is not set
  # CONFIG_MWINCHIPC6 is not set
  CONFIG_NAMESPACES=y
@@ -362,7 +365,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_PCI=y
  # CONFIG_PCIEPORTBUS is not set
  CONFIG_PCI_BIOS=y
-@@ -343,11 +282,11 @@
+@@ -343,11 +283,11 @@
  # CONFIG_PCI_GODIRECT is not set
  # CONFIG_PCI_GOMMCONFIG is not set
  # CONFIG_PCI_GOOLPC is not set
@@ -379,7 +382,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  CONFIG_PCSPKR_PLATFORM=y
  # CONFIG_PCWATCHDOG is not set
  CONFIG_PHYSICAL_ALIGN=0x100000
-@@ -359,31 +298,26 @@
+@@ -359,6 +299,7 @@
  CONFIG_PROC_PAGE_MONITOR=y
  # CONFIG_PROVIDE_OHCI1394_DMA_INIT is not set
  # CONFIG_R6040 is not set
@@ -387,10 +390,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_RELOCATABLE is not set
  CONFIG_RFKILL_LEDS=y
  CONFIG_RTC=y
--CONFIG_RWSEM_GENERIC_SPINLOCK=y
--# CONFIG_RWSEM_XCHGADD_ALGORITHM is not set
-+# CONFIG_RWSEM_GENERIC_SPINLOCK is not set
-+CONFIG_RWSEM_XCHGADD_ALGORITHM=y
+@@ -367,23 +308,17 @@
  # CONFIG_SBC7240_WDT is not set
  # CONFIG_SBC8360_WDT is not set
  # CONFIG_SBC_EPX_C3_WATCHDOG is not set
@@ -420,7 +420,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_SERIAL_8250_CS is not set
  # CONFIG_SERIAL_8250_EXTENDED is not set
  CONFIG_SERIAL_8250_PCI=y
-@@ -395,11 +329,17 @@
+@@ -395,11 +330,17 @@
  # CONFIG_SERIO_PCIPS2 is not set
  # CONFIG_SERIO_RAW is not set
  CONFIG_SERIO_SERPORT=y
@@ -441,7 +441,7 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
  # CONFIG_SONYPI is not set
  CONFIG_SPARSEMEM_STATIC=y
  # CONFIG_SPARSEMEM_VMEMMAP_ENABLE is not set
-@@ -412,87 +352,266 @@
+@@ -412,87 +353,318 @@
  # CONFIG_TELCLOCK is not set
  # CONFIG_TICK_ONESHOT is not set
  # CONFIG_TOSHIBA is not set
@@ -723,11 +723,30 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 +CONFIG_GENERIC_CLOCKEVENTS_BROADCAST=y
 +CONFIG_HIDRAW=y
 +CONFIG_IDE_ARCH_OBSOLETE_INIT=y
-+CONFIG_M586MMX=y
-+CONFIG_M586TSC=y
++# CONFIG_M386 is not set
++# CONFIG_M486 is not set
 +CONFIG_M586=y
-+CONFIG_MII=y
-+CONFIG_MMU=y
++# CONFIG_M586TSC is not set
++# CONFIG_M586MMX is not set
++# CONFIG_M686 is not set
++# CONFIG_MPENTIUMII is not set
++# CONFIG_MPENTIUMIII is not set
++# CONFIG_MPENTIUMM is not set
++# CONFIG_MPENTIUM4 is not set
++# CONFIG_MK6 is not set
++# CONFIG_MK7 is not set
++# CONFIG_MK8 is not set
++# CONFIG_MCRUSOE is not set
++# CONFIG_MEFFICEON is not set
++# CONFIG_MWINCHIPC6 is not set
++# CONFIG_MWINCHIP2 is not set
++# CONFIG_MWINCHIP3D is not set
++# CONFIG_MGEODEGX1 is not set
++# CONFIG_MGEODE_LX is not set
++# CONFIG_MCYRIXIII is not set
++# CONFIG_MVIAC3_2 is not set
++# CONFIG_MVIAC7 is not set
++# CONFIG_MCORE2 is not set
 +CONFIG_SERIAL_8250_CONSOLE=y
 +CONFIG_SERIAL_8250_NR_UARTS=2
 +CONFIG_SERIAL_8250_RUNTIME_UARTS=2
@@ -744,3 +763,36 @@ diff -Naur a/target/linux/x86/config-2.6.27 b/target/linux/x86/config-2.6.27
 +CONFIG_X86=y
 +CONFIG_ZONE_DMA_FLAG=1
 +CONFIG_ZONE_DMA=y
++CONFIG_MTD=y
++# CONFIG_MTD_ABSENT is not set
++CONFIG_MTD_BLKDEVS=y
++CONFIG_MTD_BLOCK=y
++CONFIG_MTD_BLOCK2MTD=y
++# CONFIG_MTD_CFI is not set
++# CONFIG_MTD_CFI_I1 is not set
++# CONFIG_MTD_CFI_I2 is not set
++# CONFIG_MTD_CFI_I4 is not set
++# CONFIG_MTD_CFI_I8 is not set
++CONFIG_MTD_CHAR=y
++# CONFIG_MTD_CMDLINE_PARTS is not set
++# CONFIG_MTD_COMPLEX_MAPPINGS is not set
++# CONFIG_MTD_CONCAT is not set
++# CONFIG_MTD_JEDECPROBE is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_1 is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_2 is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_4 is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_8 is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_16 is not set
++# CONFIG_MTD_MAP_BANK_WIDTH_32 is not set
++# CONFIG_MTD_MTDRAM is not set
++# CONFIG_MTD_ONENAND is not set
++CONFIG_MTD_PARTITIONS=y
++# CONFIG_MTD_PHRAM is not set
++# CONFIG_MTD_PLATRAM is not set
++# CONFIG_MTD_PMC551 is not set
++# CONFIG_MTD_RAM is not set
++# CONFIG_MTD_REDBOOT_PARTS is not set
++# CONFIG_MTD_ROM is not set
++# CONFIG_MTD_SLRAM is not set
++# CONFIG_MTD_TS5500 is not set
++

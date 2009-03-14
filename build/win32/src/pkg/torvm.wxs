@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <?define ThisProductVersion="0.0.2" ?>
-  <?define ThisProductVersionDisp="0.0.2" ?>
+  <?define ThisProductVersion="0.0.1" ?>
+  <?define ThisProductVersionDisp="0.0.1" ?>
   <?define UpgradeCode="3f874171-34a0-4af8-8c66-27a681ac5fb6" ?>
   
   <?define CurrProductGUID="8b88858f-1d36-461c-9541-e6ffddeb8e69" ?>
@@ -74,6 +74,12 @@
             </RegistryKey>
             <Shortcut Id="TorVMStartMenuShortcut"
                       Name="Tor VM" Target="[ProgramsInstDir]torvm.exe"
+                      Arguments="--bundle"
+                      Directory="ShortcutFolder" WorkingDirectory="ProgramsInstDir"
+                      Icon="torvm.ico" IconIndex="0" />
+            <Shortcut Id="TorVMDebugStartMenuShortcut"
+                      Name="Tor VM (debug)" Target="[ProgramsInstDir]torvm.exe"
+                      Arguments="--bundle --verbose"
                       Directory="ShortcutFolder" WorkingDirectory="ProgramsInstDir"
                       Icon="torvm.ico" IconIndex="0" />
             <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
@@ -88,6 +94,12 @@
           </RegistryKey>
           <Shortcut Id="TorVMDesktopShortcut"
                     Name="Tor VM" Target="[ProgramsInstDir]torvm.exe"
+                    Arguments="--bundle"
+                    Directory="DesktopFolder" WorkingDirectory="ProgramsInstDir"
+                    Icon="torvm.ico" IconIndex="0" />
+          <Shortcut Id="TorVMDebugDesktopShortcut"
+                    Name="Tor VM (debug)" Target="[ProgramsInstDir]torvm.exe"
+                    Arguments="--bundle --verbose"
                     Directory="DesktopFolder" WorkingDirectory="ProgramsInstDir"
                     Icon="torvm.ico" IconIndex="0" />
         </Component>

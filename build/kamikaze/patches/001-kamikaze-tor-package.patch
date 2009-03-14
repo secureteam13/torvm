@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-03-10 07:00:07.492772805 +0000
++++ b/package/tor/Makefile	2009-03-14 04:07:01.620407064 +0000
 @@ -0,0 +1,112 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -30,7 +30,7 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +  CATEGORY:=Network
 +  DEPENDS:=+libevent +libopenssl +libpthread +zlib
 +  TITLE:=An anonymous Internet communication system
-+  URL:=http://tor.eff.org/
++  URL:=https://www.torproject.org/
 +endef
 +
 +define Package/tor/description
@@ -75,7 +75,7 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +fi
 +
 +if [ -z "$$(grep ^\\$${name}: $${IPKG_INSTROOT}/etc/passwd)" ]; then
-+        echo "adding user $name to /etc/passwd"
++        echo "adding user $$name to /etc/passwd"
 +        echo "$${name}:x:$${id}:$${id}:$${name}:/tmp/.$${name}:/bin/false" >> $${IPKG_INSTROOT}/etc/passwd
 +fi
 +endef
@@ -116,8 +116,8 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +$(eval $(call BuildPackage,tor))
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-02-01 09:56:07.585143480 +0000
-@@ -0,0 +1,113 @@
++++ b/package/tor/files/tor.init	2009-03-13 15:35:54.963580280 +0000
+@@ -0,0 +1,114 @@
 +#!/bin/sh 
 +
 +BIN=tor
@@ -175,8 +175,9 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	chown $RUN_USER:$RUN_GROUP $CONF_F
 +	# start tor process
 +	$BIN -f $CONF_F $OPTIONS > $SLOG_F 2>&1
-+	# TODO for now used fixed control port accept rule
++	# TODO for now used fixed control port and socks port accept rule
 +	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9051 -j ACCEPT
++	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9050 -j ACCEPT
 +	# forcibly filter some traffic which should never go over Tor:
 +	# no SMTP
 +	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 25 -j DROP
@@ -233,8 +234,8 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +exit 0
 diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 --- a/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torrc	2009-02-01 09:56:07.586143328 +0000
-@@ -0,0 +1,24 @@
++++ b/package/tor/files/torrc	2009-03-13 16:03:40.525376400 +0000
+@@ -0,0 +1,26 @@
 +# Configuration for Tor VM
 +RunAsDaemon 1
 +User tor
@@ -243,7 +244,9 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +DataDirectory /home/tor/data
 +Log notice file /var/log/tor/notices.log
 +
-+# Rely on netfilter for access control to transproxy ports
++# XXX For now rely on netfilter for access control to transproxy ports
++SocksListenAddress 0.0.0.0
++SocksPort 9050
 +TransListenAddress 0.0.0.0
 +TransPort 9095
 +DNSListenAddress 0.0.0.0

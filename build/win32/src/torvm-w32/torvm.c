@@ -4,12 +4,13 @@
 #include "torvm.h"
 #include <getopt.h>
 
+#define DEFAULT_WINDIR "C:\\WINDOWS"
 #define TOR_VM_BASE    "Tor_VM"
 #define W_TOR_VM_BASE  L"Tor_VM"
 #define TOR_VM_BIN     "bin"
 #define TOR_VM_LIB     "lib"
 #define TOR_VM_STATE   "state"
-#define WIN_DRV_DIR    "C:\\WINDOWS\\system32\\drivers"
+#define WIN_DRV_DIR    "system32\\drivers"
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
 /* TODO: network config defaults via vmconfig.h and runtime configuration */
@@ -25,7 +26,6 @@
 
 BOOL buildpath (const TCHAR *dirname,
                 TCHAR **fullpath);
-BOOL buildwsyspath (TCHAR **fullpath);
 
 #define PATH_FQ        1
 #define PATH_RELATIVE  2
@@ -39,6 +39,15 @@ static BOOL buildfpath (DWORD   pathtype,
                         LPTSTR  wdpath,
                         LPTSTR  append,
 			LPTSTR *fpath);
+
+#define SYSDIR_WINROOT     1
+#define SYSDIR_PROFILE     2
+#define SYSDIR_PROGRAMS    3
+#define SYSDIR_LCLDATA     4
+#define SYSDIR_LCLPROGRAMS 5
+static BOOL buildsyspath (DWORD   syspathtype,
+                          LPTSTR  append,
+                          LPTSTR *fpath);
 
 struct s_rconnelem {
   BOOL    isactive;
@@ -226,6 +235,69 @@ void ldebug (const char* format, ...)
   return;
 }
 
+static BOOL buildsyspath (DWORD  syspathtype,
+                          LPTSTR append,
+                          LPTSTR *fpath)
+{
+#define BUFSZ 4096
+  DWORD   retval;
+  DWORD   errnum;
+  LPTSTR  defval = NULL;
+  LPTSTR  envvar;
+  LPTSTR  dsep = "\\";
+  *fpath = malloc(BUFSZ * sizeof(TCHAR));
+  if(*fpath == NULL) {
+    lerror ("buildsyspath: out of memory.");
+    free(envvar);
+    return FALSE;
+  }
+  if (syspathtype == SYSDIR_WINROOT) {
+    envvar = getenv("SYSTEMROOT");
+    defval = DEFAULT_WINDIR;
+  }
+  else if (syspathtype == SYSDIR_PROFILE)
+    envvar = getenv("USERPROFILE");
+  else if (syspathtype == SYSDIR_PROGRAMS)
+    envvar = getenv("PROGRAMFILES");
+  else if (syspathtype == SYSDIR_LCLDATA)
+    envvar = getenv("USERPROFILE");
+  else if (syspathtype == SYSDIR_LCLPROGRAMS)
+    envvar = getenv("USERPROFILE");
+  if(!envvar) {
+    if (defval) {
+      strncpy(*fpath, defval, (BUFSZ -1));
+      return TRUE;
+    }
+    free(*fpath);
+    *fpath = 0;
+    return FALSE;
+  }
+  if ( (syspathtype == SYSDIR_LCLPROGRAMS) || (syspathtype == SYSDIR_LCLDATA) ) {
+    LPTSTR lclpost = 0;
+    if (syspathtype == SYSDIR_LCLPROGRAMS)
+      lclpost = "Programs";
+    /* local appdata and programs is built against the user profile root */
+    snprintf (*fpath, (BUFSZ -1),
+              "%s%s%s%s%s%s%s",
+              envvar,
+              dsep,
+              "Local Settings\\Application Data",
+              lclpost ? dsep : "",
+              lclpost ? lclpost : "",
+              append ? dsep : "",
+              append ? append : "");
+  }
+  else {
+    snprintf (*fpath, (BUFSZ -1),
+              "%s%s%s",
+              envvar,
+              append ? dsep : "",
+              append ? append : "");
+  }
+  return TRUE;
+}
+#undef BUFSZ
+
 /* initial attempt to keep file locations dynamic and configurable.
  */
 static BOOL buildfpath (DWORD   pathtype,
@@ -308,6 +380,62 @@ static BOOL buildfpath (DWORD   pathtype,
   ldebug ("Returning build file path %s for path type %d subdir type %d working path %s and append %s", *fpath, pathtype, subdirtype, wdpath ? wdpath : "", append ? append : "");
 
   free (basepath);
+  return TRUE;
+}
+
+BOOL exists(LPTSTR path)
+{
+  HANDLE  hnd;
+  hnd = CreateFile (path,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (hnd == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  CloseHandle(hnd);
+  return TRUE;
+}
+
+BOOL copyfile (LPTSTR srcpath,
+               LPTSTR destpath)
+{
+  HANDLE src, dest;
+  DWORD buffsz = 4096;
+  DWORD len, written;
+  LPTSTR buff;
+  src = CreateFile (srcpath,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (src == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  dest = CreateFile (destpath,
+                     GENERIC_WRITE,
+                     0,
+                     NULL,
+                     CREATE_NEW,
+                     FILE_ATTRIBUTE_NORMAL,
+                     NULL);
+  if (dest == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  buff = malloc(buffsz);
+  if (!buff) 
+    return FALSE;
+  while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
+    WriteFile(dest, buff, len, &written, NULL);
+  free (buff);
+  CloseHandle (src);
+  CloseHandle (dest);
+
   return TRUE;
 }
 
@@ -588,15 +716,19 @@ BOOL installtornpf (void)
   HANDLE src = NULL;
   HANDLE dest = NULL;
   LPTSTR srcname = NULL;
-  LPTSTR destname = WIN_DRV_DIR "\\" TOR_CAP_SYS;
+  LPTSTR destname = NULL;
   CHAR * buff = NULL;
   DWORD  buffsz = 4096;
   DWORD  len;
   DWORD  written;
-  
+  if (!buildsyspath(SYSDIR_WINROOT, WIN_DRV_DIR "\\" TOR_CAP_SYS, &destname)) {
+    lerror ("Unable to build path for WINROOT.");
+    return FALSE;
+  } 
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, TOR_CAP_SYS, &srcname)) {
-    lerror ("Unable to build path for %s", TOR_CAP_SYS);
+    free (destname);
     srcname = "C:\\Tor_VM\\lib\\" TOR_CAP_SYS;
+    lerror ("Unable to build path for %s, using default: %s", TOR_CAP_SYS, srcname);
   }
   
   src = CreateFile (srcname,
@@ -607,6 +739,7 @@ BOOL installtornpf (void)
                     FILE_ATTRIBUTE_NORMAL,
                     NULL);
   if (src == INVALID_HANDLE_VALUE) {
+    free (destname);
     return FALSE;
   } 
   dest = CreateFile (destname,
@@ -616,6 +749,7 @@ BOOL installtornpf (void)
                      CREATE_ALWAYS,
                      FILE_ATTRIBUTE_SYSTEM,
                      NULL);
+  free (destname);
   if (dest == INVALID_HANDLE_VALUE) {
     return FALSE;
   } 
@@ -633,12 +767,19 @@ BOOL installtornpf (void)
 
 BOOL uninstalltornpf (void)
 {
-  LPTSTR fname = WIN_DRV_DIR "\\" TOR_CAP_SYS;
+  LPTSTR fname = NULL;
   LPTSTR cmd = "\"net.exe\" stop tornpf";
-  DeleteFile (fname);
   if (! runcommand(cmd)) {
-    return FALSE;
+    lerror ("Unable to run net stop for tornpf service.");
   }
+  if (0) { /* XXX: for now we don't ever delete the npf device file. */
+    if (!buildsyspath(SYSDIR_WINROOT, WIN_DRV_DIR "\\" TOR_CAP_SYS, &fname)) {
+      lerror ("Unable to build path for WINROOT to uninstall tap.");
+      return FALSE;
+    } 
+    DeleteFile (fname);
+    free (fname);
+  } 
   return TRUE;
 }
 
@@ -1497,6 +1638,81 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   return TRUE;
 }
 
+BOOL runvidalia ()
+{
+  PROCESS_INFORMATION pi;
+  STARTUPINFO si;
+  SECURITY_ATTRIBUTES sattr;
+  LPTSTR cmd = NULL;
+  LPTSTR dir = NULL;
+  LPTSTR vcfgtmp = NULL;
+  LPTSTR pcfgtmp = NULL;
+  LPTSTR vcfgdest = NULL;
+  LPTSTR pcfgdest = NULL;
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  HANDLE tmphnd;
+  ZeroMemory( &si, sizeof(si) );
+  si.cb = sizeof(si);
+  ZeroMemory( &pi, sizeof(pi) );
+  
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defvidalia.conf", &vcfgtmp)) {
+    lerror ("Unable to build path for default vidalia config file."); 
+    return FALSE;
+  } 
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defpolipo.conf", &pcfgtmp)) {
+    lerror ("Unable to build path for default polipo config file.");
+    return FALSE;
+  } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia", &dir)) {
+    lerror ("Unable to build path for Vidalia programs dir."); 
+    return FALSE;
+  } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia\\vidalia.conf", &vcfgdest)) {
+    lerror ("Unable to build path for vidalia dest config file."); 
+    return FALSE;
+  } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia\\polipocfg.txt", &pcfgdest)) {
+    lerror ("Unable to build path for polipo dest config."); 
+    return FALSE;
+  } 
+  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &cmd)) {
+    lerror ("Unable to build path for vidalia marble exe."); 
+    return FALSE;
+  } 
+  if (!exists(cmd)) {
+    /* assume not a marble vidalia install */
+    free (cmd);
+    if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia.exe", &cmd)) {
+      lerror ("Unable to build path for vidalia exe."); 
+      return FALSE;
+    } 
+  }
+  if (!exists(vcfgdest)) {
+    ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
+    copyfile(vcfgtmp, vcfgdest);
+  }
+  if (!exists(pcfgdest)) {
+    ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
+    copyfile(pcfgtmp, pcfgdest);
+  }
+  
+  ldebug ("Launching Vidalia in dir: %s , with cmd: %s", dir, cmd);
+  if( !CreateProcess(NULL,
+                     cmd,
+                     NULL,   // process handle no inherit
+                     NULL,   // thread handle no inherit
+                     TRUE,   
+                     opts,
+                     NULL,   // environment block
+                     dir,
+                     &si,
+                     &pi) ) {
+    lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    return FALSE;
+  }
+  return TRUE;
+}
+
 BOOL launchtorvm (PROCESS_INFORMATION * pi,
                   char *  bridgeintf,
                   char *  macaddr,
@@ -1833,6 +2049,7 @@ int main(int argc, char **argv)
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
   struct s_rconnelem *tapconn = NULL;
+  BOOL  bundle = FALSE;
   BOOL  indebug = FALSE;
   BOOL  vmnop = FALSE;
   BOOL  noinit = FALSE;
@@ -1855,6 +2072,7 @@ int main(int argc, char **argv)
 
         case 'b':
           ldebug ("Set option %s.", torvm_options[optidx].name);
+          bundle = TRUE;
           break;
 
         case 's':
@@ -2070,6 +2288,13 @@ int main(int argc, char **argv)
   if (! configtap()) {
     lerror ("Unable to configure tap device.");
     goto shutdown;
+  }
+
+  /* XXX: temp hack - in bundle mode launch Vidalia with a custom config
+   * for the 10. tap control port and externally managed Tor instance.
+   */
+  if (bundle) {
+    runvidalia();
   }
 
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
