@@ -63,12 +63,11 @@
             </RegistryKey>
           </Component>
 
-        <Directory Id="ProgramsInstDir" Name="Tor License">
+          <Directory Id="ProgramsInstDir" Name="Tor License">
+          </Directory>
         </Directory>
       </Directory>
-    </Directory>
 
-    <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" Name="Desktop">
         <Component Id="AddTorDocsToDesktop" Guid="$(var.CurrDocsOnDesktopGUID)">
           <Condition><![CDATA[NOSC <> 1]]> </Condition>
