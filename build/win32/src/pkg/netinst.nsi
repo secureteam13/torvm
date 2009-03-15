@@ -10,7 +10,7 @@
 SetCompressor /SOLID BZIP2
 RequestExecutionLevel admin
 OutFile ${INSTALLER}
-InstallDir "$TEMP\TorVMInstTmp"
+InstallDir "$PROGRAMFILES\TorInstPkgs"
 SetOverWrite on
 Name "Tor VM Network Installer"
 Caption "Tor VM Network Installer"
@@ -45,19 +45,19 @@ Function ExtractPackages
 FunctionEnd
 
 Function RunInstallers
-	ExecWait 'msiexec /i "$INSTDIR\license.msi" /qn'
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
+	ExecWait 'msiexec /i "$INSTDIR\license.msi" NOSC=1 /qn'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Vidalia Marble Updates" /bundleinfo/vidalia-marble/win32/'
+	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Vidalia Marble Updates" /bundleinfo/vidalia-marble/win32/'
+	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
 FunctionEnd
 
 Function LaunchTorVM
 	SetOutPath "$PROGRAMFILES\Tor VM"
-	Exec 'torvm.exe'
+	Exec 'torvm.exe --bundle'
 FunctionEnd

@@ -14,7 +14,7 @@
   <Product Name="Tor VM $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
            Language="!(loc.LCID)"
            Version="$(var.ThisProductVersion)"
-           Manufacturer="www.torproject.org"
+           Manufacturer="https://www.torproject.org"
            UpgradeCode="$(var.UpgradeCode)">
     
     <Package Id="*" Keywords="Installer"
@@ -109,7 +109,7 @@
         <RegistryKey Root="HKCU"
                      Key="Software\Microsoft\Windows\CurrentVersion\Run"
                      Action="createAndRemoveOnUninstall">
-          <RegistryValue Name="Tor VM" Value='"[ProgramsInstDir]vidalia.exe"' Type="string" />
+          <RegistryValue Name="Tor VM" Value='"[ProgramsInstDir]torvm.exe"' Type="string" />
         </RegistryKey>
       </Component>
     </Directory>

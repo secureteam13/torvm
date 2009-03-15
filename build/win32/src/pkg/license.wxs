@@ -10,12 +10,12 @@
   <Product Name="Tor License Documents $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
            Language="!(loc.LCID)"
            Version="$(var.ThisProductVersion)"
-           Manufacturer="www.torproject.org"
+           Manufacturer="https://www.torproject.org"
            UpgradeCode="$(var.UpgradeCode)">
     
     <Package Id="*" Keywords="Installer"
              Description="Tor License $(var.ThisProductVersionDisp) Installer"
-             Manufacturer="www.torproject.org"
+             Manufacturer="https://www.torproject.org"
              InstallerVersion="200" Compressed="yes"
              InstallPrivileges="limited" />
 

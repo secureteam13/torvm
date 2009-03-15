@@ -10,7 +10,7 @@
 SetCompressor /SOLID BZIP2
 RequestExecutionLevel admin
 OutFile ${INSTALLER}
-InstallDir "$PROGRAMFILES\TorVMInstPkgs"
+InstallDir "$PROGRAMFILES\TorInstPkgs"
 SetOverWrite on
 Name "Tor VM ${VERSION} Bundle"
 Caption "Tor VM ${VERSION} Bundle Setup"
@@ -45,20 +45,20 @@ Function ExtractPackages
 	File "torbutton.msi"
 	File "thandy.msi"
 	File "polipo.msi"
-	File "vidalia-marble.msi"
+	File "vidalia.msi"
 FunctionEnd
 
 Function RunInstallers
-	ExecWait 'msiexec /i "$INSTDIR\license.msi" /qn'
 	ExecWait 'msiexec /i "$INSTDIR\torvm.msi" BUNDLE=1 /qn'
+	ExecWait 'msiexec /i "$INSTDIR\vidalia.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\polipo.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\torbutton.msi" /qn'
-	ExecWait 'msiexec /i "$INSTDIR\vidalia-marble.msi" NOSC=1 /qn'
+	ExecWait 'msiexec /i "$INSTDIR\license.msi" NOSC=1 /qn'
 FunctionEnd
 
 Function LaunchTorVM
 	SetOutPath "$PROGRAMFILES\Tor VM"
-	Exec 'torvm.exe'
+	Exec 'torvm.exe --bundle'
 FunctionEnd
 
