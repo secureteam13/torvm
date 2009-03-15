@@ -8,25 +8,10 @@ Legend:
   ? Deferrable
   X Deferred
  *  Top priority
- !! Release critical prerequisite / showstopper
-      (this indication will probably be removed from TODO once a 0.0.x
-       release is finally tagged and packaged on the web site.)
 _______________________________________________________________________
 
-!! Integrate Vidalia into Tor VM bundle
-   . Launch Vidalia with new control port password via stdin option and
-     correct configuration to communicate with control port over VM TAP
-     interface.
-   . Complete changes for new MSI based packaging and new Vidalia parts
-   - Add license and other legal information to package contents.
-
-!! Update end user documentation
-   . Screenshots of the installation process using both bundle and
-     network based installers and the portable self extracting
-     executable.
-   . Provide trouble shooting and bug reporting instructions.
-   - Commit documentation to torwww svn.
-   - Add license and other legal information to web pages as needed.
+ * Update end user documentation
+   . Expand trouble shooting and bug reporting instructions.
 
  * Update documentation
    . Update Kyle's build documents at janusvm with new bundle details
@@ -74,7 +59,8 @@ _______________________________________________________________________
      and route metric must be used to distinguish properly.
    ? Keep a host or guid identifier with the saved network state files
      to ensure that an unclean exit on one host does not accidentally
-     hose the settings of another installation.
+     hose the settings of another installation. (expect to use hostname
+     and account name when considering saved state for load via netsh).
 
    Tor VM controller hardening
    - Provide at least minimal privilege separation for processes by
