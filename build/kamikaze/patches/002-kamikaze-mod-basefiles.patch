@@ -1229,8 +1229,8 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-13 14:59:05.237509704 +0000
-@@ -1,88 +1,206 @@
++++ b/package/base-files/files/etc/preinit	2009-03-15 04:14:48.433644176 +0000
+@@ -1,88 +1,231 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
@@ -1273,14 +1273,23 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  exec /bin/sh
 +fi
 +
++# setup various runtime options using kernel parameters
++ARGS=`cat /proc/cmdline`
++ARGS="_ $ARGS _"
++
 +syslogd >/dev/null 2>&1
 +# do we need it? klogd -c 1 >/dev/null 2>&1
 +
 +clear;echo
 +d "Initializing ..."
 +
-+# XXX set from cmdline
-+hostname "Tor_VM" >/dev/null 2>&1
++HOSTNAME="Tor_VM"
++echo $ARGS | grep ' USEHOSTNAME=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z-_]//g'`
++fi
++export HOSTNAME
++hostname "$HOSTNAME" >/dev/null 2>&1
  
  if grep devfs /proc/filesystems > /dev/null; then
  	mount devfs /dev -t devfs
@@ -1374,19 +1383,16 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +
 +ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
 +
-+# setup various runtime options using kernel parameters
-+ARGS=`cat /proc/cmdline`
-+ARGS="_ $ARGS _"
-+
 +# XXX need a good way to set this flexibly...
 +TZ='PST8PDT,M3.2.0/2,M11.1.0/2'
 +echo $ARGS | grep ' TZ=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
 +fi
-+echo $TZ > /etc/TZ
++export TZ
++echo "$TZ" > /etc/TZ
 +
-+echo $ARGS | grep '  NOINIT' >/dev/null 2>&1
++echo $ARGS | grep ' NOINIT ' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
 +else
@@ -1394,14 +1400,14 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +PRIVIP=10.99.11.1
 +echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
-+  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//'`
++  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
 +fi
 +grep eth1: /proc/net/dev >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  ifconfig eth1 $PRIVIP netmask 255.255.255.252 up
 +fi
 +
-+echo $ARGS | grep ' DEBUGINIT' >/dev/null 2>&1
++echo $ARGS | grep ' DEBUGINIT ' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
 +  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
@@ -1419,12 +1425,14 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  LEASE=""
 +  DHCPSVR=""
 +  DHCPNAME=""
-+  IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//'`
-+  MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//'`
-+  GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//'`
-+  MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//'`
-+  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//'`
-+  ISDHCP=0
++  # XXX we should be able to use character classes in busybox matching for repl.
++  # or possibly bash style string manipulation if ash is sufficiently capable...
++  export IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export ISDHCP=0
 +  dn "Setting IP $IP / $MASK via $GW ..."
 +  ifconfig eth0 hw ether $MAC
 +  ifconfig eth0 $IP netmask $MASK up
@@ -1432,9 +1440,9 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  route add default gw $GW
 +  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
 +  if [ $? -eq 0 ]; then
-+    ISDHCP=1
-+    DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//'`
-+    DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
++    export ISDHCP=1
++    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//'`
++    export DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
 +    # fire up udhcpc to keep the lease active for however long is needed
 +    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
 +  fi
@@ -1460,12 +1468,29 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +fi
 +
 +if [ $netup -eq 0 ]; then
-+  echo " FAILED."
++  echo " FAILED.";echo
 +  d "ERROR: Unable to get an IP address."
 +  d "Check your DHCP server or configure one manually with ifconfig."
 +  d "Remember to start Tor via /etc/init.d/tor start when ready."
 +else
-+  echo " done."
++  echo $ARGS | grep ' CALLHDDINIT=' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    HDDINITF=`echo $ARGS | sed 's/.* CALLHDDINIT=//' | sed 's/ .*//'`
++    if [ -f "/home/tor/${HDDINITF}" ]; then
++      HDDINITF="/home/tor/${HDDINITF}"
++    else
++      if [ ! -f "${HDDINITF}" ]; then
++        HDDINITF="/proc/self/exists_not"
++      fi
++    fi
++    if [ -f "${HDDINITF}" ]; then
++      echo "done.";echo
++      d "Replacing init(self) with user requested HDD post-init script:"
++      d "   ${HDDINITF}"
++      exec "${HDDINITF}"
++    fi
++  fi
++  echo " done.";echo
 +  dn "Starting Tor ... "
 +  /etc/init.d/tor start
 +  echo "done."
@@ -1500,6 +1525,27 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 -	exec /sbin/init
 +# end if !NOINIT
  fi
+diff -Naur a/package/base-files/files/etc/profile b/package/base-files/files/etc/profile
+--- a/package/base-files/files/etc/profile	2009-01-07 04:38:57.851159000 +0000
++++ b/package/base-files/files/etc/profile	2009-03-15 04:12:57.481511464 +0000
+@@ -1,15 +1,11 @@
+ #!/bin/sh
+ [ -f /etc/banner ] && cat /etc/banner
+ 
+-export PATH=/bin:/sbin:/usr/bin:/usr/sbin
++export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/etc/init.d
+ export HOME=$(grep -e "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
+ export HOME=${HOME:-/root}
+-export PS1='\u@\h:\w\$ '
++export PS1='\u@Tor_VM:\w\$ '
+ 
+ [ -x /bin/more ] || alias more=less
+ [ -x /usr/bin/vim ] && alias vi=vim || alias vim=vi
+-
+-[ -z "$KSH_VERSION" -o \! -s /etc/mkshrc ] || . /etc/mkshrc
+-
+ [ -x /sbin/arp ] || arp() { cat /proc/net/arp; }
+-[ -z /bin/ldd ] || ldd() { LD_TRACE_LOADED_OBJECTS=1 $*; }
 diff -Naur a/package/base-files/files/etc/rc.common b/package/base-files/files/etc/rc.common
 --- a/package/base-files/files/etc/rc.common	2008-09-23 12:35:34.898984000 +0000
 +++ b/package/base-files/files/etc/rc.common	2009-02-01 09:47:48.118074016 +0000
