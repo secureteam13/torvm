@@ -1,6 +1,6 @@
 diff -Naur a/.config b/.config
 --- a/.config	1970-01-01 00:00:00.000000000 +0000
-+++ b/.config	2009-03-14 19:50:51.158408720 +0000
++++ b/.config	2009-03-15 08:41:53.424475272 +0000
 @@ -0,0 +1,1291 @@
 +#
 +# Automatically generated make config: don't edit
@@ -223,7 +223,7 @@ diff -Naur a/.config b/.config
 +CONFIG_LOCALMIRROR=""
 +CONFIG_AUTOREBUILD=y
 +CONFIG_BUILD_SUFFIX=""
-+CONFIG_CCACHE=y
++# CONFIG_CCACHE is not set
 +CONFIG_EXTERNAL_KERNEL_TREE=""
 +CONFIG_KERNEL_GIT_CLONE_URI=""
 +CONFIG_KERNEL_GIT_LOCAL_REPOSITORY=""

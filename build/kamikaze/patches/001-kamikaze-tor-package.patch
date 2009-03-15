@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-03-15 04:21:36.085671648 +0000
++++ b/package/tor/Makefile	2009-03-15 09:11:17.875237984 +0000
 @@ -0,0 +1,113 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -105,10 +105,10 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +define Package/tor/install
 +	$(INSTALL_DIR) $(1)/usr/sbin
 +	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/or/tor $(1)/usr/sbin/
-+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/config/geoip $(1)/etc/tor/geoip
 +	$(INSTALL_DIR) $(1)/etc/init.d
 +	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
 +	$(INSTALL_DIR) $(1)/etc/tor
++	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/config/geoip $(1)/etc/tor/geoip
 +	$(INSTALL_DATA) ./files/torrc $(1)/etc/tor/torrc
 +	$(INSTALL_DIR) $(1)/var/log/tor
 +	$(INSTALL_DIR) $(1)/var/run/tor
