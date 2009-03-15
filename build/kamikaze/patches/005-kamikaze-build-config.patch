@@ -1,7 +1,12 @@
 diff -Naur a/.config b/.config
 --- a/.config	1970-01-01 00:00:00.000000000 +0000
-+++ b/.config	2009-03-14 13:28:04.407885504 +0000
-@@ -0,0 +1,1298 @@
++++ b/.config	2009-03-14 19:50:51.158408720 +0000
+@@ -0,0 +1,1291 @@
++#
++# Automatically generated make config: don't edit
++# OpenWrt version: Kamikaze (unknown)
++# Sat Mar 14 12:50:32 2009
++#
 +CONFIG_HAVE_DOT_CONFIG=y
 +# CONFIG_TARGET_ppc40x is not set
 +# CONFIG_TARGET_ppc44x is not set
@@ -218,7 +223,7 @@ diff -Naur a/.config b/.config
 +CONFIG_LOCALMIRROR=""
 +CONFIG_AUTOREBUILD=y
 +CONFIG_BUILD_SUFFIX=""
-+# CONFIG_CCACHE is not set
++CONFIG_CCACHE=y
 +CONFIG_EXTERNAL_KERNEL_TREE=""
 +CONFIG_KERNEL_GIT_CLONE_URI=""
 +CONFIG_KERNEL_GIT_LOCAL_REPOSITORY=""
@@ -292,13 +297,13 @@ diff -Naur a/.config b/.config
 +#
 +# CONFIG_BUSYBOX_CONFIG_DESKTOP is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_ASSUME_UNICODE is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_BUFFERS_USE_MALLOC=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_BUFFERS_GO_ON_STACK is not set
++# CONFIG_BUSYBOX_CONFIG_FEATURE_BUFFERS_USE_MALLOC is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_BUFFERS_GO_ON_STACK=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_BUFFERS_GO_IN_BSS is not set
 +CONFIG_BUSYBOX_CONFIG_SHOW_USAGE=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VERBOSE_USAGE is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_COMPRESS_USAGE is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_INSTALLER is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_VERBOSE_USAGE=y
++CONFIG_BUSYBOX_CONFIG_FEATURE_COMPRESS_USAGE=y
++CONFIG_BUSYBOX_CONFIG_FEATURE_INSTALLER=y
 +# CONFIG_BUSYBOX_CONFIG_LOCALE_SUPPORT is not set
 +CONFIG_BUSYBOX_CONFIG_GETOPT_LONG=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_DEVPTS=y
@@ -315,8 +320,7 @@ diff -Naur a/.config b/.config
 +#
 +# Build Options
 +#
-+# CONFIG_BUSYBOX_CONFIG_STATIC is not set
-+# CONFIG_BUSYBOX_CONFIG_PIE is not set
++CONFIG_BUSYBOX_CONFIG_STATIC=y
 +# CONFIG_BUSYBOX_CONFIG_NOMMU is not set
 +CONFIG_BUSYBOX_CONFIG_LFS=y
 +CONFIG_BUSYBOX_CONFIG_CROSS_COMPILER_PREFIX=""
@@ -329,7 +333,7 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_NO_DEBUG_LIB=y
 +# CONFIG_BUSYBOX_CONFIG_DMALLOC is not set
 +# CONFIG_BUSYBOX_CONFIG_EFENCE is not set
-+CONFIG_BUSYBOX_CONFIG_INCLUDE_SUSv2=y
++# CONFIG_BUSYBOX_CONFIG_INCLUDE_SUSv2 is not set
 +
 +#
 +# Installation Options
@@ -350,9 +354,9 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_ETC_NETWORKS is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_MAX_LEN=512
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_VI is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_VI=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_HISTORY=256
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_SAVEHISTORY is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_SAVEHISTORY=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_TAB_COMPLETION=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_USERNAME_COMPLETION is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_EDITING_FANCY_PROMPT=y
@@ -392,7 +396,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_TAR_OLDSUN_COMPATIBILITY is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_TAR_GNU_EXTENSIONS=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_TAR_LONG_OPTIONS=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_TAR_UNAME_GNAME is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_TAR_UNAME_GNAME=y
 +# CONFIG_BUSYBOX_CONFIG_UNCOMPRESS is not set
 +# CONFIG_BUSYBOX_CONFIG_UNLZMA is not set
 +# CONFIG_BUSYBOX_CONFIG_UNZIP is not set
@@ -419,7 +423,7 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_DATE=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_DATE_ISOFMT=y
 +CONFIG_BUSYBOX_CONFIG_DD=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_DD_SIGNAL_HANDLING is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_DD_SIGNAL_HANDLING=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_DD_IBS_OBS is not set
 +CONFIG_BUSYBOX_CONFIG_DF=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_DF_INODE is not set
@@ -453,7 +457,7 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_FEATURE_LS_USERNAME=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_LS_COLOR=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_LS_COLOR_IS_DEFAULT=y
-+CONFIG_BUSYBOX_CONFIG_MD5SUM=y
++# CONFIG_BUSYBOX_CONFIG_MD5SUM is not set
 +CONFIG_BUSYBOX_CONFIG_MKDIR=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_MKDIR_LONG_OPTIONS=y
 +CONFIG_BUSYBOX_CONFIG_MKFIFO=y
@@ -490,11 +494,11 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_TEE=y
 +CONFIG_BUSYBOX_CONFIG_FEATURE_TEE_USE_BLOCK_IO=y
 +CONFIG_BUSYBOX_CONFIG_TEST=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_TEST_64 is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_TEST_64=y
 +CONFIG_BUSYBOX_CONFIG_TOUCH=y
 +CONFIG_BUSYBOX_CONFIG_TR=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_TR_CLASSES is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_TR_EQUIV is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_TR_CLASSES=y
++CONFIG_BUSYBOX_CONFIG_FEATURE_TR_EQUIV=y
 +CONFIG_BUSYBOX_CONFIG_TRUE=y
 +# CONFIG_BUSYBOX_CONFIG_TTY is not set
 +CONFIG_BUSYBOX_CONFIG_UNAME=y
@@ -506,7 +510,7 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_WC=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_WC_LARGE is not set
 +# CONFIG_BUSYBOX_CONFIG_WHO is not set
-+CONFIG_BUSYBOX_CONFIG_WHOAMI=y
++# CONFIG_BUSYBOX_CONFIG_WHOAMI is not set
 +CONFIG_BUSYBOX_CONFIG_YES=y
 +
 +#
@@ -699,24 +703,8 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_MDEV is not set
 +# CONFIG_BUSYBOX_CONFIG_MKSWAP is not set
 +# CONFIG_BUSYBOX_CONFIG_MORE is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_USE_TERMIOS=y
-+CONFIG_BUSYBOX_CONFIG_VOLUMEID=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_EXT=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_REISERFS=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_FAT=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_HFS is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_JFS is not set
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_XFS=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_NTFS=y
-+CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_ISO9660=y
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_UDF is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_LUKS is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_LINUXSWAP is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_CRAMFS is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_ROMFS is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_SYSV is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_OCFS2 is not set
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_VOLUMEID_LINUXRAID is not set
++# CONFIG_BUSYBOX_CONFIG_FEATURE_USE_TERMIOS is not set
++# CONFIG_BUSYBOX_CONFIG_VOLUMEID is not set
 +CONFIG_BUSYBOX_CONFIG_MOUNT=y
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_FAKE is not set
 +# CONFIG_BUSYBOX_CONFIG_FEATURE_MOUNT_VERBOSE is not set
@@ -750,8 +738,10 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_BBCONFIG is not set
 +# CONFIG_BUSYBOX_CONFIG_CHAT is not set
 +# CONFIG_BUSYBOX_CONFIG_CHRT is not set
-+# CONFIG_BUSYBOX_CONFIG_CROND is not set
-+# CONFIG_BUSYBOX_CONFIG_CRONTAB is not set
++CONFIG_BUSYBOX_CONFIG_CROND=y
++# CONFIG_BUSYBOX_CONFIG_DEBUG_CROND_OPTION is not set
++# CONFIG_BUSYBOX_CONFIG_FEATURE_CROND_CALL_SENDMAIL is not set
++CONFIG_BUSYBOX_CONFIG_CRONTAB=y
 +# CONFIG_BUSYBOX_CONFIG_DC is not set
 +# CONFIG_BUSYBOX_CONFIG_DEVFSD is not set
 +# CONFIG_BUSYBOX_CONFIG_EJECT is not set
@@ -783,12 +773,13 @@ diff -Naur a/.config b/.config
 +# CONFIG_BUSYBOX_CONFIG_TASKSET is not set
 +CONFIG_BUSYBOX_CONFIG_TIME=y
 +# CONFIG_BUSYBOX_CONFIG_TTYSIZE is not set
-+# CONFIG_BUSYBOX_CONFIG_WATCHDOG is not set
++CONFIG_BUSYBOX_CONFIG_WATCHDOG=y
 +
 +#
 +# Networking Utilities
 +#
-+# CONFIG_BUSYBOX_CONFIG_FEATURE_IPV6 is not set
++CONFIG_BUSYBOX_CONFIG_FEATURE_IPV6=y
++CONFIG_BUSYBOX_CONFIG_FEATURE_PREFER_IPV4_ADDRESS=y
 +CONFIG_BUSYBOX_CONFIG_VERBOSE_RESOLUTION_ERRORS=y
 +CONFIG_BUSYBOX_CONFIG_ARP=y
 +CONFIG_BUSYBOX_CONFIG_ARPING=y
@@ -820,13 +811,16 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_FEATURE_NETSTAT_WIDE=y
 +CONFIG_BUSYBOX_CONFIG_NSLOOKUP=y
 +CONFIG_BUSYBOX_CONFIG_PING=y
++# CONFIG_BUSYBOX_CONFIG_PING6 is not set
 +CONFIG_BUSYBOX_CONFIG_FEATURE_FANCY_PING=y
 +# CONFIG_BUSYBOX_CONFIG_PSCAN is not set
 +CONFIG_BUSYBOX_CONFIG_ROUTE=y
 +# CONFIG_BUSYBOX_CONFIG_SENDMAIL is not set
 +# CONFIG_BUSYBOX_CONFIG_FETCHMAIL is not set
 +# CONFIG_BUSYBOX_CONFIG_SLATTACH is not set
-+# CONFIG_BUSYBOX_CONFIG_TELNET is not set
++CONFIG_BUSYBOX_CONFIG_TELNET=y
++CONFIG_BUSYBOX_CONFIG_FEATURE_TELNET_TTYPE=y
++# CONFIG_BUSYBOX_CONFIG_FEATURE_TELNET_AUTOLOGIN is not set
 +# CONFIG_BUSYBOX_CONFIG_TELNETD is not set
 +# CONFIG_BUSYBOX_CONFIG_TFTP is not set
 +# CONFIG_BUSYBOX_CONFIG_TFTPD is not set
@@ -839,7 +833,7 @@ diff -Naur a/.config b/.config
 +CONFIG_BUSYBOX_CONFIG_FEATURE_RFC3397=y
 +CONFIG_BUSYBOX_CONFIG_DHCPC_DEFAULT_SCRIPT="/usr/share/udhcpc/default.script"
 +CONFIG_BUSYBOX_CONFIG_UDHCPC_SLACK_FOR_BUGGY_SERVERS=80
-+# CONFIG_BUSYBOX_CONFIG_VCONFIG is not set
++CONFIG_BUSYBOX_CONFIG_VCONFIG=y
 +# CONFIG_BUSYBOX_CONFIG_WGET is not set
 +# CONFIG_BUSYBOX_CONFIG_ZCIP is not set
 +# CONFIG_BUSYBOX_CONFIG_TCPSVD is not set
@@ -947,27 +941,27 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_dnsmasq is not set
 +# CONFIG_PACKAGE_dropbear is not set
 +# CONFIG_PACKAGE_ead is not set
-+# CONFIG_PACKAGE_firewall is not set
++CONFIG_PACKAGE_firewall=y
 +# CONFIG_PACKAGE_hotplug2 is not set
 +CONFIG_PACKAGE_iptables=y
 +CONFIG_PACKAGE_iptables-mod-conntrack=y
-+# CONFIG_PACKAGE_iptables-mod-conntrack-extra is not set
-+# CONFIG_PACKAGE_iptables-mod-extra is not set
++CONFIG_PACKAGE_iptables-mod-conntrack-extra=y
++CONFIG_PACKAGE_iptables-mod-extra=y
 +CONFIG_PACKAGE_iptables-mod-filter=y
 +CONFIG_PACKAGE_iptables-mod-ipopt=y
 +CONFIG_PACKAGE_iptables-mod-iprange=y
 +# CONFIG_PACKAGE_iptables-mod-ipsec is not set
 +# CONFIG_PACKAGE_iptables-mod-ipset is not set
 +CONFIG_PACKAGE_iptables-mod-nat=y
-+# CONFIG_PACKAGE_iptables-mod-nat-extra is not set
++CONFIG_PACKAGE_iptables-mod-nat-extra=y
 +# CONFIG_PACKAGE_iptables-mod-ulog is not set
 +CONFIG_PACKAGE_iptables-utils=y
-+CONFIG_PACKAGE_ldconfig=y
-+# CONFIG_PACKAGE_libc is not set
++# CONFIG_PACKAGE_ldconfig is not set
++CONFIG_PACKAGE_libc=y
 +CONFIG_PACKAGE_libgcc=y
 +CONFIG_PACKAGE_libpthread=y
 +CONFIG_PACKAGE_librt=y
-+CONFIG_PACKAGE_mtd=y
++# CONFIG_PACKAGE_mtd is not set
 +# CONFIG_PACKAGE_opkg is not set
 +# CONFIG_PACKAGE_swconfig is not set
 +# CONFIG_PACKAGE_uci is not set
@@ -982,7 +976,7 @@ diff -Naur a/.config b/.config
 +# disc
 +#
 +# CONFIG_PACKAGE_libfuse is not set
-+CONFIG_PACKAGE_libblkid=y
++# CONFIG_PACKAGE_libblkid is not set
 +CONFIG_PACKAGE_libevent=y
 +# CONFIG_PACKAGE_libext2fs is not set
 +# CONFIG_PACKAGE_libiw is not set
@@ -995,7 +989,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_libreadline is not set
 +# CONFIG_PACKAGE_libuci is not set
 +# CONFIG_PACKAGE_libuci-lua is not set
-+CONFIG_PACKAGE_libuuid=y
++# CONFIG_PACKAGE_libuuid is not set
 +# CONFIG_PACKAGE_linux-atm is not set
 +CONFIG_PACKAGE_zlib=y
 +
@@ -1034,8 +1028,8 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-aoe is not set
 +# CONFIG_PACKAGE_kmod-ata-core is not set
 +# CONFIG_PACKAGE_kmod-ide-aec62xx is not set
-+# CONFIG_PACKAGE_kmod-ide-core is not set
-+# CONFIG_PACKAGE_kmod-loop is not set
++CONFIG_PACKAGE_kmod-ide-core=y
++CONFIG_PACKAGE_kmod-loop=y
 +# CONFIG_PACKAGE_kmod-nbd is not set
 +# CONFIG_PACKAGE_kmod-scsi-core is not set
 +# CONFIG_PACKAGE_kmod-scsi-generic is not set
@@ -1044,9 +1038,9 @@ diff -Naur a/.config b/.config
 +# Cryptographic API modules
 +#
 +# CONFIG_PACKAGE_kmod-crypto-aes is not set
-+# CONFIG_PACKAGE_kmod-crypto-arc4 is not set
++CONFIG_PACKAGE_kmod-crypto-arc4=y
 +# CONFIG_PACKAGE_kmod-crypto-authenc is not set
-+# CONFIG_PACKAGE_kmod-crypto-core is not set
++CONFIG_PACKAGE_kmod-crypto-core=y
 +# CONFIG_PACKAGE_kmod-crypto-des is not set
 +# CONFIG_PACKAGE_kmod-crypto-hmac is not set
 +# CONFIG_PACKAGE_kmod-crypto-hw-geode is not set
@@ -1057,7 +1051,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-crypto-misc is not set
 +# CONFIG_PACKAGE_kmod-crypto-null is not set
 +# CONFIG_PACKAGE_kmod-crypto-ocf is not set
-+# CONFIG_PACKAGE_kmod-crypto-sha1 is not set
++CONFIG_PACKAGE_kmod-crypto-sha1=y
 +# CONFIG_PACKAGE_kmod-crypto-test is not set
 +
 +#
@@ -1068,7 +1062,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-fs-ext3 is not set
 +# CONFIG_PACKAGE_kmod-fs-hfs is not set
 +# CONFIG_PACKAGE_kmod-fs-hfsplus is not set
-+# CONFIG_PACKAGE_kmod-fs-isofs is not set
++CONFIG_PACKAGE_kmod-fs-isofs=y
 +CONFIG_PACKAGE_kmod-fs-mbcache=y
 +# CONFIG_PACKAGE_kmod-fs-minix is not set
 +# CONFIG_PACKAGE_kmod-fs-msdos is not set
@@ -1079,7 +1073,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-fs-vfat is not set
 +# CONFIG_PACKAGE_kmod-fs-xfs is not set
 +# CONFIG_PACKAGE_kmod-fuse is not set
-+# CONFIG_PACKAGE_kmod-nls-base is not set
++CONFIG_PACKAGE_kmod-nls-base=y
 +# CONFIG_PACKAGE_kmod-nls-cp1250 is not set
 +# CONFIG_PACKAGE_kmod-nls-cp1251 is not set
 +# CONFIG_PACKAGE_kmod-nls-cp437 is not set
@@ -1108,21 +1102,21 @@ diff -Naur a/.config b/.config
 +#
 +# Netfilter Extensions
 +#
-+# CONFIG_PACKAGE_kmod-arptables is not set
++CONFIG_PACKAGE_kmod-arptables=y
 +# CONFIG_PACKAGE_kmod-ebtables is not set
 +# CONFIG_PACKAGE_kmod-ip6tables is not set
 +CONFIG_PACKAGE_kmod-ipt-core=y
 +CONFIG_PACKAGE_kmod-ipt-conntrack=y
-+# CONFIG_PACKAGE_kmod-ipt-conntrack-extra is not set
-+# CONFIG_PACKAGE_kmod-ipt-extra is not set
++CONFIG_PACKAGE_kmod-ipt-conntrack-extra=y
++CONFIG_PACKAGE_kmod-ipt-extra=y
 +CONFIG_PACKAGE_kmod-ipt-filter=y
 +CONFIG_PACKAGE_kmod-ipt-ipopt=y
 +CONFIG_PACKAGE_kmod-ipt-iprange=y
 +# CONFIG_PACKAGE_kmod-ipt-ipsec is not set
 +# CONFIG_PACKAGE_kmod-ipt-ipset is not set
 +CONFIG_PACKAGE_kmod-ipt-nat=y
-+# CONFIG_PACKAGE_kmod-ipt-nat-extra is not set
-+# CONFIG_PACKAGE_kmod-ipt-nathelper is not set
++CONFIG_PACKAGE_kmod-ipt-nat-extra=y
++CONFIG_PACKAGE_kmod-ipt-nathelper=y
 +# CONFIG_PACKAGE_kmod-ipt-nathelper-extra is not set
 +# CONFIG_PACKAGE_kmod-ipt-queue is not set
 +# CONFIG_PACKAGE_kmod-ipt-ulog is not set
@@ -1131,14 +1125,14 @@ diff -Naur a/.config b/.config
 +# Network Devices
 +#
 +# CONFIG_PACKAGE_kmod-3c59x is not set
-+# CONFIG_PACKAGE_kmod-8139too is not set
-+# CONFIG_PACKAGE_kmod-e100 is not set
-+# CONFIG_PACKAGE_kmod-e1000 is not set
++CONFIG_PACKAGE_kmod-8139too=y
++CONFIG_PACKAGE_kmod-e100=y
++CONFIG_PACKAGE_kmod-e1000=y
 +# CONFIG_PACKAGE_kmod-hfcmulti is not set
-+# CONFIG_PACKAGE_kmod-natsemi is not set
-+# CONFIG_PACKAGE_kmod-ne2k-pci is not set
-+# CONFIG_PACKAGE_kmod-pcnet32 is not set
-+# CONFIG_PACKAGE_kmod-r8169 is not set
++CONFIG_PACKAGE_kmod-natsemi=y
++CONFIG_PACKAGE_kmod-ne2k-pci=y
++CONFIG_PACKAGE_kmod-pcnet32=y
++CONFIG_PACKAGE_kmod-r8169=y
 +# CONFIG_PACKAGE_kmod-siit is not set
 +# CONFIG_PACKAGE_kmod-sis900 is not set
 +# CONFIG_PACKAGE_kmod-sky2 is not set
@@ -1163,7 +1157,7 @@ diff -Naur a/.config b/.config
 +# CONFIG_PACKAGE_kmod-mp-alg is not set
 +# CONFIG_PACKAGE_kmod-ppp is not set
 +# CONFIG_PACKAGE_kmod-pktgen is not set
-+# CONFIG_PACKAGE_kmod-sched is not set
++CONFIG_PACKAGE_kmod-sched=y
 +# CONFIG_PACKAGE_kmod-sit is not set
 +CONFIG_PACKAGE_kmod-tun=y
 +
@@ -1284,7 +1278,6 @@ diff -Naur a/.config b/.config
 +# CONFIG_UDEVEXTRAS_scsi_id is not set
 +# CONFIG_UDEVEXTRAS_usb_id is not set
 +# CONFIG_UDEVEXTRAS_volume_id is not set
-+# CONFIG_PACKAGE_uuidgen is not set
 +
 +#
 +# Extra packages
