@@ -55,6 +55,8 @@ Function RunInstallers
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+        SetOutPath $DESKTOP
+        File "Uninstall_Tor.bat"
 FunctionEnd
 
 Function LaunchTorVM

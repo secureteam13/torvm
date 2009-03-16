@@ -1208,6 +1208,8 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
   cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
   cp ../torvm-w32/tor-icon-32.ico ./tor.ico
+  cp /src/add/uninstall.bat ./Uninstall_Tor.bat
+  unix2dos ./Uninstall_Tor.bat
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
   cp /src/$TOR_DIR/bin/*.exe bin/

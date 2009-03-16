@@ -55,6 +55,8 @@ Function RunInstallers
 	ExecWait 'msiexec /i "$INSTDIR\polipo.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\torbutton.msi" /qn'
 	ExecWait 'msiexec /i "$INSTDIR\license.msi" NOSC=1 /qn'
+        SetOutPath $DESKTOP
+        File "Uninstall_Tor.bat"
 FunctionEnd
 
 Function LaunchTorVM

@@ -348,6 +348,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	echo "--- Copying packages for ISO image file system ..."; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/*.vbs $(ISODIR)/bin/; \
+	cp files/uninstall.bat $(ISODIR)/add/; \
 	cp files/hdd.img.gz $(ISODIR)/add/; \
 	cp files/defvidalia.conf $(ISODIR)/add/; \
 	cp files/defpolipo.conf $(ISODIR)/add/; \
