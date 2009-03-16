@@ -55,3 +55,6 @@ IF EXIST "%USERPROFILE%\Local Settings\Application Data\TorInstPkgs" (
   cd ..
   rmdir TorInstPkgs
 )
+IF EXIST "%USERPROFILE%\Desktop\Uninstall_Tor.bat" (
+  del /F "%USERPROFILE%\Desktop\Uninstall_Tor.bat"
+)
