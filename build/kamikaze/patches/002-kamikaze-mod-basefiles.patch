@@ -269,8 +269,8 @@ diff -Naur a/package/base-files/files/bin/login b/package/base-files/files/bin/l
 -exec /bin/ash --login
 diff -Naur a/package/base-files/files/etc/banner b/package/base-files/files/etc/banner
 --- a/package/base-files/files/etc/banner	2005-12-20 15:03:08.038259000 +0000
-+++ b/package/base-files/files/etc/banner	2009-02-01 09:30:07.138367448 +0000
-@@ -1,10 +1,2 @@
++++ b/package/base-files/files/etc/banner	2009-03-16 09:24:27.057467560 +0000
+@@ -1,10 +1,26 @@
 -  _______                     ________        __
 - |       |.-----.-----.-----.|  |  |  |.----.|  |_
 - |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
@@ -281,7 +281,31 @@ diff -Naur a/package/base-files/files/etc/banner b/package/base-files/files/etc/
 -  * 10 oz Triple sec  mixture into 10 shot glasses.
 -  * 10 oz lime juice  Salute!
 - ---------------------------------------------------
-+Tor Virtual Machine BUILDDATE BUILDVER
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++ Tor Virtual Machine - version 0.0.1
 +
 diff -Naur a/package/base-files/files/etc/config/fstab b/package/base-files/files/etc/config/fstab
 --- a/package/base-files/files/etc/config/fstab	2007-09-22 13:47:20.783817000 +0000
@@ -1229,8 +1253,8 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-16 00:58:48.775587448 +0000
-@@ -1,88 +1,231 @@
++++ b/package/base-files/files/etc/preinit	2009-03-16 09:32:25.894673240 +0000
+@@ -1,88 +1,232 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
@@ -1340,6 +1364,7 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +# last attempt: if no disk exists, assume hda1 and create manually with mknod.
 +hddev=/dev/hda1
 +hdopt="b 3 1"
++hdmntopt="-onoatime,nodiratime"
 +if [ ! -e $hddev ]; then
 +  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
 +  if [ $? -eq 0 ]; then
@@ -1347,7 +1372,7 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  fi
 +fi
 +mkdir /home
-+if [ -e $hddev ] && mount $hddev /home; then
++if [ -e $hddev ] && mount $hdmntopt $hddev /home; then
 +  # check for saved entropy state and launch update daemon if exists
 +  syshome=/home/system
 +  if [ ! -d $syshome ]; then
