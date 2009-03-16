@@ -313,7 +313,7 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-03-16 00:58:28.063736128 +0000
++++ b/package/tor/files/tor.init	2009-03-16 02:53:51.141268368 +0000
 @@ -0,0 +1,117 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
@@ -374,7 +374,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	fi;
 +	chown $RUN_USER:$RUN_GROUP $CONF_F
 +	# start tor process
-+	$BIN -f $CONF_F > $SLOG_F 2>&1
++	$BIN --runasdaemon 1 -f $CONF_F > $SLOG_F 2>&1
 +	# TODO for now used fixed control port and socks port accept rule
 +	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9051 -j ACCEPT
 +	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9050 -j ACCEPT
