@@ -47,14 +47,14 @@ FunctionEnd
 Function RunInstallers
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\license.msi" NOSC=1 /qn'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$PROGRAMFILES\Thandy\thandy.exe" update --install "--repo=$PROGRAMFILES\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
 FunctionEnd
 
 Function LaunchTorVM
