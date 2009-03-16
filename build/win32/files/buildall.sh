@@ -1212,7 +1212,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   cp $thandir/Thandy.exe bin/
   cp /src/$TOR_DIR/bin/*.exe bin/
   cp /src/$TOR_DIR/contrib/*.ico ./
-  cp /src/$TOR_DIR/share/tor/geoip ./
+  # XXX: disabled for now; we do geoip in Vidalia and this is large.
+  # cp /src/$TOR_DIR/share/tor/geoip ./
+  echo "# The Tor VM kernel builds do not yet ship with a geoip data file" > geoip
   cp /src/$TOR_DIR/src/config/torrc.sample ./
   for FNAME in README Usage.html Authors ChangeLog LICENSE; do
     cp /src/$TOR_DIR/$FNAME ./
