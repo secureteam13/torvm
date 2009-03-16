@@ -23,6 +23,7 @@
 #define TOR_HDD_FILE   "hdd.img"
 #define QEMU_DEF_MEM   32
 #define CAP_MTU        1480
+#define CMDMAX         4096
 
 BOOL buildpath (const TCHAR *dirname,
                 TCHAR **fullpath);
@@ -98,7 +99,7 @@ static void _flog (HANDLE        fda,
                    const char *  format,
                    va_list       argptr)
 {
-  static const int  msgmax = 4096;
+  static const int  msgmax = CMDMAX;
   static char *     msgbuf = NULL;
   static char *     coff = NULL;
   const char *      newline = "\r\n";
@@ -239,13 +240,12 @@ static BOOL buildsyspath (DWORD  syspathtype,
                           LPTSTR append,
                           LPTSTR *fpath)
 {
-#define BUFSZ 4096
   DWORD   retval;
   DWORD   errnum;
   LPTSTR  defval = NULL;
   LPTSTR  envvar;
   LPTSTR  dsep = "\\";
-  *fpath = malloc(BUFSZ * sizeof(TCHAR));
+  *fpath = malloc(CMDMAX * sizeof(TCHAR));
   if(*fpath == NULL) {
     lerror ("buildsyspath: out of memory.");
     free(envvar);
@@ -265,7 +265,7 @@ static BOOL buildsyspath (DWORD  syspathtype,
     envvar = getenv("USERPROFILE");
   if(!envvar) {
     if (defval) {
-      strncpy(*fpath, defval, (BUFSZ -1));
+      strncpy(*fpath, defval, (CMDMAX -1));
       return TRUE;
     }
     free(*fpath);
@@ -277,7 +277,7 @@ static BOOL buildsyspath (DWORD  syspathtype,
     if (syspathtype == SYSDIR_LCLPROGRAMS)
       lclpost = "Programs";
     /* local appdata and programs is built against the user profile root */
-    snprintf (*fpath, (BUFSZ -1),
+    snprintf (*fpath, (CMDMAX -1),
               "%s%s%s%s%s%s%s",
               envvar,
               dsep,
@@ -288,7 +288,7 @@ static BOOL buildsyspath (DWORD  syspathtype,
               append ? append : "");
   }
   else {
-    snprintf (*fpath, (BUFSZ -1),
+    snprintf (*fpath, (CMDMAX -1),
               "%s%s%s",
               envvar,
               append ? dsep : "",
@@ -296,7 +296,6 @@ static BOOL buildsyspath (DWORD  syspathtype,
   }
   return TRUE;
 }
-#undef BUFSZ
 
 /* initial attempt to keep file locations dynamic and configurable.
  */
@@ -404,7 +403,7 @@ BOOL copyfile (LPTSTR srcpath,
                LPTSTR destpath)
 {
   HANDLE src, dest;
-  DWORD buffsz = 4096;
+  DWORD buffsz = CMDMAX;
   DWORD len, written;
   LPTSTR buff;
   src = CreateFile (srcpath,
@@ -718,7 +717,7 @@ BOOL installtornpf (void)
   LPTSTR srcname = NULL;
   LPTSTR destname = NULL;
   CHAR * buff = NULL;
-  DWORD  buffsz = 4096;
+  DWORD  buffsz = CMDMAX;
   DWORD  len;
   DWORD  written;
   if (!buildsyspath(SYSDIR_WINROOT, WIN_DRV_DIR "\\" TOR_CAP_SYS, &destname)) {
@@ -1549,10 +1548,16 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                    char **               cmdline)
 {
 /* DHCPSVR DHCPNAME LEASE ISDHCP CTLSOCK HASHPW */
-  const DWORD  cmdlen = 4096;
+  const DWORD  cmdlen = CMDMAX;
   *cmdline = malloc(cmdlen);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
+
+  /* Give the VM our hostname, since it is assuming the host's place in the network. */
+  char * myhostname = getenv("COMPUTERNAME");
+  if (!myhostname)
+    myhostname = getenv("HOSTNAME");
+
   /* control port password is "password"
    * TODO: use Crypto API to collect entropy for ephemeral password generation
    */
@@ -1566,8 +1571,10 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s%s%s  IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
+                myhostname ? " USEHOSTNAME=" : "",
+                myhostname ? myhostname : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1578,9 +1585,15 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 ctlpass);
     }
     else {
+      /* fallback if we can't get HOSTNAME, use DHCP client name. */
+      if (!myhostname)
+        myhostname = brif->dhcpname;
+
       snprintf (*cmdline, cmdlen -1,
-                "%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
+                myhostname ? " USEHOSTNAME=" : "",
+                myhostname ? myhostname : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1617,9 +1630,9 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
     return FALSE;
   }
 
-  TCHAR *cmd = malloc(4096);
+  TCHAR *cmd = malloc(CMDMAX);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
-  snprintf (cmd, 4095,
+  snprintf (cmd, CMDMAX -1,
             "\"%s\" -L . -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
@@ -1638,12 +1651,14 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   return TRUE;
 }
 
-BOOL runvidalia ()
+BOOL runvidalia (BOOL  indebug)
 {
+  BOOL  retval = FALSE;
   PROCESS_INFORMATION pi;
   STARTUPINFO si;
   SECURITY_ATTRIBUTES sattr;
-  LPTSTR cmd = NULL;
+  TCHAR * cmd = NULL;
+  LPTSTR exe = NULL;
   LPTSTR dir = NULL;
   LPTSTR vcfgtmp = NULL;
   LPTSTR pcfgtmp = NULL;
@@ -1657,34 +1672,34 @@ BOOL runvidalia ()
   
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defvidalia.conf", &vcfgtmp)) {
     lerror ("Unable to build path for default vidalia config file."); 
-    return FALSE;
+    goto cleanup;
   } 
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defpolipo.conf", &pcfgtmp)) {
     lerror ("Unable to build path for default polipo config file.");
-    return FALSE;
+    goto cleanup;
   } 
   if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia", &dir)) {
     lerror ("Unable to build path for Vidalia programs dir."); 
-    return FALSE;
+    goto cleanup;
   } 
   if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia\\vidalia.conf", &vcfgdest)) {
     lerror ("Unable to build path for vidalia dest config file."); 
-    return FALSE;
+    goto cleanup;
   } 
   if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia\\polipocfg.txt", &pcfgdest)) {
     lerror ("Unable to build path for polipo dest config."); 
-    return FALSE;
+    goto cleanup;
   } 
-  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &cmd)) {
+  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &exe)) {
     lerror ("Unable to build path for vidalia marble exe."); 
-    return FALSE;
+    goto cleanup;
   } 
-  if (!exists(cmd)) {
+  if (!exists(exe)) {
     /* assume not a marble vidalia install */
-    free (cmd);
-    if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia.exe", &cmd)) {
+    free (exe);
+    if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia.exe", &exe)) {
       lerror ("Unable to build path for vidalia exe."); 
-      return FALSE;
+      goto cleanup;
     } 
   }
   if (!exists(vcfgdest)) {
@@ -1696,6 +1711,12 @@ BOOL runvidalia ()
     copyfile(pcfgtmp, pcfgdest);
   }
   
+  cmd = malloc(CMDMAX);
+  snprintf (cmd, CMDMAX -1,
+            "\"%s\"%s",
+            exe,
+            indebug ? " -loglevel debug -logfile debuglog.txt" :
+                      " -loglevel info -logfile infolog.txt");
   ldebug ("Launching Vidalia in dir: %s , with cmd: %s", dir, cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1708,9 +1729,29 @@ BOOL runvidalia ()
                      &si,
                      &pi) ) {
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
-    return FALSE;
+    goto cleanup;
   }
-  return TRUE;
+  else {
+    retval = TRUE;
+  }
+
+ cleanup:
+  if(cmd)
+    free(cmd);
+  if(exe)
+    free(exe);
+  if(dir)
+    free(dir);
+  if(vcfgtmp)
+    free(vcfgtmp);
+  if(pcfgtmp)
+    free(pcfgtmp);
+  if(vcfgdest)
+    free(vcfgdest);
+  if(pcfgdest)
+    free(pcfgdest);
+
+  return retval;
 }
 
 BOOL launchtorvm (PROCESS_INFORMATION * pi,
@@ -1726,8 +1767,8 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
-  /* DWORD opts = BELOW_NORMAL_PRIORITY_CLASS; */
-  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  /* If Tor VM Qemu instance is not below normal prio, performance of host suffers. */
+  DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS;
   DWORD numwritten;
   DWORD pipesz;
   LPTSTR qemubin = NULL;
@@ -1748,9 +1789,9 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
 /*  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL; */
-  cmd = malloc(4096);
+  cmd = malloc(CMDMAX);
   if (tapname) {
-    snprintf (cmd, 4095,
+    snprintf (cmd, CMDMAX -1,
               "\"%s\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
 	      qemubin,
               cmdline,
@@ -1760,7 +1801,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
               tapname);
   }
   else {
-    snprintf (cmd, 4095,
+    snprintf (cmd, CMDMAX -1,
               "\"%s\" -name \"Tor VM \" -L . -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
 	      qemubin,
               cmdline,
@@ -1902,8 +1943,8 @@ BOOL detachself (void)
   LPTSTR args = "";
   bgstartupinfo (&si);
   getmypath(&mypath);
-  cmd = malloc (4096);
-  snprintf (cmd, 4095,
+  cmd = malloc (CMDMAX);
+  snprintf (cmd, CMDMAX -1,
             "\"%s\" %s",
             mypath, args);
   if( !CreateProcess(NULL,
@@ -2294,7 +2335,7 @@ int main(int argc, char **argv)
    * for the 10. tap control port and externally managed Tor instance.
    */
   if (bundle) {
-    runvidalia();
+    runvidalia(indebug);
   }
 
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we

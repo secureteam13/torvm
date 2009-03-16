@@ -1229,7 +1229,7 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-15 04:14:48.433644176 +0000
++++ b/package/base-files/files/etc/preinit	2009-03-16 00:58:48.775587448 +0000
 @@ -1,88 +1,231 @@
  #!/bin/sh
 -# Copyright (C) 2006 OpenWrt.org
@@ -1286,7 +1286,7 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +HOSTNAME="Tor_VM"
 +echo $ARGS | grep ' USEHOSTNAME=' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
-+  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z-_]//g'`
++  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z_-]//g'`
 +fi
 +export HOSTNAME
 +hostname "$HOSTNAME" >/dev/null 2>&1
@@ -1430,8 +1430,8 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  export IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
 +  export MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
 +  export GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.]//g'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9]//g'`
 +  export ISDHCP=0
 +  dn "Setting IP $IP / $MASK via $GW ..."
 +  ifconfig eth0 hw ether $MAC
@@ -1441,7 +1441,7 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
 +  if [ $? -eq 0 ]; then
 +    export ISDHCP=1
-+    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//'`
++    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
 +    export DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
 +    # fire up udhcpc to keep the lease active for however long is needed
 +    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
@@ -1527,13 +1527,9 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
  fi
 diff -Naur a/package/base-files/files/etc/profile b/package/base-files/files/etc/profile
 --- a/package/base-files/files/etc/profile	2009-01-07 04:38:57.851159000 +0000
-+++ b/package/base-files/files/etc/profile	2009-03-15 04:12:57.481511464 +0000
-@@ -1,15 +1,11 @@
- #!/bin/sh
- [ -f /etc/banner ] && cat /etc/banner
- 
--export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/etc/init.d
++++ b/package/base-files/files/etc/profile	2009-03-16 00:59:14.150729840 +0000
+@@ -4,12 +4,8 @@
+ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
  export HOME=$(grep -e "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
  export HOME=${HOME:-/root}
 -export PS1='\u@\h:\w\$ '
