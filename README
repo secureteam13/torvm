@@ -1,103 +1,21 @@
 
-                    Transparent Tor Proxy Virtual Machine
+  Transparent Tor Proxy Virtual Machine
 
+Software Copyright (C) 2008-2009  The Tor Project, Inc.
+See LICENSE file for rights and terms.
 
-See the doc/ directory for design and implementation details and the LICENSE
-file for rights and terms.
+Current documentation for this software is available at:
+  https://www.torproject.org/torvm/
 
-To build you will need a *nix environment and a Windows XP or later operating
-system for Qemu and libraries.  Various build configuration options and other
-basic features are not yet avilable; edit the Makefile to adjust manually.
+Please read the information there before requesting support.
 
+This initial release is still under heavy development. There is a bug tracking
+database for known issues and requests:
+  http://bugs.noreply.org/flyspray/index.php?tasks=all&project=4&cat=19
 
+To test the latest fixes or features periodic builds of the win32 bundles and
+packages are available at:
+  https://data.peertech.org/torbld/info/Tor_VM-svn
 
-NOTE: Some subversion repositories are accessed via SSL with keys that may need
-to be accepted manually.  To confirm that you have authenticated the keys used
-issue the following commands as the build user and approve the keys if needed:
-
-    svn info https://svn.torproject.org/svn/torvm/trunk/
-    # Fingerprint: 55:62:fe:1b:60:f9:35:fa:50:44:dd:33:ea:54:77:26:e4:da:5f:72
-
-    svn info https://svn.openwrt.org/openwrt/trunk/
-    # Fingerprint: a1:0a:d8:2d:af:4e:67:92:18:a0:27:b6:9f:2b:e1:12:08:28:a0:b1
-
-    svn info https://svn.vidalia-project.net/svn/vidalia/trunk/
-    # Fingerprint: 1e:ff:c9:02:af:53:50:f8:7a:6f:6f:95:25:c3:fb:50:78:15:9b:28
-
-
-
-Run 'make' to build the VM kernel image and Windows build ISO image.  Once the
-Windows build is done a complete Tor virtual machine package should be zipped
-up ready for distribution in the C:\Tor_VM folder.  You will need to have the
-Windows Driver Development Kit installed for the WinPcap and TAP-Win32 driver
-compilation.  You can download the DDK installer ISO at:
-
-    http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
-
-
-
-If you have trouble with the build process downloading the various sources
-from mirrors and upstream repositories a current copy of all the kamikaze and
-win32 archives is available as: http://peertech.org/files/torvmdlcache.tar
-
-The extracted dl and wdl directories can be used in the build by passing their
-location to the make command:
-
-    make DLDIR=./dl WDLDIR=./wdl all
-
-
-
-Some files and paths of interest:
-
-./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
-> this is the Linux kernel and initramfs used in the VM.
-
-./build/win32/w32build.iso
-> this is the automated win32 build ISO for Qemu.  Once everything is built
-> the Qemu program and libraries will be placed in C:\Tor_VM
-
-./build/kamikaze/patches/
-> this directory contains the patch set applied to the kamikaze distribution
-> for Tor VM customizations.
-
-./build/win32/files/
-> this directory contains the scripts and files used in the Windows build and
-> packaged Qemu Tor_VM folder.
-
-./build/win32/patches/
-> this directory contains the patches applied to Qemu for bridged ethernet
-> support via WinPcap and modifications for the WinPcap and TAP-Win32 drivers
-> to prevent collision with any existing installed packages.
-
-
-
-Fully automated builds are supported with some minor modifications to both the
-Linux build host and the win32 build VM.  There are three steps to this setup:
-
-First, create a restricted user where the build targets will be copied to from
-the win32 build VM OS.  You can use the /bin/rbash restricted shell or similar
-utility to ensure that scp privileges and not much else are provided.  Create an
-SSH identity key for this user and copy the private key where the build user can
-access it.
-
-Second, configure the win32 build VM OS with a Startup script that invokes the
-install.bat script on the win32 build ISO image.  This image is assumed to be
-mounted when the win32 build VM OS boots up.
-
-Last, pass the requisite information to the build script so that the necessary
-commands are invoked during build to launch the win32 build VM and have the
-completed build files copied back out to the host.  For example:
-
-    make DLDIR=/var/build/dl WDLDIR=/var/build/wdl  \
-         W32AUTO_BUILD_CMD=/var/build/runbldvm.sh   \
-         AUTO_SHUTDOWN=TRUE                         \
-         BUILD_SCP_IDF=/var/build/build_id_rsa      \
-         BUILD_SCP_USER=build                       \
-         BUILD_SCP_HOST=192.168.1.2                 \
-         BUILD_SCP_DIR=/home/build                  \
-         all
-
-When the build completes a Tor_VM_<timestamp> directory will be created in the
-requested location.  The timestamp is an integer value representing the UNIX
-epoch in seconds.
+See the HACKING file for additional developer related information.
 

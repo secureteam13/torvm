@@ -10,6 +10,40 @@ diff -Naur a/CMakeLists.txt b/CMakeLists.txt
  set(VERSION     "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}-svn")
  message(STATUS  "Configuring Vidalia ${VERSION}")
  project(Vidalia)
+diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
+--- a/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
++++ b/pkg/build-geoip-cache.sh	2009-03-16 05:33:25.382762424 +0000
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/bin/bash
+ ##
+ ##  $Id: build-geoip-cache.sh 2362 2008-02-29 04:30:11Z edmanm $
+ ## 
+@@ -13,15 +13,9 @@
+ 
+ 
+ DIRURL="http://tor.noreply.org/tor/status/all"
+-GEOIPURL="http://geoip.vidalia-project.net/cgi-bin/geoip"
++GEOIPURL="http://peertech.org/geoip"
+ CACHEFILE="geoip-cache"
+ 
+-if [ "$1" == "-notimestamp" -o "$1" == "--notimestamp" ]; then
+-  timestamp=""
+-else
+-  timestamp=":$(date +%s)"
+-fi
+-
+ # Fetch a list of server IP addresses
+ ipaddrs=$(wget -q -O - "$DIRURL" | awk '$1 == "r" { print $7 }' | sort | uniq | tr "\n" ",")
+ 
+@@ -32,6 +26,6 @@
+ IFS=$'\n'
+ rm -f $CACHEFILE
+ for geoip in $geoips; do
+-  echo "$geoip""$timestamp" >> "$CACHEFILE"
++  echo "$geoip" >> "$CACHEFILE"
+ done
+ 
 diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
 --- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
 +++ b/pkg/win32/polipo.conf	2009-03-07 12:47:21.712807024 +0000
@@ -1581,7 +1615,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
  /** Called when Tor has printed a log message to stdout. */
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
-+++ b/src/vidalia/config/torsettings.cpp	2009-03-07 03:57:41.693104376 +0000
++++ b/src/vidalia/config/torsettings.cpp	2009-03-16 05:35:49.339877616 +0000
 @@ -61,6 +61,7 @@
  {
  #if defined(Q_OS_WIN32)
@@ -1606,6 +1640,49 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
    setDefault(SETTING_CONTROL_ADDR,  "127.0.0.1");
    setDefault(SETTING_CONTROL_PORT,  9051);
    setDefault(SETTING_AUTH_METHOD,   toString(DEFAULT_AUTH_METHOD));
+@@ -88,6 +96,9 @@
+ {
+   QHash<QString, QString> conf;
+   QString hashedPassword;
++  QString tor = localValue(SETTING_TOR_EXECUTABLE).toString();
++  if (tor.isEmpty())
++    return (true);
+ 
+   conf.insert(SETTING_CONTROL_PORT,
+               localValue(SETTING_CONTROL_PORT).toString());
+@@ -104,9 +115,12 @@
+                           ? hashPassword(randomPassword())
+                           : hashPassword(getControlPassword());
+       if (hashedPassword.isEmpty()) {
++#if 0
+         if (errmsg)
+           *errmsg =  tr("Failed to hash the control password.");
+         return false;
++#endif
++return true;
+       }
+       conf.insert(TOR_ARG_COOKIE_AUTH,    "0");
+       conf.insert(TOR_ARG_HASHED_PASSWORD, hashedPassword);
+@@ -139,7 +153,7 @@
+ {
+   QString tor = localValue(SETTING_TOR_EXECUTABLE).toString();
+   if (tor.isEmpty()) /* Don't let the Tor executable name be empty */
+-    tor = defaultValue(SETTING_TOR_EXECUTABLE).toString();
++    return tor;
+   return QDir::convertSeparators(tor);
+ }
+ 
+@@ -156,8 +170,10 @@
+ {
+   QString torrc;
+   TorControl *tc = torControl();
++#if 0
+   if (tc && tc->isConnected() && tc->getInfo("config-file", torrc))
+     return QDir::convertSeparators(torrc);
++#endif
+   return QDir::convertSeparators(localValue(SETTING_TORRC).toString());
+ }
+ 
 diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidaliasettings.cpp
 --- a/src/vidalia/config/vidaliasettings.cpp	2009-02-03 02:09:39.844750000 +0000
 +++ b/src/vidalia/config/vidaliasettings.cpp	2009-03-07 03:57:41.694104224 +0000
