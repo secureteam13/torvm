@@ -297,6 +297,34 @@ static BOOL buildsyspath (DWORD  syspathtype,
   return TRUE;
 }
 
+static BOOL escquote(LPTSTR  path,
+                     LPTSTR *epath)
+{
+  DWORD  buflen;
+  LPTSTR ci = path;
+  LPTSTR cv;
+  *epath = NULL;
+  if (!*path)
+    return FALSE;
+  buflen = strlen(path)*2 + 1;
+  *epath = malloc(buflen);
+  if (!*epath)
+    return FALSE;
+  cv=*epath;
+  while (*ci) {
+    if (*ci == '\\') {
+      *cv++ = '\\';
+      *cv++ = '\\';
+    }
+    else {
+      *cv++ = *ci;
+    }
+    *ci++;
+  }
+  *cv = 0;
+  return TRUE;
+}
+
 /* initial attempt to keep file locations dynamic and configurable.
  */
 static BOOL buildfpath (DWORD   pathtype,
@@ -431,6 +459,63 @@ BOOL copyfile (LPTSTR srcpath,
     return FALSE;
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
     WriteFile(dest, buff, len, &written, NULL);
+  free (buff);
+  CloseHandle (src);
+  CloseHandle (dest);
+
+  return TRUE;
+}
+
+BOOL copyvidaliacfg (LPTSTR srcpath,
+                     LPTSTR destpath,
+                     LPTSTR datadir,
+                     LPTSTR polipocfg)
+{
+  HANDLE src, dest;
+  DWORD buffsz = CMDMAX;
+  DWORD len, written;
+  LPTSTR buff;
+  LPTSTR epath;
+  src = CreateFile (srcpath,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (src == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  dest = CreateFile (destpath,
+                     GENERIC_WRITE,
+                     0,
+                     NULL,
+                     CREATE_NEW,
+                     FILE_ATTRIBUTE_NORMAL,
+                     NULL);
+  if (dest == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  buff = malloc(buffsz);
+  if (!buff) 
+    return FALSE;
+
+  if (escquote(polipocfg, &epath)) {
+    snprintf(buff, buffsz -1,
+             "[General]\r\nProxyExecutableArguments=-c, %s\r\n",
+             epath);
+    WriteFile(dest, buff, strlen(buff), &written, NULL);
+    free(epath);
+  }
+  while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
+    WriteFile(dest, buff, len, &written, NULL);
+  if (escquote(datadir, &epath)) {
+    snprintf(buff, buffsz -1,
+             "DataDirectory=%s\n",
+             epath);
+    WriteFile(dest, buff, strlen(buff), &written, NULL);
+    free(epath);
+  }
   free (buff);
   CloseHandle (src);
   CloseHandle (dest);
@@ -1686,7 +1771,7 @@ BOOL runvidalia (BOOL  indebug)
     lerror ("Unable to build path for vidalia dest config file."); 
     goto cleanup;
   } 
-  if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia\\polipocfg.txt", &pcfgdest)) {
+  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\config.txt", &pcfgdest)) {
     lerror ("Unable to build path for polipo dest config."); 
     goto cleanup;
   } 
@@ -1704,7 +1789,7 @@ BOOL runvidalia (BOOL  indebug)
   }
   if (!exists(vcfgdest)) {
     ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
-    copyfile(vcfgtmp, vcfgdest);
+    copyvidaliacfg(vcfgtmp, vcfgdest, dir, pcfgdest);
   }
   if (!exists(pcfgdest)) {
     ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
@@ -1713,8 +1798,9 @@ BOOL runvidalia (BOOL  indebug)
   
   cmd = malloc(CMDMAX);
   snprintf (cmd, CMDMAX -1,
-            "\"%s\"%s",
+            "\"%s\" -tor-address %s%s",
             exe,
+            TOR_TAP_VMIP,
             indebug ? " -loglevel debug -logfile debuglog.txt" :
                       " -loglevel info -logfile infolog.txt");
   ldebug ("Launching Vidalia in dir: %s , with cmd: %s", dir, cmd);

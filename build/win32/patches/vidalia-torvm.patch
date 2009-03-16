@@ -1542,14 +1542,15 @@ diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
 +
 diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
 --- a/src/torcontrol/torcontrol.cpp	2009-02-24 03:20:58.105033000 +0000
-+++ b/src/torcontrol/torcontrol.cpp	2009-03-13 18:41:09.504913168 +0000
-@@ -73,16 +73,22 @@
++++ b/src/torcontrol/torcontrol.cpp	2009-03-16 10:32:51.838446000 +0000
+@@ -73,16 +73,23 @@
  void
  TorControl::start(const QString &tor, const QStringList &args)
  {
 +  if (tor.length() == 0) {
 +    _torProcess = 0;
 +    emit started();
++    return;
 +  }
    if (isRunning()) {
      emit started();
@@ -1568,7 +1569,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
  #else
      /* Start a new Tor process */
      _torProcess->start(expand_filename(tor), args);
-@@ -95,11 +101,17 @@
+@@ -95,11 +102,17 @@
  TorControl::stop(QString *errmsg)
  {
    bool rc = false;
@@ -1591,7 +1592,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
  }
  
  /** Emits a signal that the Tor process stopped */
-@@ -118,6 +130,7 @@
+@@ -118,6 +131,7 @@
  bool
  TorControl::isVidaliaRunningTor()
  {
@@ -1599,7 +1600,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
    return (_torProcess->state() != QProcess::NotRunning);
  }
  
-@@ -125,8 +138,11 @@
+@@ -125,8 +139,11 @@
  bool
  TorControl::isRunning()
  {
@@ -1613,10 +1614,21 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
  }
  
  /** Called when Tor has printed a log message to stdout. */
+@@ -454,6 +471,10 @@
+   cmd.addArgument(TorSignal::toString(sig));
+ 
+   if (sig == TorSignal::Shutdown || sig == TorSignal::Halt) {
++    if (!_torProcess) {
++      _controlConn->disconnect();
++      return true;
++    }
+     /* Tor closes the connection before giving us a response to any commands
+      * asking it to stop running, so don't try to get a response. */
+     return _controlConn->send(cmd, errmsg);
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
-+++ b/src/vidalia/config/torsettings.cpp	2009-03-16 05:35:49.339877616 +0000
-@@ -61,6 +61,7 @@
++++ b/src/vidalia/config/torsettings.cpp	2009-03-16 10:58:45.486255632 +0000
+@@ -61,16 +61,28 @@
  {
  #if defined(Q_OS_WIN32)
    QString programFiles = win32_program_files_folder();
@@ -1624,7 +1636,12 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
    if (QFileInfo(programFiles + "\\Vidalia Bundle\\Tor\\tor.exe").exists())
      setDefault(SETTING_TOR_EXECUTABLE,
                 programFiles + "\\Vidalia Bundle\\Tor\\tor.exe");
-@@ -70,7 +71,14 @@
+-  else
++  else if (QFileInfo(programFiles + "\\Tor\\tor.exe").exists())
+     setDefault(SETTING_TOR_EXECUTABLE, programFiles + "\\Tor\\tor.exe");
++  else
++    setDefault(SETTING_TOR_EXECUTABLE, "");
+ #else
    setDefault(SETTING_TOR_EXECUTABLE, "tor");
  #endif
  
@@ -1632,6 +1649,8 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
 +#if defined(Q_OS_WIN32)
 +  if (QFileInfo(appData + "\\Tor\\torrc.txt").exists())
 +    setDefault(SETTING_TORRC, appData + "\\Tor\\torrc.txt");
++  else if (QFileInfo(appData + "\\Vidalia\\torrc.txt").exists())
++    setDefault(SETTING_TORRC, appData + "\\Vidalia\\torrc.txt");
 +  else
 +    setDefault(SETTING_TORRC,         Vidalia::dataDirectory() + "/torrc");
 +#else
@@ -1640,7 +1659,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
    setDefault(SETTING_CONTROL_ADDR,  "127.0.0.1");
    setDefault(SETTING_CONTROL_PORT,  9051);
    setDefault(SETTING_AUTH_METHOD,   toString(DEFAULT_AUTH_METHOD));
-@@ -88,6 +96,9 @@
+@@ -88,6 +100,9 @@
  {
    QHash<QString, QString> conf;
    QString hashedPassword;
@@ -1650,7 +1669,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
  
    conf.insert(SETTING_CONTROL_PORT,
                localValue(SETTING_CONTROL_PORT).toString());
-@@ -104,9 +115,12 @@
+@@ -104,9 +119,12 @@
                            ? hashPassword(randomPassword())
                            : hashPassword(getControlPassword());
        if (hashedPassword.isEmpty()) {
@@ -1663,7 +1682,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
        }
        conf.insert(TOR_ARG_COOKIE_AUTH,    "0");
        conf.insert(TOR_ARG_HASHED_PASSWORD, hashedPassword);
-@@ -139,7 +153,7 @@
+@@ -139,7 +157,7 @@
  {
    QString tor = localValue(SETTING_TOR_EXECUTABLE).toString();
    if (tor.isEmpty()) /* Don't let the Tor executable name be empty */
@@ -1672,7 +1691,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
    return QDir::convertSeparators(tor);
  }
  
-@@ -156,8 +170,10 @@
+@@ -156,8 +174,10 @@
  {
    QString torrc;
    TorControl *tc = torControl();
@@ -1706,6 +1725,93 @@ diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidalia
  #if defined(Q_WS_WIN)
    setDefault(SETTING_CHECK_FOR_UPDATES, true);
  #else
+diff -Naur a/src/vidalia/mainwindow.cpp b/src/vidalia/mainwindow.cpp
+--- a/src/vidalia/mainwindow.cpp	2009-02-23 01:36:04.102244000 +0000
++++ b/src/vidalia/mainwindow.cpp	2009-03-16 10:42:36.730528888 +0000
+@@ -127,6 +127,7 @@
+   createTrayIcon();
+   /* Start with Tor initially stopped */
+   _status = Unset;
++  _isTorExt = false;
+   _isVidaliaRunningTor = false;
+   updateTorStatus(Stopped);
+   
+@@ -332,7 +333,7 @@
+   if (settings.isAutoUpdateEnabled()) {
+     QDateTime lastCheckedAt = settings.lastCheckedForUpdates();
+     if (UpdateProcess::shouldCheckForUpdates(lastCheckedAt)) {
+-      if (settings.runTorAtStart() && ! _torControl->circuitEstablished()) {
++      if (! _torControl->circuitEstablished()) {
+         /* We started Tor but it hasn't bootstrapped yet, so give it a bit
+          * before we decide to check for updates. If Tor manages to build a
+          * circuit before this timer times out, we will stop the timer and
+@@ -362,7 +363,8 @@
+ void
+ MainWindow::shutdown()
+ {
+-  if (_torControl->isVidaliaRunningTor()) {
++  VidaliaSettings vidalia_settings;
++  if (!_isTorExt && _torControl->isVidaliaRunningTor()) {
+     /* Kill our Tor process now */ 
+     _torControl->stop();
+   }
+@@ -378,8 +380,6 @@
+   }
+ 
+   /* Kill the browser and IM client if using the new launcher */
+-  VidaliaSettings vidalia_settings;
+-
+   if (! vidalia_settings.getBrowserDirectory().isEmpty()) {
+     /* Disconnect the finished signals so that we won't try to exit Vidalia again */
+     QObject::disconnect(_browserProcess, SIGNAL(finished(int, QProcess::ExitStatus)), 0, 0);
+@@ -411,7 +411,8 @@
+ void
+ MainWindow::close()
+ {
+-  if (_torControl->isVidaliaRunningTor()) {
++  VidaliaSettings vidalia_settings;
++  if (!_isTorExt && _torControl->isVidaliaRunningTor()) {
+     /* If we're running a server currently, ask if we want to do a delayed
+      * shutdown. If we do, then close Vidalia only when Tor stops. Otherwise,
+      * kill Tor and bail now. */
+@@ -1045,6 +1046,10 @@
+       args << "CookieAuthentication"  << "0";
+   }
+ 
++  /* XXX: this is the dirty hack to integrate with Tor VM currently... */
++  if (settings.getExecutable().isEmpty()) {
++    _isTorExt = true;
++  }
+   /* This doesn't get set to false until Tor is actually up and running, so we
+    * don't yell at users twice if their Tor doesn't even start, due to the fact
+    * that QProcess::stopped() is emitted even if the process didn't even
+@@ -1137,11 +1142,15 @@
+ bool
+ MainWindow::stop()
+ {
++  VidaliaSettings settings;
+   ServerSettings server(_torControl);
+   QString errmsg;
+   TorStatus prevStatus;
+   bool rc;
+ 
++  if (_isTorExt)
++    return true;
++
+   /* If we're running a server, give users the option of terminating
+    * gracefully so clients have time to find new servers. */
+   if (server.isServerEnabled() && !_delayedShutdownStarted) {
+diff -Naur a/src/vidalia/mainwindow.h b/src/vidalia/mainwindow.h
+--- a/src/vidalia/mainwindow.h	2009-02-03 02:09:39.844750000 +0000
++++ b/src/vidalia/mainwindow.h	2009-03-16 10:33:26.545169776 +0000
+@@ -241,6 +241,7 @@
+   bool _useSavedPassword;
+   /** The Vidalia icon that sits in the tray. */
+   TrayIcon _trayIcon;
++  bool _isTorExt;
+ 
+ #if defined(USE_AUTOUPDATE)
+   /** Timer used to remind us to check for software updates. */
 diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
 --- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
 +++ b/src/vidalia/network/geoipresolver.cpp	2009-03-13 16:51:51.257918256 +0000

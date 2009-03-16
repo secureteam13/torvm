@@ -71,6 +71,7 @@ _______________________________________________________________________
      and account name when considering saved state for load via netsh).
    - Implement command line parameter parsing for the configurable
      parameters implemented in the afore mentioned tasks.
+   - Pass ARP parameters to VM kernel for faster IP setup.
 
    Tor VM controller hardening
    - Provide at least minimal privilege separation for processes by
