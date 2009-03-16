@@ -32,17 +32,23 @@ _______________________________________________________________________
    Update build automation docs and hooks
    ? Add buildbot support into win32 ISO image so non-full builds are
      possible easily and requisite perl parts are present.
+   ? Replace build all script with component based Makefiles with
+     proper dependency checking and conditional build support.
 
    Update Tor VM release packages
    ? Add support for run-as service configuration during install.
-   ? Add support for SteadyState friendly configuration.
+   ? Add support for SteadyState friendly configuration (registry).
+   ? Keep as few Thandy package files on disk as possible after an
+     upgrade. Ideally no more than two packages of the same product
+     would be kept.
    ? Improve package removal to support real clean uninstall.
      (removing all installed directories and data, including cached
       package files and program data)
+   ? Improve package removal to iterate through products and remove
+     by name rather than MSI file or product GUID; include rollback
+     capability for situations where upgraded packages fail.
 
    Tor VM kernel networking improvements
-   . Implement optional traffic shaping capabilities for client and
-     server traffic.
    . Implement tarpit target default until Tor is successfully up and
      running to avoid cached failures and other annoying side effects
      of immediate RST.
@@ -57,14 +63,18 @@ _______________________________________________________________________
      entries created by tap and pcap devices.
    - Fix detection of default route when multiple gateways are present
      and route metric must be used to distinguish properly.
+   - Make addresses, devices, and other configuration dynamic for Tor
+     VM kernel and Vidalia controller.
    ? Keep a host or guid identifier with the saved network state files
      to ensure that an unclean exit on one host does not accidentally
      hose the settings of another installation. (expect to use hostname
      and account name when considering saved state for load via netsh).
+   - Implement command line parameter parsing for the configurable
+     parameters implemented in the afore mentioned tasks.
 
    Tor VM controller hardening
    - Provide at least minimal privilege separation for processes by
-     user account.
+     user account. (right now this is a manual process)
    ? Integrate with SteadyState via registry backed configuration and
      provide deployment configuration scripts.
    ? Take advantage of fine grained authorization and permissions in
@@ -72,7 +82,25 @@ _______________________________________________________________________
    . Use CryptoAPI to gather entropy in host and pass to VM on command
      line for use in stronger seeding of first-run kernel random pool.
 
+   Vidalia integration
+   . Clean up implementation of wixtool for upstream merge. Missing
+     ability to set defaults for missing tags and remove duplicate
+     tag IDs in documents.
+   - Implement random control port password generation and delivery to
+     Tor VM kernel and Vidalia using standard input file handles.
+   - Implement external Tor based bundle support in a proper manner
+     for upstream merge into Vidalia tree. This would include minor
+     UI changes associated with Tor run external to Vidalia, and even
+     multiple instances of Tor on the same host. (dedicated relay VM
+     and dedicated client VM with traffic prioritization in kernel.)
+   - Support local Tor config file for use with Vidalia settings that
+     is communicated to the Tor instance(s) in the VM. The list of
+     parameters which may be set must be filtered against a whitelist
+     to avoid risks associated with arbitrary config replacement
+     before hand off to the VM Tor instances.
+
    General topics requiring further investigation and documentation
+     [ see design document in ./doc/design.html ]
    ? Native 64bit apps and TAP device.
    ? Custom filtering and/or shaping by port and protocol.
    ? Multiple process model hardening.
