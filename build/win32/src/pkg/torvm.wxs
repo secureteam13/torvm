@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?define ThisProductVersion="0.0.2" ?>
-  <?define ThisProductVersionDisp="$(var.ThisProductVersion)-dev" ?>
+  <?define ThisProductVersionDisp="0.0.1-dev" ?>
   <?define UpgradeCode="3f874171-34a0-4af8-8c66-27a681ac5fb6" ?>
   
   <?define CurrProductGUID="b7b6edad-8da7-4b13-b9ac-31dde19747af" ?>

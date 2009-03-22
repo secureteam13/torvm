@@ -269,7 +269,7 @@ diff -Naur a/package/base-files/files/bin/login b/package/base-files/files/bin/l
 -exec /bin/ash --login
 diff -Naur a/package/base-files/files/etc/banner b/package/base-files/files/etc/banner
 --- a/package/base-files/files/etc/banner	2005-12-20 15:03:08.038259000 +0000
-+++ b/package/base-files/files/etc/banner	2009-03-22 17:46:09.143475968 +0000
++++ b/package/base-files/files/etc/banner	2009-03-22 17:50:37.785636152 +0000
 @@ -1,10 +1,26 @@
 -  _______                     ________        __
 - |       |.-----.-----.-----.|  |  |  |.----.|  |_
@@ -305,7 +305,7 @@ diff -Naur a/package/base-files/files/etc/banner b/package/base-files/files/etc/
 +
 +
 +
-+ Tor Virtual Machine - version 0.0.2-dev
++ Tor Virtual Machine - version 0.0.1-dev
 +
 diff -Naur a/package/base-files/files/etc/config/fstab b/package/base-files/files/etc/config/fstab
 --- a/package/base-files/files/etc/config/fstab	2007-09-22 13:47:20.783817000 +0000
