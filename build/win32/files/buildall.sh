@@ -1558,6 +1558,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f $exename ]; then
     rm -f $exename
   fi
+  cp -a LicenseDocs Tor_VM/
   7z.exe a -sfx7z.sfx $exename Tor_VM
   if [ -f $exename ]; then
     cp $exename $bundledir
