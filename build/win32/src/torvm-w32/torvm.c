@@ -444,6 +444,7 @@ BOOL copyfile (LPTSTR srcpath,
   if (src == INVALID_HANDLE_VALUE) {
     return FALSE;
   }
+  DeleteFile (destpath);
   dest = CreateFile (destpath,
                      GENERIC_WRITE,
                      0,
@@ -1628,6 +1629,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
 }
 
 BOOL buildcmdline (struct s_rconnelem *  brif,
+                   BOOL                  bundle,
                    BOOL                  usedebug,
                    BOOL                  noinit,
                    char **               cmdline)
@@ -1656,10 +1658,11 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s%s%s  IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? " USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
+                bundle ? " FOLLOWTOR=TRUE" : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1675,10 +1678,11 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? " USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
+                bundle ? " FOLLOWTOR=TRUE" : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1749,6 +1753,7 @@ BOOL runvidalia (BOOL  indebug)
   LPTSTR pcfgtmp = NULL;
   LPTSTR vcfgdest = NULL;
   LPTSTR pcfgdest = NULL;
+  LPTSTR pcfgdestsave = NULL;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
   HANDLE tmphnd;
   ZeroMemory( &si, sizeof(si) );
@@ -1775,6 +1780,10 @@ BOOL runvidalia (BOOL  indebug)
     lerror ("Unable to build path for polipo dest config."); 
     goto cleanup;
   } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\save-cfg.txt", &pcfgdestsave)) {
+    lerror ("Unable to build path for polipo saved dest config."); 
+    goto cleanup;
+  } 
   if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &exe)) {
     lerror ("Unable to build path for vidalia marble exe."); 
     goto cleanup;
@@ -1787,13 +1796,20 @@ BOOL runvidalia (BOOL  indebug)
       goto cleanup;
     } 
   }
-  if (!exists(vcfgdest)) {
-    ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
-    copyvidaliacfg(vcfgtmp, vcfgdest, dir, pcfgdest);
-  }
-  if (!exists(pcfgdest)) {
-    ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
-    copyfile(pcfgtmp, pcfgdest);
+
+  /* for now we always force a correct vidalia config to temporarily resolve
+   * flyspray 945
+   */
+  ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
+  copyvidaliacfg(vcfgtmp, vcfgdest, dir, pcfgdest);
+
+  /* same for polipo and its backup file; see flyspray 946.
+   */
+  ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
+  copyfile(pcfgtmp, pcfgdest);
+  if (!exists(pcfgdestsave)) {
+    ldebug ("Copying default polipo config from %s to save-file %s", pcfgtmp, pcfgdestsave);
+    copyfile(pcfgtmp, pcfgdestsave);
   }
   
   cmd = malloc(CMDMAX);
@@ -2369,7 +2385,7 @@ int main(int argc, char **argv)
   }
 
   if (!vmnop) {
-    if (! buildcmdline(ce, indebug, noinit, &cmdline)) {
+    if (! buildcmdline(ce, bundle, indebug, noinit, &cmdline)) {
       lerror ("Unable to generate command line for kernel.");
       goto shutdown;
     }

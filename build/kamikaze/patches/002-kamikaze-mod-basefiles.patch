@@ -1253,303 +1253,20 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-16 09:32:25.894673240 +0000
-@@ -1,88 +1,232 @@
++++ b/package/base-files/files/etc/preinit	2009-03-25 12:47:19.187854072 +0000
+@@ -1,6 +1,12 @@
  #!/bin/sh
--# Copyright (C) 2006 OpenWrt.org
-+# Copyright (C) 2008-2009  The Tor Project, Inc.
-+# See LICENSE file for rights and terms.
-+#
-+# NOTE: This file is a full replacement of the original
-+# OpenWRT preinit boot script.  This may not be apparent
-+# when viewing the diff between these implementations.
-+
+ # Copyright (C) 2006 OpenWrt.org
  export PATH=/bin:/sbin:/usr/bin:/usr/sbin
--. /etc/diag.sh
++
++# bypass default kamikaze init if we're running with Tor VM modifications
++if [ -f /etc/torvminit ]; then
++  exec /etc/torvminit
++fi
++
+ . /etc/diag.sh
  
--failsafe_ip() {
--	ifconfig $ifname 192.168.1.1 netmask 255.255.255.0 broadcast 192.168.1.255 up
-+d () {
-+echo "    ${1}"
- }
--
--failsafe() {
--	[ -n "$ifname" ] && grep "$ifname" /proc/net/dev >/dev/null && {
--		failsafe_ip
--		netmsg 192.168.1.255 "Entering Failsafe!"
--		telnetd -l /bin/login <> /dev/null 2>&1
--	}
--	lock /tmp/.failsafe
--	ash --login
-+dn () {
-+echo -n "    ${1}"
- }
- 
- mount proc /proc -t proc
- mount sysfs /sys -t sysfs
- 
--size=$(awk '/MemTotal:/ {l=5242880;mt=($2*1024);print((s=mt/2)<l)&&(mt>l)?mt-l:s}' /proc/meminfo)
--mount tmpfs /tmp -t tmpfs -o size=$size,nosuid,nodev,mode=1777
-+# if we don't have /proc something is very wrong.
-+# abort to shell as this is likely a test kernel image.
-+if [ ! -d /proc/self ]; then
-+  d "ERROR: unable to access /proc , aborting init."
-+  exec /bin/sh
-+fi
-+
-+# setup various runtime options using kernel parameters
-+ARGS=`cat /proc/cmdline`
-+ARGS="_ $ARGS _"
-+
-+syslogd >/dev/null 2>&1
-+# do we need it? klogd -c 1 >/dev/null 2>&1
-+
-+clear;echo
-+d "Initializing ..."
-+
-+HOSTNAME="Tor_VM"
-+echo $ARGS | grep ' USEHOSTNAME=' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z_-]//g'`
-+fi
-+export HOSTNAME
-+hostname "$HOSTNAME" >/dev/null 2>&1
- 
- if grep devfs /proc/filesystems > /dev/null; then
- 	mount devfs /dev -t devfs
--	M0=/dev/pty/m0
--	M1=/dev/pty/m1
--	HOTPLUG=/sbin/hotplug-call
--
--elif [ -x /sbin/hotplug2 ]; then
--	mount -t tmpfs tmpfs /dev -o size=512K
--	mknod /dev/console c 5 1
--	/sbin/hotplug2 --coldplug --set-rules-file /etc/hotplug2-init.rules
--	/sbin/hotplug2 --no-coldplug --persistent --set-rules-file /etc/hotplug2-init.rules &
--	M0=/dev/ptmx
--	M1=/dev/ptmx
--	HOTPLUG=
--
- elif [ -x /sbin/udevd ]; then
- 	mount -n -t tmpfs -o mode=0755 udev /dev
- 	/sbin/udevd --daemon
- 	/sbin/udevtrigger
- 	/sbin/udevsettle
--	M0=/dev/pty/ptmx
--	M1=/dev/pty/ptmx
--	HOTPLUG=
- fi
- 
- mkdir -p /dev/pts /dev/shm
- mount devpts /dev/pts -t devpts
- 
--# the shell really doesn't like having stdin/out closed
--# that's why we use /dev/pty/m0 and m1 as replacement
--# for /dev/console if there's no serial console available
--dd if=/dev/console of=/dev/null bs=1 count=0 >/dev/null 2>/dev/null && {
--	M0=/dev/console
--	M1=/dev/console
--}
-+# attempt mount of persistent virtual disk
-+mdbin=`which makedevs`
-+devtable=/etc/device_table.txt
-+if [ -x $mdbin ]; then 
-+  makedevs -d $devtable / >/dev/null 2>&1
-+else
-+  mdbin=`which MAKEDEVS`
-+  if [ -x $mdbin ]; then
-+    MAKEDEVS >/dev/null 2>&1
-+  fi
-+fi
-+# last attempt: if no disk exists, assume hda1 and create manually with mknod.
-+hddev=/dev/hda1
-+hdopt="b 3 1"
-+hdmntopt="-onoatime,nodiratime"
-+if [ ! -e $hddev ]; then
-+  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
-+  if [ $? -eq 0 ]; then
-+    mknod $hddev $hdopt
-+  fi
-+fi
-+mkdir /home
-+if [ -e $hddev ] && mount $hdmntopt $hddev /home; then
-+  # check for saved entropy state and launch update daemon if exists
-+  syshome=/home/system
-+  if [ ! -d $syshome ]; then
-+    mkdir -p $syshome
-+  fi
-+  chown root:root $syshome
-+  chmod 700 $syshome
-+  rndstate=$syshome/.rnd
-+  if [ -f $rndstate ]; then
-+    cat $rndstate > /dev/urandom 2>/dev/null
-+  fi
-+  # incorporate digest of kernel command line into entropy pool, as this should contain some local information
-+  sha1sum /proc/cmdline > /dev/urandom 2>/dev/null
-+  # launch process to periodically save entropy from pool for next boot (cannot assume clean shutdown)
-+  nohup /bin/sh /bin/entropy-update.sh "$rndstate" >/dev/null 2>&1 &
-+else
-+  # XXX should we force reboot or halt instead?
-+  echo 'ERROR: unable to mount persistent storage virtual disk!'
-+  echo '       Do not run Tor in this configuration.'
-+  sleep 3
-+fi
- 
--exec <$M0 >$M1 2>&0
-+mkdir -p /var/run
-+mkdir -p /var/log
-+mkdir -p /var/lock
-+mkdir -p /var/state
-+touch /var/log/wtmp
-+touch /var/log/lastlog
-+ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
-+
-+/etc/init.d/sysctl
-+
-+ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
-+
-+# XXX need a good way to set this flexibly...
-+TZ='PST8PDT,M3.2.0/2,M11.1.0/2'
-+echo $ARGS | grep ' TZ=' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
-+fi
-+export TZ
-+echo "$TZ" > /etc/TZ
-+
-+echo $ARGS | grep ' NOINIT ' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
-+else
-+
-+PRIVIP=10.99.11.1
-+echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+fi
-+grep eth1: /proc/net/dev >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  ifconfig eth1 $PRIVIP netmask 255.255.255.252 up
-+fi
-+
-+echo $ARGS | grep ' DEBUGINIT ' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
-+  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
-+  echo 'tty3::askfirst:/bin/ash --login' >> /etc/inittab
-+  echo 'tty4::askfirst:/bin/ash --login' >> /etc/inittab
-+  echo 'tty5::askfirst:/bin/ash --login' >> /etc/inittab
-+else
-+  echo 'tty1::respawn:/etc/init.d/tor status' >> /etc/inittab
-+fi
-+
-+# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
-+netup=0
-+echo $ARGS | grep ' IP=' >/dev/null 2>&1
-+if [ $? -eq 0 ]; then
-+  LEASE=""
-+  DHCPSVR=""
-+  DHCPNAME=""
-+  # XXX we should be able to use character classes in busybox matching for repl.
-+  # or possibly bash style string manipulation if ash is sufficiently capable...
-+  export IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+  export MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+  export GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.]//g'`
-+  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9]//g'`
-+  export ISDHCP=0
-+  dn "Setting IP $IP / $MASK via $GW ..."
-+  ifconfig eth0 hw ether $MAC
-+  ifconfig eth0 $IP netmask $MASK up
-+  ifconfig eth0 mtu $MTU
-+  route add default gw $GW
-+  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
-+  if [ $? -eq 0 ]; then
-+    export ISDHCP=1
-+    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
-+    export DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
-+    # fire up udhcpc to keep the lease active for however long is needed
-+    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
-+  fi
-+  netup=1
-+else
-+  # dhcp for address
-+  dn "Trying to get DHCP lease ..."
-+  udhcpc -b -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
-+  maxrt=20
-+  while [ $maxrt -gt 0 ]; do
-+    sleep 1
-+    ifconfig eth0 | grep 'inet addr:' >/dev/null 2>&1
-+    if [ $? -eq 0 ]; then
-+      netup=1
-+      maxrt=0
-+    else
-+      echo -n "."
-+      maxrt=$(expr $maxrt - 1)
-+    fi
-+  done
-+  # XXX enforce MTU under 1500 to work around winpcap issue until resolved
-+  ifconfig eth0 mtu 1482
-+fi
-+
-+if [ $netup -eq 0 ]; then
-+  echo " FAILED.";echo
-+  d "ERROR: Unable to get an IP address."
-+  d "Check your DHCP server or configure one manually with ifconfig."
-+  d "Remember to start Tor via /etc/init.d/tor start when ready."
-+else
-+  echo $ARGS | grep ' CALLHDDINIT=' >/dev/null 2>&1
-+  if [ $? -eq 0 ]; then
-+    HDDINITF=`echo $ARGS | sed 's/.* CALLHDDINIT=//' | sed 's/ .*//'`
-+    if [ -f "/home/tor/${HDDINITF}" ]; then
-+      HDDINITF="/home/tor/${HDDINITF}"
-+    else
-+      if [ ! -f "${HDDINITF}" ]; then
-+        HDDINITF="/proc/self/exists_not"
-+      fi
-+    fi
-+    if [ -f "${HDDINITF}" ]; then
-+      echo "done.";echo
-+      d "Replacing init(self) with user requested HDD post-init script:"
-+      d "   ${HDDINITF}"
-+      exec "${HDDINITF}"
-+    fi
-+  fi
-+  echo " done.";echo
-+  dn "Starting Tor ... "
-+  /etc/init.d/tor start
-+  echo "done."
-+  echo
-+  d "Run /etc/init.d/tor status"
-+  d " for bootstrap status."
-+fi
- 
--echo "- preinit -"
--echo "Press CTRL-C for failsafe"
--trap 'FAILSAFE=true' INT
--trap 'FAILSAFE=true' USR1
--[ -e /etc/preinit.arch ] && . /etc/preinit.arch
--set_state preinit
--echo "$HOTPLUG" > /proc/sys/kernel/hotplug
--eval ${FAILSAFE:+failsafe}
--lock -w /tmp/.failsafe
--
--if [ -z "$INITRAMFS" ]; then
--	mount_root
--	[ -f /sysupgrade.tgz ] && {
--		echo "- config restore -"
--		cd /
--		mv sysupgrade.tgz /tmp
--		tar xzf /tmp/sysupgrade.tgz
--		rm -f /tmp/sysupgrade.tgz
--		sync
--	}
--
--	echo "- init -"
--	
--	exec /sbin/init
-+# end if !NOINIT
- fi
+ failsafe_ip() {
 diff -Naur a/package/base-files/files/etc/profile b/package/base-files/files/etc/profile
 --- a/package/base-files/files/etc/profile	2009-01-07 04:38:57.851159000 +0000
 +++ b/package/base-files/files/etc/profile	2009-03-16 00:59:14.150729840 +0000
@@ -1691,6 +1408,242 @@ diff -Naur a/package/base-files/files/etc/sysctl.conf b/package/base-files/files
 -# net.ipv6.conf.all.forwarding=1
 +net.ipv4.netfilter.ip_conntrack_udp_timeout=600
 +net.ipv4.netfilter.ip_conntrack_udp_timeout_stream=1800
+diff -Naur a/package/base-files/files/etc/torvminit b/package/base-files/files/etc/torvminit
+--- a/package/base-files/files/etc/torvminit	1970-01-01 00:00:00.000000000 +0000
++++ b/package/base-files/files/etc/torvminit	2009-03-25 12:52:24.913376728 +0000
+@@ -0,0 +1,232 @@
++#!/bin/sh
++# Copyright (C) 2008-2009  The Tor Project, Inc.
++# See LICENSE file for rights and terms.
++#
++d () {
++echo "    ${1}"
++}
++dn () {
++echo -n "    ${1}"
++}
++
++mount proc /proc -t proc
++mount sysfs /sys -t sysfs
++
++# if we don't have /proc something is very wrong.
++# abort to shell as this is likely a test kernel image.
++if [ ! -d /proc/self ]; then
++  d "ERROR: unable to access /proc , aborting init."
++  exec /bin/sh
++fi
++
++# setup various runtime options using kernel parameters
++ARGS=`cat /proc/cmdline`
++ARGS="_ $ARGS _"
++
++syslogd >/dev/null 2>&1
++# do we need it? klogd -c 1 >/dev/null 2>&1
++
++clear;echo
++d "Initializing ..."
++
++HOSTNAME="Tor_VM"
++echo $ARGS | grep ' USEHOSTNAME=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z_-]//g'`
++fi
++export HOSTNAME
++hostname "$HOSTNAME" >/dev/null 2>&1
++
++if grep devfs /proc/filesystems > /dev/null; then
++	mount devfs /dev -t devfs
++elif [ -x /sbin/udevd ]; then
++	mount -n -t tmpfs -o mode=0755 udev /dev
++	/sbin/udevd --daemon
++	/sbin/udevtrigger
++	/sbin/udevsettle
++fi
++
++mkdir -p /dev/pts /dev/shm
++mount devpts /dev/pts -t devpts
++
++# attempt mount of persistent virtual disk
++mdbin=`which makedevs`
++devtable=/etc/device_table.txt
++if [ -x $mdbin ]; then 
++  makedevs -d $devtable / >/dev/null 2>&1
++else
++  mdbin=`which MAKEDEVS`
++  if [ -x $mdbin ]; then
++    MAKEDEVS >/dev/null 2>&1
++  fi
++fi
++# last attempt: if no disk exists, assume hda1 and create manually with mknod.
++hddev=/dev/hda1
++hdopt="b 3 1"
++hdmntopt="-onoatime,nodiratime"
++if [ ! -e $hddev ]; then
++  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    mknod $hddev $hdopt
++  fi
++fi
++mkdir /home
++if [ -e $hddev ] && mount $hdmntopt $hddev /home; then
++  # check for saved entropy state and launch update daemon if exists
++  syshome=/home/system
++  if [ ! -d $syshome ]; then
++    mkdir -p $syshome
++  fi
++  chown root:root $syshome
++  chmod 700 $syshome
++  rndstate=$syshome/.rnd
++  if [ -f $rndstate ]; then
++    cat $rndstate > /dev/urandom 2>/dev/null
++  fi
++  # incorporate digest of kernel command line into entropy pool, as this should contain some local information
++  sha1sum /proc/cmdline > /dev/urandom 2>/dev/null
++  # launch process to periodically save entropy from pool for next boot (cannot assume clean shutdown)
++  nohup /bin/sh /bin/entropy-update.sh "$rndstate" >/dev/null 2>&1 &
++else
++  # XXX should we force reboot or halt instead?
++  echo 'ERROR: unable to mount persistent storage virtual disk!'
++  echo '       Do not run Tor in this configuration.'
++  sleep 3
++fi
++
++mkdir -p /var/run
++mkdir -p /var/log
++mkdir -p /var/lock
++mkdir -p /var/state
++touch /var/log/wtmp
++touch /var/log/lastlog
++ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
++
++/etc/init.d/sysctl
++
++ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
++
++# XXX need a good way to set this flexibly...
++TZ='PST8PDT,M3.2.0/2,M11.1.0/2'
++echo $ARGS | grep ' TZ=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
++fi
++export TZ
++echo "$TZ" > /etc/TZ
++
++echo $ARGS | grep ' NOINIT ' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++else
++
++PRIVIP=10.99.11.1
++PRIVINTF=eth1
++echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++fi
++grep $PRIVINTF: /proc/net/dev >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  ifconfig $PRIVINTF $PRIVIP netmask 255.255.255.252 up
++fi
++# use tarpit by default to prevent RST/other fail fast with error
++iptables -I INPUT -i $PRIVINTF -j DROP
++iptables -I INPUT -i $PRIVINTF -p tcp -j TARPIT
++iptables -I FORWARD -i $PRIVINTF -j DROP
++iptables -I FORWARD -i $PRIVINTF -p tcp -j TARPIT
++
++echo $ARGS | grep ' DEBUGINIT ' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty3::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty4::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty5::askfirst:/bin/ash --login' >> /etc/inittab
++else
++  echo 'tty1::respawn:/etc/init.d/tor status' >> /etc/inittab
++fi
++
++# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
++netup=0
++echo $ARGS | grep ' IP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  LEASE=""
++  DHCPSVR=""
++  DHCPNAME=""
++  # XXX we should be able to use character classes in busybox matching for repl.
++  # or possibly bash style string manipulation if ash is sufficiently capable...
++  export IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.]//g'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9]//g'`
++  export ISDHCP=0
++  dn "Setting IP $IP / $MASK via $GW ..."
++  ifconfig eth0 hw ether $MAC
++  ifconfig eth0 $IP netmask $MASK up
++  ifconfig eth0 mtu $MTU
++  route add default gw $GW
++  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    export ISDHCP=1
++    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++    export DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
++    # fire up udhcpc to keep the lease active for however long is needed
++    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  fi
++  netup=1
++else
++  # dhcp for address
++  dn "Trying to get DHCP lease ..."
++  udhcpc -b -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  maxrt=20
++  while [ $maxrt -gt 0 ]; do
++    sleep 1
++    ifconfig eth0 | grep 'inet addr:' >/dev/null 2>&1
++    if [ $? -eq 0 ]; then
++      netup=1
++      maxrt=0
++    else
++      echo -n "."
++      maxrt=$(expr $maxrt - 1)
++    fi
++  done
++  # XXX enforce MTU under 1500 to work around winpcap issue until resolved
++  ifconfig eth0 mtu 1482
++fi
++
++if [ $netup -eq 0 ]; then
++  echo " FAILED.";echo
++  d "ERROR: Unable to get an IP address."
++  d "Check your DHCP server or configure one manually with ifconfig."
++  d "Remember to start Tor via /etc/init.d/tor start when ready."
++else
++  echo $ARGS | grep ' CALLHDDINIT=' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    HDDINITF=`echo $ARGS | sed 's/.* CALLHDDINIT=//' | sed 's/ .*//'`
++    if [ -f "/home/tor/${HDDINITF}" ]; then
++      HDDINITF="/home/tor/${HDDINITF}"
++    else
++      if [ ! -f "${HDDINITF}" ]; then
++        HDDINITF="/proc/self/exists_not"
++      fi
++    fi
++    if [ -f "${HDDINITF}" ]; then
++      echo "done.";echo
++      d "Replacing init(self) with user requested HDD post-init script:"
++      d "   ${HDDINITF}"
++      exec "${HDDINITF}"
++    fi
++  fi
++  echo " done.";echo
++  dn "Starting Tor ... "
++  /etc/init.d/tor start
++  echo "done."
++  echo
++  d "Run /etc/init.d/tor status"
++  d " for bootstrap status."
++fi
++
++# end if !NOINIT
++fi
 diff -Naur a/package/base-files/files/lib/config/parse_spec.awk b/package/base-files/files/lib/config/parse_spec.awk
 --- a/package/base-files/files/lib/config/parse_spec.awk	2007-03-04 04:41:46.644094000 +0000
 +++ b/package/base-files/files/lib/config/parse_spec.awk	1970-01-01 00:00:00.000000000 +0000
