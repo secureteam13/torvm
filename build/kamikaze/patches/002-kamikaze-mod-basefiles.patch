@@ -1253,7 +1253,7 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-26 00:52:20.326675768 +0000
++++ b/package/base-files/files/etc/preinit	2009-03-26 03:48:34.351179704 +0000
 @@ -1,6 +1,13 @@
  #!/bin/sh
  # Copyright (C) 2006 OpenWrt.org
@@ -1262,12 +1262,19 @@ diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc
 +# bypass default kamikaze init if we're running with Tor VM modifications
 +if [ -f /etc/torvminit ]; then
 +  chmod +x /etc/torvminit >/dev/null 2>&1
-+  exec /etc/torvminit
-+fi
++  . /etc/torvminit
++else
 +
  . /etc/diag.sh
  
  failsafe_ip() {
+@@ -86,3 +93,6 @@
+ 	
+ 	exec /sbin/init
+ fi
++
++# end not Tor VM init
++fi
 diff -Naur a/package/base-files/files/etc/profile b/package/base-files/files/etc/profile
 --- a/package/base-files/files/etc/profile	2009-01-07 04:38:57.851159000 +0000
 +++ b/package/base-files/files/etc/profile	2009-03-16 00:59:14.150729840 +0000
@@ -1411,7 +1418,7 @@ diff -Naur a/package/base-files/files/etc/sysctl.conf b/package/base-files/files
 +net.ipv4.netfilter.ip_conntrack_udp_timeout_stream=1800
 diff -Naur a/package/base-files/files/etc/torvminit b/package/base-files/files/etc/torvminit
 --- a/package/base-files/files/etc/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/base-files/files/etc/torvminit	2009-03-26 00:50:46.993864512 +0000
++++ b/package/base-files/files/etc/torvminit	2009-03-26 03:49:06.422304152 +0000
 @@ -0,0 +1,235 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.

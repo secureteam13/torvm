@@ -313,8 +313,8 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-03-25 13:16:19.421298376 +0000
-@@ -0,0 +1,132 @@
++++ b/package/tor/files/tor.init	2009-03-26 03:54:19.952640296 +0000
+@@ -0,0 +1,136 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
 +export PATH=/usr/sbin:/sbin:$PATH
@@ -344,6 +344,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	[ -f $CONF_F ] || cp -f /etc/tor/torrc $CONF_F
 +	[ -f $GEOIP_F ] || cp -f /etc/tor/geoip $GEOIP_F
 +	[ -d $LOG_D ] || mkdir -p $LOG_D
++	rm -f $LOG_F >/dev/null 2>&1
 +	chown $RUN_USER:$RUN_GROUP $LOG_D
 +	[ -d $DATA_D ] || mkdir -p $DATA_D
 +	chmod 700 $DATA_D
@@ -415,9 +416,12 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +
 +elif [ "$1" = "dofollow" ]; then
 +	$BIN --runasdaemon 0 -f $CONF_F > $SLOG_F 2>&1
-+	reboot >/dev/null 2>&1 &
-+	sleep 1
-+	halt >/dev/null 2>&1
++	if [ -f $LOG_F ]; then
++	  # no log means we didn't really start; don't abort by default.
++	  reboot >/dev/null 2>&1 &
++	  sleep 1
++	  halt >/dev/null 2>&1
++	fi
 +
 +elif [ "$1" = "status" ]; then
 +	while true; do
