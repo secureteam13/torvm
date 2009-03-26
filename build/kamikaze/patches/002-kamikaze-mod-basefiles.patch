@@ -1253,14 +1253,15 @@ diff -Naur a/package/base-files/files/etc/inittab b/package/base-files/files/etc
 -tty1::askfirst:/bin/ash --login
 diff -Naur a/package/base-files/files/etc/preinit b/package/base-files/files/etc/preinit
 --- a/package/base-files/files/etc/preinit	2008-08-14 22:21:35.073308000 +0000
-+++ b/package/base-files/files/etc/preinit	2009-03-25 12:47:19.187854072 +0000
-@@ -1,6 +1,12 @@
++++ b/package/base-files/files/etc/preinit	2009-03-26 00:52:20.326675768 +0000
+@@ -1,6 +1,13 @@
  #!/bin/sh
  # Copyright (C) 2006 OpenWrt.org
  export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 +
 +# bypass default kamikaze init if we're running with Tor VM modifications
 +if [ -f /etc/torvminit ]; then
++  chmod +x /etc/torvminit >/dev/null 2>&1
 +  exec /etc/torvminit
 +fi
 +
@@ -1410,8 +1411,8 @@ diff -Naur a/package/base-files/files/etc/sysctl.conf b/package/base-files/files
 +net.ipv4.netfilter.ip_conntrack_udp_timeout_stream=1800
 diff -Naur a/package/base-files/files/etc/torvminit b/package/base-files/files/etc/torvminit
 --- a/package/base-files/files/etc/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/base-files/files/etc/torvminit	2009-03-25 12:52:24.913376728 +0000
-@@ -0,0 +1,232 @@
++++ b/package/base-files/files/etc/torvminit	2009-03-26 00:50:46.993864512 +0000
+@@ -0,0 +1,235 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
 +# See LICENSE file for rights and terms.
@@ -1485,7 +1486,10 @@ diff -Naur a/package/base-files/files/etc/torvminit b/package/base-files/files/e
 +  fi
 +fi
 +mkdir /home
-+if [ -e $hddev ] && mount $hdmntopt $hddev /home; then
++if [ -e $hddev ]  && mount $hdmntopt $hddev /home; then
++  # if the mount fails it may require a fs check / repair, or
++  # the virtual disk could be corrupt.  XXX: handle both cases correctly.
++
 +  # check for saved entropy state and launch update daemon if exists
 +  syshome=/home/system
 +  if [ ! -d $syshome ]; then
