@@ -1722,7 +1722,7 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   TCHAR *cmd = malloc(CMDMAX);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, CMDMAX -1,
-            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
+            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1781,9 +1781,9 @@ BOOL runvidalia (BOOL  indebug)
     goto cleanup;
   } 
   if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\save-cfg.txt", &pcfgdestsave)) {
-    lerror ("Unable to build path for polipo saved dest config."); 
+    lerror ("Unable to build path for polipo saved dest config.");
     goto cleanup;
-  } 
+  }
   if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &exe)) {
     lerror ("Unable to build path for vidalia marble exe."); 
     goto cleanup;
@@ -1811,7 +1811,7 @@ BOOL runvidalia (BOOL  indebug)
     ldebug ("Copying default polipo config from %s to save-file %s", pcfgtmp, pcfgdestsave);
     copyfile(pcfgtmp, pcfgdestsave);
   }
-  
+
   cmd = malloc(CMDMAX);
   snprintf (cmd, CMDMAX -1,
             "\"%s\" -tor-address %s%s",
@@ -1852,6 +1852,8 @@ BOOL runvidalia (BOOL  indebug)
     free(vcfgdest);
   if(pcfgdest)
     free(pcfgdest);
+  if(pcfgdestsave)
+    free(pcfgdestsave);
 
   return retval;
 }
@@ -2389,26 +2391,26 @@ int main(int argc, char **argv)
       lerror ("Unable to generate command line for kernel.");
       goto shutdown;
     }
+    ldebug ("Generated kernel command line: %s", cmdline);
   }
-
-  ldebug ("Generated kernel command line: %s", cmdline);
 
   PROCESS_INFORMATION pi;
-  if (!vmnop) {
-    if (! launchtorvm(&pi,
-                      ce->guid,
-                      ce->macaddr,
-                      TOR_TAP_NAME,
-                      cmdline)) {
-      lerror ("Unable to launch Qemu TorVM instance.");
-      goto shutdown;
-    }
-  }
-  else {
+  if (vmnop) {
     if (! spawnprocess(&pi, "qemu.exe")) {
       lerror ("Unable to launch default Qemu instance.");
-      goto shutdown;
     }
+    /* This mode does nothing but run Qemu with the kernel and virtual disk.
+     * no need for cleanup or interface configuration.
+     */
+    exit (0);
+  }
+  if (! launchtorvm(&pi,
+                    ce->guid,
+                    ce->macaddr,
+                    TOR_TAP_NAME,
+                    cmdline)) {
+    lerror ("Unable to launch Qemu TorVM instance.");
+    goto shutdown;
   }
 
   /* need to delay long enough to allow qemu to start and open tap device */
