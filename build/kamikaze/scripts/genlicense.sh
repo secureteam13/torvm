@@ -8,6 +8,7 @@ lf="target:util-linux-ng:COPYING $lf"
 lf="linux:linux:COPYING $lf"
 lf="linux:iptables:COPYING $lf"
 lf="linux:tor:LICENSE $lf"
+lf="target:upnptools:LICENSE $lf"
 function usage () {
   if (( $# )); then
     echo "Error: $1" >&2
