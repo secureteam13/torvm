@@ -1031,6 +1031,9 @@ WIX_DEFAULT_LOC_LINK="-loc WixUI_en-us.wxl -loc vidalia_en.wxl"
 if [[ "$BUILD_IND_LANGS" == "" ]]; then
   export BUILD_IND_LANGS=yes
 fi
+if [[ "$INTL_DEFAULT" == "" ]]; then
+  export INTL_DEFAULT=yes
+fi
 
 if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Building bundle packages ..."
@@ -1191,6 +1194,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         fi
       done
       if [ -f $BASEMSI ]; then
+        if [[ "$INTL_DEFAULT" == "yes" ]]; then
+          cp -f $BASEMSI vidalia.msi
+          cp -f $BASEMSI $bundledir/vidalia.msi
+        fi
         cp $BASEMSI ../pkg/
         cp $BASEMSI $bundledir
         echo "Completed multi-lingual package transforms for $BASEMSI"
@@ -1316,6 +1323,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     done
   fi
   if [ -f "$BASEMSI" ]; then
+    if [[ "$INTL_DEFAULT" == "yes" ]]; then
+      cp -f $BASEMSI torvm.msi
+      cp -f $BASEMSI $bundledir/torvm.msi
+    fi
     cp "$BASEMSI" $bundledir
     echo "Completed multi-lingual package transforms for $BASEMSI"
     ls -l "$BASEMSI"
@@ -1370,6 +1381,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       fi
     done
   fi
+  if [[ "$INTL_DEFAULT" == "yes" ]]; then
+    cp -f tor-intl.msi tor.msi
+    cp -f tor-intl.msi $bundledir/tor.msi
+  fi
   if [ -f "$BASEMSI" ]; then
     cp "$BASEMSI" $bundledir
     echo "Completed multi-lingual package transforms for $BASEMSI"
@@ -1423,6 +1438,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     done
   fi
   if [ -f "$BASEMSI" ]; then
+    if [[ "$INTL_DEFAULT" == "yes" ]]; then
+      cp -f $BASEMSI polipo.msi 
+      cp -f $BASEMSI $bundledir/polipo.msi
+    fi
     cp "$BASEMSI" $bundledir
     echo "Completed multi-lingual package transforms for $BASEMSI"
     ls -l "$BASEMSI"
@@ -1477,6 +1496,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       done
     fi
     if [ -f "$BASEMSI" ]; then
+      if [[ "$INTL_DEFAULT" == "yes" ]]; then
+        cp -f $BASEMSI torbutton.msi
+        cp -f $BASEMSI $bundledir/torbutton.msi
+      fi
       cp "$BASEMSI" $bundledir
       echo "Completed multi-lingual package transforms for $BASEMSI"
       ls -l "$BASEMSI"
@@ -1530,6 +1553,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     done
   fi
   if [ -f "$BASEMSI" ]; then
+    if [[ "$INTL_DEFAULT" == "yes" ]]; then
+      cp -f $BASEMSI thandy.msi
+      cp -f $BASEMSI $bundledir/thandy.msi
+    fi
     cp "$BASEMSI" $bundledir
     echo "Completed multi-lingual package transforms for $BASEMSI"
     ls -l "$BASEMSI"
@@ -1544,6 +1571,16 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     echo "ERROR: unable to build Tor VM executable bundle installer."
   fi
 
+  echo "Creating Marble Tor VM Bundle installer executable ..."
+  cat bundle.nsi | sed 's/vidalia[.]msi/vidalia-marble-full.msi/g' | sed 's/TorVMBundle.exe/TorVMMarbleBundle.exe/g' > marble-bundle.nsi
+  makensis.exe marble-bundle.nsi
+  if [ -f TorVMMarbleBundle.exe ]; then
+    cp TorVMMarbleBundle.exe $bundledir
+    ls -l TorVMMarbleBundle.exe
+  else
+    echo "ERROR: unable to build Marble Tor VM executable bundle installer."
+  fi
+
   echo "Creating Tor VM network installer executable ..."
   makensis.exe netinst.nsi
   if [ -f TorVMNetInstaller.exe ]; then
@@ -1551,6 +1588,16 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     ls -l TorVMNetInstaller.exe
   else
     echo "ERROR: unable to build Tor VM executable network installer."
+  fi
+
+  echo "Creating Marble Tor VM network installer executable ..."
+  cat netinst.nsi | sed 's/vidalia[.]msi/vidalia-marble-full.msi/g' | sed 's/TorVMNetInstaller.exe/TorVMMarbleNetInstaller.exe/g' > marble-netinst.nsi
+  makensis.exe marble-netinst.nsi
+  if [ -f TorVMMarbleNetInstaller.exe ]; then
+    cp TorVMMarbleNetInstaller.exe $bundledir
+    ls -l TorVMMarbleNetInstaller.exe
+  else
+    echo "ERROR: unable to build Marble Tor VM executable network installer."
   fi
 
   echo "Creating self-extracting Tor VM archive ..."

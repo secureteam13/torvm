@@ -217,20 +217,20 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3618
+VIDALIA_VER=3645
 
 # for package resources
 TORSVN_NAME=tor-latest
 TORSVN_TGZ=$(TORSVN_NAME).tar.gz
 TORSVN_SVN=https://tor-svn.freehaven.net/svn/tor/
 TORSVN_BR=trunk
-TORSVN_VER=18924
+TORSVN_VER=19114
 
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
 TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
-TORBUTTON_VER=18976
+TORBUTTON_VER=19101
 
 # XXX add / switch to signed tags one key mgmt resolved
 PYCRYPTO_NAME=pycrypto-latest

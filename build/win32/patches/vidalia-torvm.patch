@@ -1,18 +1,25 @@
 diff -Naur a/CMakeLists.txt b/CMakeLists.txt
---- a/CMakeLists.txt	2009-03-04 23:38:18.848228000 +0000
-+++ b/CMakeLists.txt	2009-03-15 06:58:51.369290512 +0000
-@@ -13,7 +13,7 @@
+--- a/CMakeLists.txt	2009-03-22 02:22:05.164345000 +0000
++++ b/CMakeLists.txt	2009-03-15 06:58:51.000000000 +0000
+@@ -1,5 +1,5 @@
+ ##
+-##  $Id: CMakeLists.txt 3640 2009-03-22 02:22:05Z edmanm $
++##  $Id: CMakeLists.txt 3598 2009-03-04 23:38:18Z edmanm $
+ ## 
+ ##  This file is part of Vidalia, and is subject to the license terms in the
+ ##  LICENSE file, found in the top level directory of this distribution. If 
+@@ -104,6 +104,8 @@
+ ## Check for system header files
+ check_include_file("limits.h" HAVE_LIMITS_H)
+ check_include_file("sys/limits.h" HAVE_SYS_LIMITS_H)
++check_include_file("math.h"  HAVE_MATH_H)
++check_include_file_cxx("cmath" HAVE_CMATH)
  
- set(VER_MAJOR   "0")
- set(VER_MINOR   "2")
--set(VER_PATCH   "0")
-+set(VER_PATCH   "1")
- set(VERSION     "${VER_MAJOR}.${VER_MINOR}.${VER_PATCH}-svn")
- message(STATUS  "Configuring Vidalia ${VERSION}")
- project(Vidalia)
+ ## Check for the sizes of various data types
+ check_type_size(int SIZEOF_INT)
 diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
 --- a/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
-+++ b/pkg/build-geoip-cache.sh	2009-03-16 05:33:25.382762424 +0000
++++ b/pkg/build-geoip-cache.sh	2009-03-16 05:33:25.000000000 +0000
 @@ -1,4 +1,4 @@
 -#!/bin/sh
 +#!/bin/bash
@@ -46,7 +53,7 @@ diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
  
 diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
 --- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
-+++ b/pkg/win32/polipo.conf	2009-03-07 12:47:21.712807024 +0000
++++ b/pkg/win32/polipo.conf	2009-03-07 12:47:21.000000000 +0000
 @@ -35,7 +35,6 @@
  # parentProxy = "squid.example.org:3128"
  
@@ -76,12 +83,12 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
---- a/pkg/win32/vidalia.wxs.in	2009-02-24 05:46:46.615879000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-03-15 07:01:31.639925672 +0000
-@@ -1,334 +1,371 @@
+--- a/pkg/win32/vidalia.wxs.in	2009-03-21 04:03:31.345626000 +0000
++++ b/pkg/win32/vidalia.wxs.in	2009-03-15 07:01:31.000000000 +0000
+@@ -1,345 +1,371 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
--  $Id: vidalia.wxs.in 3586 2009-02-24 05:46:46Z edmanm $
+-  $Id: vidalia.wxs.in 3639 2009-03-21 04:03:31Z edmanm $
 +  $Id: vidalia.wxs.in 3329 2008-11-21 02:04:34Z edmanm $
 +
 +  This file is part of Vidalia, and is subject to the license terms in the
@@ -143,6 +150,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -  <?define MarblePlacemarkDataGuid="27D54547-A819-435b-9A0C-13284169A9D9" ?>
 -  <?define MarbleStarsDataGuid="8C5C3F32-67E6-4a4a-9B6C-6D67A6D44D67" ?>
 -  <?define MarbleSvgDataGuid="03E25BCA-4C58-4571-9F17-061D52877714" ?>
+-  <?define UseMarble="@USE_MARBLE@"?>
 -
 -  <Product Name="Vidalia @VERSION@" Id="$(var.VidaliaProductGuid)"
 -           Language="1033" Codepage="1252"
@@ -219,25 +227,27 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
      <Directory Id="TARGETDIR" Name="SourceDir">
 -      <Directory Id="ProgramFilesFolder" Name="ProgramFilesDir">
 -        <Directory Id="INSTALLDIR" Name="Vidalia">
--          <Directory Id="PluginsDir" Name="plugins">
--            <Directory Id="QtPluginsDir" Name="qt">
--              <Directory Id="QtImageFormatPluginsDir" Name="imageformats" />
--            </Directory>
--            <Directory Id="MarblePluginsDir" Name="marble" />
--          </Directory>
--          <Directory Id="MarbleDataDir" Name="data">
--            <Directory Id="MarbleMapsDir" Name="maps">
--              <Directory Id="MarbleEarthMapsDir" Name="earth">
--                <Directory Id="MarbleBlueMarbleDataDir" Name="bluemarble" />
--                <Directory Id="MarbleCityLightsDataDir" Name="citylights" />
--                <Directory Id="MarbleSrtmDataDir" Name="srtm" />
+-          <?if $(var.UseMarble) = "ON"?>
+-            <Directory Id="PluginsDir" Name="plugins">
+-              <Directory Id="QtPluginsDir" Name="qt">
+-                <Directory Id="QtImageFormatPluginsDir" Name="imageformats" />
 -              </Directory>
+-              <Directory Id="MarblePluginsDir" Name="marble" />
 -            </Directory>
--            <Directory Id="MarbleMwdbiiDir" Name="mwdbii" />
--            <Directory Id="MarblePlacemarkDataDir" Name="placemarks" />
--            <Directory Id="MarbleStarsDataDir" Name="stars" />
--            <Directory Id="MarbleSvgDataDir" Name="svg" />
--          </Directory>
+-            <Directory Id="MarbleDataDir" Name="data">
+-              <Directory Id="MarbleMapsDir" Name="maps">
+-                <Directory Id="MarbleEarthMapsDir" Name="earth">
+-                  <Directory Id="MarbleBlueMarbleDataDir" Name="bluemarble" />
+-                  <Directory Id="MarbleCityLightsDataDir" Name="citylights" />
+-                  <Directory Id="MarbleSrtmDataDir" Name="srtm" />
+-                </Directory>
+-              </Directory>
+-              <Directory Id="MarbleMwdbiiDir" Name="mwdbii" />
+-              <Directory Id="MarblePlacemarkDataDir" Name="placemarks" />
+-              <Directory Id="MarbleStarsDataDir" Name="stars" />
+-              <Directory Id="MarbleSvgDataDir" Name="svg" />
+-            </Directory>
+-          <?endif?>
 -        </Directory>
 -      </Directory>
 -    </Directory>
@@ -328,8 +338,12 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -              Name="QtNetwork4.dll" Source="@QT_BINARY_DIR@\QtNetwork4.dll" />
 -        <File Id="QtXml4Dll" DiskId="1"
 -              Name="QtXml4.dll" Source="@QT_BINARY_DIR@\QtXml4.dll" />
--        <File Id="QtSvg4Dll" DiskId="1"
--              Name="QtSvg4.dll" Source="@QT_BINARY_DIR@\QtSvg4.dll" />
+-        <?if $(var.UseMarble) = "ON"?>
+-          <File Id="QtSvg4Dll" DiskId="1"
+-                Name="QtSvg4.dll" Source="@QT_BINARY_DIR@\QtSvg4.dll" />
+-          <File Id="QtWebKit4Dll" DiskId="1"
+-                Name="QtWebKit4.dll" Source="@QT_BINARY_DIR@\QtWebKit4.dll" />
+-        <?endif?>
 -      </Component>
 +          <!-- MinGW-related library files -->
 +          <Component Id="MinGWLibrary" Guid="$(var.CurrMingwLibsGUID)">
@@ -366,11 +380,13 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 -              Name="ssleay32.dll" Source="@OPENSSL_BINARY_DIR@\ssleay32.dll" />
 -      </Component>
 -      
--      <!-- Marble-related library files -->
--      <Component Id="MarbleWidgetLibrary" Guid="$(var.MarbleWidgetLibraryGuid)">
--        <File Id="MarbleWidgetDll" DiskId="1"
--              Name="libmarblewidget.dll" Source="@MARBLEWIDGET_LIBRARY@" />
--      </Component>
+-      <?if $(var.UseMarble) = "ON"?>
+-        <!-- Marble-related library files -->
+-        <Component Id="MarbleWidgetLibrary" Guid="$(var.MarbleWidgetLibraryGuid)">
+-          <File Id="MarbleWidgetDll" DiskId="1"
+-                Name="libmarblewidget.dll" Source="@MARBLEWIDGET_LIBRARY@" />
+-        </Component>
+-      <?endif?>
 -    </DirectoryRef>
 +          <!-- Place this here until argument parsing with quoted escapes works as expected. -->
 +          <Component Id="PolipoConfig" Guid="$(var.CurrPolipoConfigGUID)">
@@ -388,118 +404,120 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 +          </Component>
  
 -    <!-- Qt-related plugin files -->
--    <DirectoryRef Id="QtImageFormatPluginsDir">
--      <Component Id="QtImageFormatPlugins" Guid="$(var.QtImageFormatPluginsGuid)">
--        <File Id="QJpeg4Dll" DiskId="1"
--              Name="qjpeg4.dll" Source="@QT_PLUGINS_DIR@\imageformats\qjpeg4.dll" />
--      </Component>
--    </DirectoryRef>
+-    <?if $(var.UseMarble) = "ON"?>
+-      <DirectoryRef Id="QtImageFormatPluginsDir">
+-        <Component Id="QtImageFormatPlugins" Guid="$(var.QtImageFormatPluginsGuid)">
+-          <File Id="QJpeg4Dll" DiskId="1"
+-                Name="qjpeg4.dll" Source="@QT_PLUGINS_DIR@\imageformats\qjpeg4.dll" />
+-        </Component>
+-      </DirectoryRef>
 +         </Directory>
 +        </Directory>
  
--    <!-- Marble-related plugin files -->
--    <DirectoryRef Id="MarblePluginsDir">
--      <Component Id="MarblePlugins" Guid="$(var.MarblePluginsGuid)">
--        <File Id="MarbleOverviewMapPlugin" DiskId="1"
--              Name="libMarbleOverviewMap.dll" Source="@MARBLE_OVERVIEWMAP_PLUGIN@" />
--        <File Id="MarbleStarsPlugin" DiskId="1"
--              Name="libMarbleStarsPlugin.dll" Source="@MARBLE_STARS_PLUGIN@" />
--      </Component>
--    </DirectoryRef>
--          
--    <!-- Marble-related data files -->
--    <DirectoryRef Id="MarbleDataDir">
--      <Component Id="MarbleLegendsData" Guid="$(var.MarbleLegendsDataGuid)">
--        <File Id="LandColorsLegend" DiskId="1"
--              Name="landcolors.leg" Source="@MARBLE_DATA_DIR@\landcolors.leg" />
--        <File Id="SeaColorsLegend" DiskId="1"
--              Name="seacolors.leg" Source="@MARBLE_DATA_DIR@\seacolors.leg" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleBlueMarbleDataDir">
--      <Component Id="MarbleBlueMarbleData" Guid="$(var.MarbleBlueMarbleDataGuid)">
--        <File Id="MarbleBlueMarbleDgml" DiskId="1"
--              Name="bluemarble.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\bluemarble\bluemarble.dgml" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleCityLightsDataDir">
--      <Component Id="MarbleCityLightsData" Guid="$(var.MarbleCityLightsDataGuid)">
--        <File Id="MarbleCityLightsDgml" DiskId="1"
--              Name="citylights.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\citylights\citylights.dgml" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleSrtmDataDir">
--      <Component Id="MarbleSrtmData" Guid="$(var.MarbleSrtmDataGuid)">
--        <File Id="MarbleSrtmDgml" DiskId="1"
--              Name="srtm.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.dgml" />
--        <File Id="MarbleSrtmJpg" DiskId="1"
--              Name="srtm.jpg" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.jpg" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleMwdbiiDir">
--      <Component Id="MarbleMwdbiiData" Guid="$(var.MarbleMwdbiiDataGuid)">
--        <File Id="DatelinePnt" DiskId="1"
--              Name="DATELINE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\DATELINE.PNT" />
--        <File Id="PAustPnt" DiskId="1"
--              Name="PAUST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PAUST.PNT" />
--        <File Id="PBorderPnt" DiskId="1"
--              Name="PBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PBORDER.PNT" />
--        <File Id="PCanProvPnt" DiskId="1"
--              Name="PCANPROV.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCANPROV.PNT" />
--        <File Id="PCoastPnt" DiskId="1"
--              Name="PCOAST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCOAST.PNT" />
--        <File Id="PDiffBorderPnt" DiskId="1"
--              Name="PDIFFBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PDIFFBORDER.PNT" />
--        <File Id="PGlacierPnt" DiskId="1"
--              Name="PGLACIER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PGLACIER.PNT" />
--        <File Id="PIslandPnt" DiskId="1"
--              Name="PISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PISLAND.PNT" />
--        <File Id="PLakePnt" DiskId="1"
--              Name="PLAKE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKE.PNT" />
--        <File Id="PLakeIslandPnt" DiskId="1"
--              Name="PLAKEISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKEISLAND.PNT" />
--        <File Id="PMexicoPnt" DiskId="1"
--              Name="PMEXICO.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PMEXICO.PNT" />
--        <File Id="PUsa48DiffPnt" DiskId="1"
--              Name="PUSA48.DIFF.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.DIFF.PNT" />
--        <File Id="PUsa48Pnt" DiskId="1"
--              Name="PUSA48.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.PNT" />
--        <File Id="RiverPnt" DiskId="1"
--              Name="RIVER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\RIVER.PNT" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarblePlacemarkDataDir">
--      <Component Id="MarblePlacemarkData" Guid="$(var.MarblePlacemarkDataGuid)">
--        <File Id="BasePlacemarksCache" DiskId="1"
--              Name="baseplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\baseplacemarks.cache" />
--        <File Id="BoundaryPlacemarksCache" DiskId="1"
--              Name="boundaryplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\boundaryplacemarks.cache" />
--        <File Id="ElevPlacemarksCache" DiskId="1"
--              Name="elevplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\elevplacemarks.cache" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleStarsDataDir">
--      <Component Id="MarbleStarsData" Guid="$(var.MarbleStarsDataGuid)">
--        <File Id="StarsDat" DiskId="1"
--              Name="stars.dat" Source="@MARBLE_DATA_DIR@\stars\stars.dat" />
--      </Component>
--    </DirectoryRef>
--    <DirectoryRef Id="MarbleSvgDataDir">
--      <Component Id="MarbleSvgData" Guid="$(var.MarbleSvgDataGuid)">
--        <File Id="WorldMapSvg" DiskId="1"
--              Name="worldmap.svg" Source="@MARBLE_DATA_DIR@\svg\worldmap.svg" />
--      </Component>
--    </DirectoryRef>
--    <ComponentGroup Id="MarbleData">
--      <ComponentRef Id="MarbleLegendsData" />
--      <ComponentRef Id="MarbleBlueMarbleData" />
--      <ComponentRef Id="MarbleCityLightsData" />
--      <ComponentRef Id="MarbleSrtmData" />
--      <ComponentRef Id="MarbleMwdbiiData" />
--      <ComponentRef Id="MarblePlacemarkData" />
--      <ComponentRef Id="MarbleStarsData" />
--      <ComponentRef Id="MarbleSvgData" />
--    </ComponentGroup>
+-      <!-- Marble-related plugin files -->
+-      <DirectoryRef Id="MarblePluginsDir">
+-        <Component Id="MarblePlugins" Guid="$(var.MarblePluginsGuid)">
+-          <File Id="MarbleOverviewMapPlugin" DiskId="1"
+-                Name="libMarbleOverviewMap.dll" Source="@MARBLE_OVERVIEWMAP_PLUGIN@" />
+-          <File Id="MarbleStarsPlugin" DiskId="1"
+-                Name="libMarbleStarsPlugin.dll" Source="@MARBLE_STARS_PLUGIN@" />
+-        </Component>
+-      </DirectoryRef>
+-            
+-      <!-- Marble-related data files -->
+-      <DirectoryRef Id="MarbleDataDir">
+-        <Component Id="MarbleLegendsData" Guid="$(var.MarbleLegendsDataGuid)">
+-          <File Id="LandColorsLegend" DiskId="1"
+-                Name="landcolors.leg" Source="@MARBLE_DATA_DIR@\landcolors.leg" />
+-          <File Id="SeaColorsLegend" DiskId="1"
+-                Name="seacolors.leg" Source="@MARBLE_DATA_DIR@\seacolors.leg" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleBlueMarbleDataDir">
+-        <Component Id="MarbleBlueMarbleData" Guid="$(var.MarbleBlueMarbleDataGuid)">
+-          <File Id="MarbleBlueMarbleDgml" DiskId="1"
+-                Name="bluemarble.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\bluemarble\bluemarble.dgml" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleCityLightsDataDir">
+-        <Component Id="MarbleCityLightsData" Guid="$(var.MarbleCityLightsDataGuid)">
+-          <File Id="MarbleCityLightsDgml" DiskId="1"
+-                Name="citylights.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\citylights\citylights.dgml" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleSrtmDataDir">
+-        <Component Id="MarbleSrtmData" Guid="$(var.MarbleSrtmDataGuid)">
+-          <File Id="MarbleSrtmDgml" DiskId="1"
+-                Name="srtm.dgml" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.dgml" />
+-          <File Id="MarbleSrtmJpg" DiskId="1"
+-                Name="srtm.jpg" Source="@MARBLE_DATA_DIR@\maps\earth\srtm\srtm.jpg" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleMwdbiiDir">
+-        <Component Id="MarbleMwdbiiData" Guid="$(var.MarbleMwdbiiDataGuid)">
+-          <File Id="DatelinePnt" DiskId="1"
+-                Name="DATELINE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\DATELINE.PNT" />
+-          <File Id="PAustPnt" DiskId="1"
+-                Name="PAUST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PAUST.PNT" />
+-          <File Id="PBorderPnt" DiskId="1"
+-                Name="PBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PBORDER.PNT" />
+-          <File Id="PCanProvPnt" DiskId="1"
+-                Name="PCANPROV.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCANPROV.PNT" />
+-          <File Id="PCoastPnt" DiskId="1"
+-                Name="PCOAST.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PCOAST.PNT" />
+-          <File Id="PDiffBorderPnt" DiskId="1"
+-                Name="PDIFFBORDER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PDIFFBORDER.PNT" />
+-          <File Id="PGlacierPnt" DiskId="1"
+-                Name="PGLACIER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PGLACIER.PNT" />
+-          <File Id="PIslandPnt" DiskId="1"
+-                Name="PISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PISLAND.PNT" />
+-          <File Id="PLakePnt" DiskId="1"
+-                Name="PLAKE.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKE.PNT" />
+-          <File Id="PLakeIslandPnt" DiskId="1"
+-                Name="PLAKEISLAND.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PLAKEISLAND.PNT" />
+-          <File Id="PMexicoPnt" DiskId="1"
+-                Name="PMEXICO.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PMEXICO.PNT" />
+-          <File Id="PUsa48DiffPnt" DiskId="1"
+-                Name="PUSA48.DIFF.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.DIFF.PNT" />
+-          <File Id="PUsa48Pnt" DiskId="1"
+-                Name="PUSA48.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\PUSA48.PNT" />
+-          <File Id="RiverPnt" DiskId="1"
+-                Name="RIVER.PNT" Source="@MARBLE_DATA_DIR@\mwdbii\RIVER.PNT" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarblePlacemarkDataDir">
+-        <Component Id="MarblePlacemarkData" Guid="$(var.MarblePlacemarkDataGuid)">
+-          <File Id="BasePlacemarksCache" DiskId="1"
+-                Name="baseplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\baseplacemarks.cache" />
+-          <File Id="BoundaryPlacemarksCache" DiskId="1"
+-                Name="boundaryplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\boundaryplacemarks.cache" />
+-          <File Id="ElevPlacemarksCache" DiskId="1"
+-                Name="elevplacemarks.cache" Source="@MARBLE_DATA_DIR@\placemarks\elevplacemarks.cache" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleStarsDataDir">
+-        <Component Id="MarbleStarsData" Guid="$(var.MarbleStarsDataGuid)">
+-          <File Id="StarsDat" DiskId="1"
+-                Name="stars.dat" Source="@MARBLE_DATA_DIR@\stars\stars.dat" />
+-        </Component>
+-      </DirectoryRef>
+-      <DirectoryRef Id="MarbleSvgDataDir">
+-        <Component Id="MarbleSvgData" Guid="$(var.MarbleSvgDataGuid)">
+-          <File Id="WorldMapSvg" DiskId="1"
+-                Name="worldmap.svg" Source="@MARBLE_DATA_DIR@\svg\worldmap.svg" />
+-        </Component>
+-      </DirectoryRef>
+-      <ComponentGroup Id="MarbleData">
+-        <ComponentRef Id="MarbleLegendsData" />
+-        <ComponentRef Id="MarbleBlueMarbleData" />
+-        <ComponentRef Id="MarbleCityLightsData" />
+-        <ComponentRef Id="MarbleSrtmData" />
+-        <ComponentRef Id="MarbleMwdbiiData" />
+-        <ComponentRef Id="MarblePlacemarkData" />
+-        <ComponentRef Id="MarbleStarsData" />
+-        <ComponentRef Id="MarbleSvgData" />
+-      </ComponentGroup>
+-    <?endif?>
 +        <Directory Id="INSTALLDIR" Name="Vidalia">
 +          <Component Id="GeoIPCache" Guid="$(var.CurrGeoIPCacheGUID)">
 +            <CreateFolder/>
@@ -644,12 +662,14 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
          <ComponentRef Id="VidaliaExecutable" />
 -        <ComponentRef Id="VidaliaDocuments" />
          <ComponentRef Id="QtLibrary" />
--        <ComponentRef Id="QtImageFormatPlugins" />
          <ComponentRef Id="MinGWLibrary" />
          <ComponentRef Id="OpenSSLLibrary" />
--        <ComponentRef Id="MarbleWidgetLibrary" />
--        <ComponentRef Id="MarblePlugins" />
--        <ComponentGroupRef Id="MarbleData"/>
+-        <?if $(var.UseMarble) = "ON"?>
+-          <ComponentRef Id="QtImageFormatPlugins" />
+-          <ComponentRef Id="MarbleWidgetLibrary" />
+-          <ComponentRef Id="MarblePlugins" />
+-          <ComponentGroupRef Id="MarbleData"/>
+-        <?endif?>
 +        <ComponentRef Id="GeoIPCache" />
 +        <ComponentRef Id="PolipoConfig" />
 +<?ifndef NOMARBLE ?>
@@ -692,8 +712,6 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
      <!-- Set the UI options -->
      <UIRef Id="WixUI_Custom" />
 -    <Icon Id="vidalia.ico" SourceFile="@Vidalia_SOURCE_DIR@\src\vidalia\res\icons\vidalia.ico" />
--    <WixVariable Id="WixUIBannerBmp" Value="@Vidalia_SOURCE_DIR@\pkg\win32\msi-header.bmp" />
--    <WixVariable Id="WixUIDialogBmp" Value="@Vidalia_SOURCE_DIR@\pkg\win32\msi-welcome.bmp" />
 +    <Icon Id="vidalia.ico" SourceFile="src\vidalia\res\icons\vidalia.ico" />
 +    <WixVariable Id="WixUIBannerBmp" Value="pkg\win32\msi-header.bmp" />
 +    <WixVariable Id="WixUIDialogBmp" Value="pkg\win32\msi-welcome.bmp" />
@@ -701,7 +719,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
  </Wix>
 diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
 --- a/src/common/win32.cpp	2009-02-16 22:53:13.437184000 +0000
-+++ b/src/common/win32.cpp	2009-03-07 03:57:41.691104680 +0000
++++ b/src/common/win32.cpp	2009-03-07 03:57:41.000000000 +0000
 @@ -67,16 +67,20 @@
  QString
  win32_program_files_folder()
@@ -727,822 +745,9 @@ diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
  }
  
  /** Returns the value in keyName at keyLocation. 
-diff -Naur a/src/tools/CMakeLists.txt b/src/tools/CMakeLists.txt
---- a/src/tools/CMakeLists.txt	2009-02-27 21:08:55.152739000 +0000
-+++ b/src/tools/CMakeLists.txt	2009-03-07 02:42:35.594135000 +0000
-@@ -17,5 +17,6 @@
-   add_subdirectory(po2nsh)
-   add_subdirectory(nsh2po EXCLUDE_FROM_ALL)
-   add_subdirectory(po2wxl)
-+  add_subdirectory(wixtool)
- endif(WIN32)
- 
-diff -Naur a/src/tools/po2wxl/po2wxl.cpp b/src/tools/po2wxl/po2wxl.cpp
---- a/src/tools/po2wxl/po2wxl.cpp	2009-03-01 07:55:10.500878000 +0000
-+++ b/src/tools/po2wxl/po2wxl.cpp	2009-03-07 03:57:41.692104528 +0000
-@@ -19,9 +19,49 @@
- #define WXL_NAMESPACE                  "http://schemas.microsoft.com/wix/2006/localization"
- #define WXL_ELEMENT_ROOT               "WixLocalization"
- #define WXL_ELEMENT_MESSAGE            "String"
-+#define WXL_ATTR_LANGUAGE              "LCID"
- #define WXL_ATTR_MESSAGE_ID            "Id"
- #define WXL_ATTR_TRANSLATION_TYPE      "Culture"
--#define WXL_ATTR_OVERRIDABLE           "Overridable"
-+
-+/** We need to provide an element with the LCID for this locale 
-+ * that is used in the WiX Product definition. */
-+QString
-+culture_lcid(const QString &culture)
-+{
-+  /* For now character encoding focused, not generally locale / dialect aware. */
-+  QString lcid = "0";
-+  if(!culture.compare("en", Qt::CaseInsensitive)) 
-+    lcid = "1033";
-+  else if(!culture.compare("cs", Qt::CaseInsensitive)) 
-+    lcid = "1029";
-+  else if(!culture.compare("de", Qt::CaseInsensitive)) 
-+    lcid = "1031";
-+  else if(!culture.compare("es", Qt::CaseInsensitive)) 
-+    lcid = "1034";
-+  else if(!culture.compare("fa", Qt::CaseInsensitive)) 
-+    lcid = "1065";
-+  else if(!culture.compare("fi", Qt::CaseInsensitive)) 
-+    lcid = "1035";
-+  else if(!culture.compare("fr", Qt::CaseInsensitive)) 
-+    lcid = "1036";
-+  else if(!culture.compare("he", Qt::CaseInsensitive)) 
-+    lcid = "1037";
-+  else if(!culture.compare("it", Qt::CaseInsensitive)) 
-+    lcid = "1040";
-+  else if(!culture.compare("nl", Qt::CaseInsensitive)) 
-+    lcid = "1043";
-+  else if(!culture.compare("pl", Qt::CaseInsensitive)) 
-+    lcid = "1045";
-+  else if(!culture.compare("pt", Qt::CaseInsensitive)) 
-+    lcid = "1046";
-+  else if(!culture.compare("ro", Qt::CaseInsensitive)) 
-+    lcid = "1048";
-+  else if(!culture.compare("ru", Qt::CaseInsensitive)) 
-+    lcid = "1049";
-+  else if(!culture.compare("sv", Qt::CaseInsensitive)) 
-+    lcid = "1053";
-+  return lcid;
-+}
- 
- /** Create a new message string element using the source string <b>msgid</b>
-  * and the translation <b>msgstr</b> and assign identifier attribute. */
-@@ -33,11 +73,6 @@
- 
-   message = wxl->createElement(WXL_ELEMENT_MESSAGE);
-   message.setAttribute(WXL_ATTR_MESSAGE_ID, strid);
--
--  /* Always allow localized string to be dynamic. This is required for
--   * multi-language packages to link correctly.
--   */
--  message.setAttribute(WXL_ATTR_OVERRIDABLE, "yes");
-   if (!msgstr.isEmpty())
-     message.appendChild(wxl->createTextNode(msgstr));
-   else
-@@ -146,7 +181,12 @@
-   Q_ASSERT(errorMessage);
- 
-   *wxl = new_wxl_document(culture);
--  
-+
-+  /* Set the LCID to Language code for use as !(loc.LCID) in Product. */
-+  QString lcid = culture_lcid(culture); 
-+  wxl->documentElement().appendChild(
-+    new_message_element(wxl, WXL_ATTR_LANGUAGE, lcid, lcid)); 
-+
-   skip_po_header(po);
-   line = read_next_line(po);
-   while (!po->atEnd()) {
-diff -Naur a/src/tools/wixtool/CMakeLists.txt b/src/tools/wixtool/CMakeLists.txt
---- a/src/tools/wixtool/CMakeLists.txt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/tools/wixtool/CMakeLists.txt	2009-03-07 02:42:35.595135000 +0000
-@@ -0,0 +1,28 @@
-+##
-+##  $Id$
-+## 
-+##  This file is part of Vidalia, and is subject to the license terms in the
-+##  LICENSE file, found in the top level directory of this distribution. If 
-+##  you did not receive the LICENSE file with this file, you may obtain it
-+##  from the Vidalia source package distributed by the Vidalia Project at
-+##  http://www.vidalia-project.net/. No part of Vidalia, including this file,
-+##  may be copied, modified, propagated, or distributed except according to
-+##  the terms described in the LICENSE file.
-+##
-+
-+## wixtool source files
-+set(wixtool_SRCS
-+  wixtool.cpp
-+)
-+
-+## Create the wixtool executable
-+add_executable(wixtool ${wixtool_SRCS})
-+
-+## Link the executable with the appropriate Qt libraries
-+target_link_libraries(wixtool ${QT_LIBRARIES})
-+
-+## Remember location so we can use it in custom commands
-+get_target_property(WIXTOOL_EXECUTABLE wixtool LOCATION)
-+set(VIDALIA_WIXTOOL_EXECUTABLE ${WIXTOOL_EXECUTABLE}
-+    CACHE STRING "Location of Vidalia's wixtool program." FORCE)
-+
-diff -Naur a/src/tools/wixtool/wixtool.cpp b/src/tools/wixtool/wixtool.cpp
---- a/src/tools/wixtool/wixtool.cpp	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/tools/wixtool/wixtool.cpp	2009-03-10 08:52:45.590313000 +0000
-@@ -0,0 +1,687 @@
-+/*
-+**  $Id$
-+**
-+**  This file is part of Vidalia, and is subject to the license terms in the
-+**  LICENSE file, found in the top level directory of this distribution. If you
-+**  did not receive the LICENSE file with this file, you may obtain it from the
-+**  Vidalia source package distributed by the Vidalia Project at
-+**  http://www.vidalia-project.net/. No part of Vidalia, including this file,
-+**  may be copied, modified, propagated, or distributed except according to the
-+**  terms described in the LICENSE file.
-+*/
-+
-+#include <QFile>
-+#include <QDomDocument>
-+#include <QTextStream>
-+#include <QTextCodec>
-+#include <QStringList>
-+#include <stdlib.h>
-+
-+#define WIX_ATTR_ID  "Id"
-+#define WIX_ATTR_DIRACTION "uninstall"
-+#define WIX_ATTR_REGACTION "createAndRemoveOnUninstall"
-+#define WIX_ATTR_VALUE "Value"
-+#define WIX_ATTR_KEY "KeyPath"
-+#define WIX_ATTR_GUID "Guid"
-+#define WIX_ATTR_NAME "Name"
-+#define WIX_ATTR_REG_TYPE "Type"
-+#define WIX_ATTR_REG_NAME "Name"
-+#define WIX_ATTR_REG_ROOT "Root"
-+#define WIX_ATTR_REG_KEYPATH  "Key"
-+#define WIX_ATTR_REG_ACTION  "Action"
-+#define WIX_REG_KEY_TYPE "integer"
-+#define WIX_TAG_FILE "File"
-+#define WIX_TAG_DIR "Directory"
-+#define WIX_TAG_FEATURE "Feature"
-+#define WIX_TAG_COMPONENT "Component"
-+#define WIX_TAG_COMPONENT_REF "ComponentRef"
-+#define WIX_TAG_CREATEDIR "CreateFolder"
-+#define WIX_TAG_REMOVEDIR "RemoveFolder"
-+#define WIX_TAG_REGKEY "RegistryKey"
-+#define WIX_TAG_REGVAL "RegistryValue"
-+
-+typedef void (*TraverseCallback)(void *cbdata, QDomElement e);
-+
-+typedef struct s_SpliceData {
-+  QString      dtag;
-+  QString      did;
-+  QDomElement  splice;
-+} SpliceData;
-+
-+typedef struct s_ReplaceData {
-+  QString  dtag;
-+  QString  did;
-+  QString  dprop;
-+  QString  newtag;
-+  QString  newprop;
-+  QString  newpropval;
-+} ReplaceData;
-+
-+typedef struct s_AddData {
-+  QString  dtag;
-+  QString  did;
-+  QString  newtag;
-+  QString  newprop;
-+  QString  newpropval;
-+} AddData;
-+
-+typedef struct s_UserLocalData {
-+  QString      keypath;
-+  QString      featureid;
-+  QStringList  newcomps;
-+} UserLocalData;
-+
-+bool
-+do_walkdoc(QDomNode  n,
-+  TraverseCallback  cb,
-+  void *            cbdata,
-+  QString *errorMessage)
-+{
-+  QTextStream error(stderr);
-+  if ( !n.isNull() ) {
-+    if ( n.isElement() ) {
-+      QDomElement e = n.toElement();
-+      (*cb)(cbdata, e);
-+    }
-+    if ( n.hasChildNodes() ) {
-+      QDomNodeList subnodes = n.childNodes();
-+      int i = 0;
-+      while (i < subnodes.count()) {
-+        do_walkdoc(subnodes.item(i++), cb, cbdata, errorMessage);
-+      }
-+    }
-+  }
-+  return true;
-+}
-+
-+bool
-+walkdoc(QDomDocument *doc,
-+  TraverseCallback  cb,
-+  void *            cbdata,
-+  QString *errorMessage)
-+{
-+  QTextStream error(stderr);
-+  QDomNode n = doc->documentElement();
-+  do_walkdoc(n, cb, cbdata, errorMessage);
-+  return true;
-+}
-+
-+void 
-+splicefunc(void *cbdata,
-+ QDomElement e)
-+{
-+  SpliceData *d = reinterpret_cast<SpliceData *>(cbdata);
-+  QString eid = e.attribute(WIX_ATTR_ID);
-+
-+  if (e.tagName().compare(d->dtag) == 0) {
-+    /* if a specific Id is set, verify it too. */
-+    if (d->did.isEmpty() ||
-+        (eid.size() && !eid.compare(d->did)) ) {
-+
-+      /* expected behavior is to graft children of the splice under target.
-+       * if we're only given a single element graft it instead.
-+       */
-+      if (d->splice.hasChildNodes()) {
-+        QDomNodeList subnodes = d->splice.childNodes();
-+        int i = 0;
-+        while (i < subnodes.count()) {
-+          e.appendChild(e.ownerDocument().importNode(subnodes.item(i++), true));
-+        }
-+      }
-+      else {
-+        e.appendChild(e.ownerDocument().importNode(d->splice, true));
-+      }
-+    }
-+  }
-+}
-+
-+/** Make modifications to requested documents.
-+ * returns false on error and <b>errorMessage</b> will be set.
-+ */
-+bool
-+docsplice(QDomDocument *doc,
-+  QString arguments,
-+  QString *errorMessage)
-+{
-+  Q_ASSERT(doc);
-+  Q_ASSERT(errorMessage);
-+  SpliceData  cbdata;
-+
-+  QStringList spliceinfo = arguments.split("=");
-+  if (spliceinfo.count() != 2) {
-+    *errorMessage = "Invalid argument for splice command: " + arguments;
-+    return false;
-+  }
-+  if (spliceinfo[0].contains(':')) {
-+    /* Id syntax */
-+    QStringList destinfo = spliceinfo[0].split(":");
-+    cbdata.dtag = destinfo[0];
-+    cbdata.did  = destinfo[1];
-+  }
-+  else {
-+    cbdata.dtag = spliceinfo[0];
-+  }
-+
-+  QStringList  srcinfo = spliceinfo[1].split(":");
-+  if (srcinfo.count() < 2) {
-+    *errorMessage = "Invalid source argument for splice command: " + arguments;
-+    return false;
-+  }
-+  QFile spliceFile(srcinfo[0]);
-+  if (!spliceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-+    *errorMessage = QString("Unable to open '%1' for reading: %2\n")
-+                     .arg(srcinfo[0]).arg(spliceFile.errorString());
-+    return false;
-+  }
-+  QTextStream sfiletxt(&spliceFile);
-+  QDomDocument sdoc;
-+  QString parseError;
-+  int  badline, badcol;
-+  if (!sdoc.setContent (sfiletxt.readAll(), false, &parseError, &badline, &badcol)) {
-+    *errorMessage = QString("Error parsing splice document '%1' at line %2 and column %3: %4")
-+                    .arg(srcinfo[0]).arg(badline).arg(badcol).arg(parseError);
-+    return false;
-+  }
-+
-+  QDomNodeList elist = sdoc.elementsByTagName(srcinfo[1]);
-+  if (elist.count() == 0) {
-+    *errorMessage = QString("Unable to locate splice element '%1' in document.\n").arg(srcinfo[1]);
-+    return false;
-+  }
-+  if (srcinfo.count() == 3) {
-+    /* Id syntax for source elem */
-+    for (int i=0; i < elist.count(); i++) {
-+      QString eid = elist.item(i).toElement().attribute(WIX_ATTR_ID);
-+      if (eid.size() && !eid.compare(srcinfo[2])) {
-+        cbdata.splice = elist.item(i).toElement();
-+      }
-+    }
-+  }
-+  else {
-+    /* without an Id the tag name should be unique. */
-+    cbdata.splice = elist.item(0).toElement();
-+  }
-+  return walkdoc(doc, &splicefunc, &cbdata, errorMessage);
-+}
-+
-+void 
-+replacefunc(void *cbdata,
-+ QDomElement e)
-+{
-+  ReplaceData *d = reinterpret_cast<ReplaceData *>(cbdata);
-+  QString eid = e.attribute(WIX_ATTR_ID);
-+
-+  if (e.tagName().compare(d->dtag) == 0) {
-+    /* if a specific Id is set, verify it too. */
-+    if (d->did.isEmpty() ||
-+        (eid.size() && !eid.compare(d->did)) ) {
-+
-+      /* no destination means remove node from tree */
-+      if (d->newtag.isNull()) {
-+        QDomNode parent = e.parentNode();
-+        parent.removeChild(e);
-+      }
-+      else {
-+        if (d->newtag.compare(e.tagName())) {
-+          e.setTagName (d->newtag);
-+        }
-+        if (d->newprop.isNull()) {
-+          /* clear all attributes (except Id if present) */
-+          QDomNamedNodeMap attrs = e.attributes();
-+          for (int i = 0; i < attrs.count(); i++) {
-+            if (attrs.item(i).nodeName().compare(WIX_ATTR_ID)) {
-+              e.removeAttribute(attrs.item(i).nodeName());
-+            }
-+          }
-+        }
-+        else {
-+          /* only modify / clear a specific property */
-+          QDomNode prop = e.attributeNode(d->newprop);
-+          if (!prop.isNull()) {
-+            e.setAttribute(d->newprop, d->newpropval);
-+          }
-+        }
-+      }
-+    }
-+  }
-+}
-+
-+/** Make modifications to requested documents.
-+ * returns false on error and <b>errorMessage</b> will be set.
-+ */
-+bool
-+docreplace(QDomDocument *doc,
-+  QString arguments,
-+  QString *errorMessage)
-+{
-+  Q_ASSERT(doc);
-+  Q_ASSERT(errorMessage);
-+  ReplaceData  cbdata;
-+
-+  QStringList replaceinfo = arguments.split("=");
-+  if (replaceinfo.count() < 1) {
-+    *errorMessage = "Invalid argument for replace command: " + arguments;
-+    return false;
-+  }
-+  if (replaceinfo[0].contains(':')) {
-+    /* Id syntax */
-+    QStringList destinfo = replaceinfo[0].split(":");
-+    cbdata.dtag = destinfo[0];
-+    cbdata.did  = destinfo[1];
-+    if (destinfo.count() >= 3) {
-+      cbdata.dprop = destinfo[2];
-+    }
-+  }
-+  else {
-+    cbdata.dtag = replaceinfo[0];
-+  }
-+  if (replaceinfo.count() > 1) {
-+    QStringList  srcinfo = replaceinfo[1].split(":");
-+    if (srcinfo.count() < 1) {
-+      *errorMessage = "Invalid target argument for replace command: " + arguments;
-+      return false;
-+    }
-+    if (srcinfo.count() >= 1) {
-+      if (srcinfo[0].length()) cbdata.newtag = srcinfo[0];
-+    }
-+    if (srcinfo.count() >= 2) {
-+      if (srcinfo[1].length()) cbdata.newprop = srcinfo[1];
-+    }
-+    if (srcinfo.count() >= 3) {
-+      if (srcinfo[2].length()) cbdata.newpropval = srcinfo[2];
-+    }
-+  }
-+  return walkdoc(doc, &replacefunc, &cbdata, errorMessage);
-+}
-+
-+void 
-+addfunc(void *cbdata,
-+ QDomElement e)
-+{
-+  AddData *d = reinterpret_cast<AddData *>(cbdata);
-+  QString eid = e.attribute(WIX_ATTR_ID);
-+
-+  if (e.tagName().compare(d->dtag) == 0) {
-+    /* if a specific Id is set, verify it too. */
-+    if (d->did.isEmpty() ||
-+        (eid.size() && !eid.compare(d->did)) ) {
-+      if (d->newtag.compare(d->dtag)) {
-+        QDomElement ne = e.ownerDocument().createElement(d->newtag);
-+        if (!d->newprop.isNull()) {
-+          ne.setAttribute(d->newprop, d->newpropval);
-+        }
-+        e.appendChild(ne);
-+      }
-+      else {
-+        e.setAttribute(d->newprop, d->newpropval);
-+      }
-+    }
-+  }
-+}
-+
-+/** Make modifications to requested documents.
-+ * returns false on error and <b>errorMessage</b> will be set.
-+ */
-+bool
-+docadd(QDomDocument *doc,
-+  QString arguments,
-+  QString *errorMessage)
-+{
-+  Q_ASSERT(doc);
-+  Q_ASSERT(errorMessage);
-+  AddData  cbdata;
-+
-+  QStringList addinfo = arguments.split("=");
-+  if (addinfo.count() < 1) {
-+    *errorMessage = "Invalid argument for add command: " + arguments;
-+    return false;
-+  }
-+  if (addinfo[0].contains(':')) {
-+    /* Id syntax */
-+    QStringList destinfo = addinfo[0].split(":");
-+    cbdata.dtag = destinfo[0];
-+    cbdata.did  = destinfo[1];
-+  }
-+  else {
-+    cbdata.dtag = addinfo[0];
-+  }
-+  if (addinfo.count() > 1) {
-+    QStringList  srcinfo = addinfo[1].split(":");
-+    if (srcinfo.count() < 1) {
-+      *errorMessage = "Invalid target argument for add command: " + arguments;
-+      return false;
-+    }
-+    if (srcinfo.count() >= 1) {
-+      if (srcinfo[0].length()) cbdata.newtag = srcinfo[0];
-+    }
-+    if (srcinfo.count() >= 2) {
-+      if (srcinfo[1].length()) cbdata.newprop = srcinfo[1];
-+    }
-+    if (srcinfo.count() >= 3) {
-+      if (srcinfo[2].length()) cbdata.newpropval = srcinfo[2];
-+    }
-+  }
-+  return walkdoc(doc, &addfunc, &cbdata, errorMessage);
-+}
-+
-+bool
-+createRegLocalComponent(QDomElement e,
-+ QString dirName,
-+ QString keyPath)
-+{ 
-+  QDomElement nrk = e.ownerDocument().createElement(WIX_TAG_REGKEY);
-+  QDomElement nrv = e.ownerDocument().createElement(WIX_TAG_REGVAL);
-+  nrk.setAttribute(WIX_ATTR_REG_ROOT, "HKCU");
-+  nrk.setAttribute(WIX_ATTR_REG_ACTION, "createAndRemoveOnUninstall");
-+  nrk.setAttribute(WIX_ATTR_REG_KEYPATH, keyPath);
-+  nrv.setAttribute(WIX_ATTR_REG_TYPE, WIX_REG_KEY_TYPE);
-+  nrv.setAttribute(WIX_ATTR_REG_NAME, dirName);
-+  nrv.setAttribute(WIX_ATTR_VALUE, "1");
-+  nrv.setAttribute(WIX_ATTR_KEY, "yes");
-+  nrk.appendChild(nrv);
-+  e.appendChild(nrk);
-+}
-+
-+bool
-+createDirMgmtComponent(QDomElement e,
-+ QString dirName)
-+{
-+  QDomElement nce;
-+  /* An empty dir might produce a createdir, so only add if not present. */
-+  if (e.elementsByTagName(WIX_TAG_CREATEDIR).count() == 0) {
-+    nce = e.ownerDocument().createElement(WIX_TAG_CREATEDIR);
-+    e.appendChild(nce);
-+  }
-+  nce = e.ownerDocument().createElement(WIX_TAG_REMOVEDIR);
-+  nce.setAttribute("On", WIX_ATTR_DIRACTION);
-+  nce.setAttribute(WIX_ATTR_ID, QString("Remove").append(dirName));
-+  e.appendChild(nce);
-+}
-+
-+void
-+userlocalfunc(void *cbdata,
-+ QDomElement e)
-+{
-+  UserLocalData *ulinfo = reinterpret_cast<UserLocalData *>(cbdata);
-+  QString eid = e.attribute(WIX_ATTR_ID);
-+
-+  if (e.tagName().compare(WIX_TAG_FILE) == 0) {
-+    e.removeAttribute(WIX_ATTR_KEY);
-+  }
-+  else if (e.tagName().compare(WIX_TAG_COMPONENT) == 0) {
-+    /* If the WiX tools get confused we need to remove KeyPath attrs
-+     * on any component elements after creation or merging.
-+     * Empty directories with a CreateFolder and nothing else will do this.
-+     */
-+    e.removeAttribute(WIX_ATTR_KEY);
-+  }
-+  else if (e.tagName().compare(WIX_TAG_FEATURE) == 0) {
-+    /* be sure to remove any default feature names; changed added above. */
-+    QDomNodeList cnl = e.elementsByTagName(WIX_TAG_COMPONENT_REF);
-+    for (int i = 0; i < cnl.count(); i++) {
-+      QDomElement cre = cnl.item(i).toElement();
-+      if (cre.attribute(WIX_ATTR_ID).compare(WIX_TAG_COMPONENT) == 0) {
-+        e.removeChild(cre);
-+      }
-+    }
-+    if (ulinfo->featureid.compare(e.attribute(WIX_ATTR_ID)) == 0) {
-+      /* this is the target feature element for the new components, if any. */
-+      QDomElement ne;
-+      for (int i = 0; i < ulinfo->newcomps.count(); i++) {
-+        QString currid = ulinfo->newcomps[i];
-+        ne = e.ownerDocument().createElement(WIX_TAG_COMPONENT_REF);
-+        ne.setAttribute(WIX_ATTR_ID, currid);
-+        e.appendChild(ne);
-+      }
-+    }
-+  }
-+  else if (e.tagName().compare(WIX_TAG_DIR) == 0) {
-+    QString dirName = e.attribute(WIX_ATTR_NAME);
-+    QString dirId = e.attribute(WIX_ATTR_ID);
-+    /* find all child components for this dir and see if it contains:
-+     * create/remove folder elements, a registry element
-+     */
-+    if ( e.hasChildNodes() ) {
-+      QDomElement fc;
-+      bool  hasComponent = false;
-+      bool  hasRegKey;
-+      QDomNodeList subnodes = e.childNodes();
-+      for (int i = 0; i < subnodes.count(); i++) {
-+        hasRegKey = false;
-+        if (subnodes.item(i).isElement()) {
-+          QDomElement ce = subnodes.item(i).toElement();
-+          if (ce.tagName().compare(WIX_TAG_COMPONENT) == 0) {
-+            if (!hasComponent) {
-+              hasComponent = true;
-+              fc = ce;
-+              if (ce.attribute(WIX_ATTR_ID).compare(WIX_TAG_COMPONENT) == 0) {
-+                /* Fix default named components before adding registry elements. */
-+                ce.setAttribute(WIX_ATTR_ID, QString("DCOMP").append(dirName));
-+                ulinfo->newcomps.append(ce.attribute(WIX_ATTR_ID));
-+              }
-+              if (ce.elementsByTagName(WIX_TAG_REMOVEDIR).count() == 0) {
-+                createDirMgmtComponent(ce, ce.attribute(WIX_ATTR_ID));
-+              }
-+            }
-+            QDomNodeList compnodes = ce.childNodes();
-+            for (int j = 0; j < compnodes.count(); j++) {
-+              if (compnodes.item(j).isElement()) {
-+                QDomElement compe = compnodes.item(j).toElement();
-+                if (compe.tagName().compare(WIX_TAG_REGKEY) == 0) {
-+                  hasRegKey = true;
-+                }
-+              }
-+            }
-+            if (!hasRegKey) {
-+              createRegLocalComponent(ce, QString("RK").append(ce.attribute(WIX_ATTR_ID)), ulinfo->keypath);
-+            }
-+          }
-+        }
-+      }
-+      if (!hasComponent) {
-+        /* Certain system directories must be ignored; we don't manage them. */
-+        if (dirId.compare("LocalAppDataFolder") &&
-+            dirId.compare("AppDataFolder") &&
-+            dirId.compare("CommonAppDataFolder") &&
-+            dirId.compare("CommonFilesFolder") &&
-+            dirId.compare("DesktopFolder") &&
-+            dirId.compare("PersonalFolder") &&
-+            dirId.compare("ProgramFilesFolder") &&
-+            dirId.compare("ProgramMenuFolder") &&
-+            dirId.compare("StartMenuFolder") &&
-+            dirId.compare("StartupFolder") &&
-+            dirId.compare("SystemFolder") &&
-+            dirId.compare("TempFolder") &&
-+            dirId.compare("WindowsFolder") ) {
-+          /* if there is no component under this dir parent then we
-+           * must create a component for the sole purpose of dir
-+           * creation with the requisite registry key path.
-+           */
-+          QDomElement ne = e.ownerDocument().createElement(WIX_TAG_COMPONENT);
-+          QString compId = QString("ULDirComp_").append(dirName);
-+          ne.setAttribute(WIX_ATTR_GUID, "*");
-+          ne.setAttribute(WIX_ATTR_ID, compId);
-+          e.appendChild(ne);
-+          createDirMgmtComponent(ne, dirName);
-+          createRegLocalComponent(ne, QString("DRK").append(dirName), ulinfo->keypath);
-+          ulinfo->newcomps.append(compId);
-+        }
-+      }
-+    }
-+  }
-+}
-+
-+/** Make modifications to requested documents.
-+ * returns false on error and <b>errorMessage</b> will be set.
-+ */
-+bool
-+docuserlocal(QDomDocument *doc,
-+  QString argument,
-+  QString *errorMessage)
-+{
-+  Q_ASSERT(doc);
-+  Q_ASSERT(errorMessage);
-+  UserLocalData  cbdata;
-+
-+  QStringList ulinfo = argument.split(":");
-+  if (ulinfo.count() < 2) {
-+    *errorMessage = "Invalid argument for userlocal command: " + argument;
-+    return false;
-+  }
-+  cbdata.keypath = ulinfo[0];
-+  cbdata.featureid = ulinfo[1];
-+  return walkdoc(doc, &userlocalfunc, &cbdata, errorMessage);
-+}
-+
-+/** Display application usage and exit. */
-+void
-+print_usage_and_exit()
-+{
-+  QTextStream error(stderr);
-+  error << "usage: wixtool <command> [-q] -i <infile> -o <outfile> <Arg0> [... <ArgN>]" << endl;
-+  error << "  command one of: " << endl;
-+  error << "    splice        Splice children from one document into another." << endl;
-+  error << "    replace       Replace elements or attributes in a document." << endl;
-+  error << "    add           Add elements or attributes into a document." << endl;
-+  error << "    userlocal     Convert File elements into per-user local elements." << endl;
-+  error << "  -i <infile>     Input or template file" << endl;
-+  error << "  -o <outfile>    Output file" << endl;
-+  error << endl;
-+  error << "  splice args:    desttagname[:Id]=file:basetag[:Id]" << endl;
-+  error << "    Splice children of basetag in file under desttagname" << endl;
-+  error << endl;
-+  error << "  replace args:   tagname[:Id]:property=newtagname[:Id]:property:value" << endl;
-+  error << "    If newtagname is empty the element is deleted" << endl;
-+  error << "    If newproperty is empty the property is deleted" << endl;
-+  error << endl;
-+  error << "  add args:       desttagname[:Id]=newtagname[:Id]:property:value" << endl;
-+  error << "    Add properties or child elements to target" << endl;
-+  error << "    If newtagname is empty only properties added to dest" << endl;
-+  error << endl;
-+  error << "  userlocal arg:  <registry key path>:<dest feature id>" << endl;
-+  error << "    Convert KeyPath File elements into the per user local idiom" << endl;
-+  error << "    with corresponding Create/RemoveDir and RegistryKey elements." << endl;
-+  error << endl;
-+  error << " NOTE: text content within an element is not accessible." << endl;
-+  error << "       Use the Value= attribute syntax if necessary." << endl;
-+  error << "       The optional :Id syntax restricts matching to elements with" << endl;
-+  error << "       the Id attribute set to the value indicated." << endl;
-+  error.flush();
-+  exit(1);
-+}
-+
-+int
-+main(int argc, char *argv[])
-+{
-+  QTextStream error(stderr);
-+  QString command, errorMessage;
-+  char *infile = 0, *outfile = 0;
-+  QTextCodec *codec = QTextCodec::codecForName("utf-8");
-+  bool quiet = false;
-+  QStringList commandargs;
-+
-+  /* Check for the correct number of input parameters. */
-+  if (argc < 6)
-+    print_usage_and_exit();
-+
-+  /* Verify command is supported. */
-+  command = argv[1];
-+  if ( command.compare("splice", Qt::CaseInsensitive) &&
-+       command.compare("replace", Qt::CaseInsensitive) &&
-+       command.compare("add", Qt::CaseInsensitive) &&
-+       command.compare("userlocal", Qt::CaseInsensitive) ) {
-+    print_usage_and_exit();
-+  }
-+
-+  /* Gather remaining arguments. */
-+  for (int i = 2; i < argc; i++) {
-+    QString arg(argv[i]);
-+    if (!arg.compare("-q", Qt::CaseInsensitive))
-+      quiet = true;
-+    else if (!arg.compare("-i", Qt::CaseInsensitive) && ++i < argc)
-+      infile = argv[i];
-+    else if (!arg.compare("-o", Qt::CaseInsensitive) && ++i < argc)
-+      outfile = argv[i];
-+    else if (infile && outfile) {
-+      commandargs.append(arg);
-+    }
-+  }
-+  if ( !infile || !outfile || !commandargs.count() ) {
-+    print_usage_and_exit();
-+  }
-+
-+  /* Open the source document for reading. */
-+  QFile srcFile(infile);
-+  QTextStream sfiletxt(&srcFile);
-+  sfiletxt.setCodec(codec);
-+  if (!srcFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-+    error << QString("Unable to open '%1' for reading: %2\n").arg(infile)
-+                                                .arg(srcFile.errorString());
-+    return 2;
-+  }
-+
-+  /* Make sure the outfile does not exist before we use it. */
-+  if (QFile::exists(outfile)) {
-+    if (!QFile::remove(outfile)) {
-+      error << QString("Unable to truncate outfile '%1'\n").arg(outfile);
-+      return 2;
-+    }
-+  }
-+
-+  QDomDocument doc;
-+  QString parseError;
-+  int  badline, badcol;
-+  if (!doc.setContent (sfiletxt.readAll(), false, &parseError, &badline, &badcol)) {
-+    error << QString("Error parsing source document '%1' at line %2 and column %3: %4")
-+                    .arg(infile).arg(badline).arg(badcol).arg(parseError);
-+    return 3;
-+  }
-+
-+  if (!command.compare("userlocal", Qt::CaseInsensitive)) {
-+    if (!docuserlocal(&doc, commandargs[0], &errorMessage)) {
-+      error << QString("Unable to convert document components to user local: %1\n")
-+                          .arg(errorMessage);
-+      return 4;
-+    }
-+  }
-+  else {
-+    for (int i = 0; i < commandargs.count(); i++) {
-+      if (!command.compare("splice", Qt::CaseInsensitive)) {
-+        if (!docsplice(&doc, commandargs[i], &errorMessage)) {
-+          error << QString("Unable to process splice command '%1': %2\n")
-+                          .arg(commandargs[i]).arg(errorMessage);
-+          return 4;
-+        }
-+      }
-+      else if (!command.compare("replace", Qt::CaseInsensitive)) {
-+        if (!docreplace(&doc, commandargs[i], &errorMessage)) {
-+          error << QString("Unable to process replace command '%1': %2\n")
-+                          .arg(commandargs[i]).arg(errorMessage);
-+          return 4;
-+        }
-+      }
-+      else if (!command.compare("add", Qt::CaseInsensitive)) {
-+        if (!docadd(&doc, commandargs[i], &errorMessage)) { 
-+          error << QString("Unable to process add command '%1': %2\n")
-+                          .arg(commandargs[i]).arg(errorMessage);
-+          return 4;
-+        }
-+      }
-+    }
-+  }
-+
-+  /* Open the output file for writing. */
-+  QFile docFile(outfile);
-+  if (!docFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-+    error << QString("Unable to open '%1' for writing: %2\n").arg(outfile)
-+                                                .arg(docFile.errorString());
-+    return 5;
-+  }
-+
-+  /* Write the .wxl output. */
-+  QTextStream out(&docFile);
-+  out << doc.toString(4);
-+
-+  return 0;
-+}
-+
 diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
 --- a/src/torcontrol/torcontrol.cpp	2009-02-24 03:20:58.105033000 +0000
-+++ b/src/torcontrol/torcontrol.cpp	2009-03-25 13:27:02.439544744 +0000
++++ b/src/torcontrol/torcontrol.cpp	2009-03-25 13:27:02.000000000 +0000
 @@ -57,6 +57,12 @@
  /** Default destructor */
  TorControl::~TorControl()
@@ -1640,7 +845,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
      return _controlConn->send(cmd, errmsg);
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
-+++ b/src/vidalia/config/torsettings.cpp	2009-03-16 10:58:45.486255632 +0000
++++ b/src/vidalia/config/torsettings.cpp	2009-03-16 10:58:45.000000000 +0000
 @@ -61,16 +61,28 @@
  {
  #if defined(Q_OS_WIN32)
@@ -1717,7 +922,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
  
 diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidaliasettings.cpp
 --- a/src/vidalia/config/vidaliasettings.cpp	2009-02-03 02:09:39.844750000 +0000
-+++ b/src/vidalia/config/vidaliasettings.cpp	2009-03-07 03:57:41.694104224 +0000
++++ b/src/vidalia/config/vidaliasettings.cpp	2009-03-07 03:57:41.000000000 +0000
 @@ -71,9 +71,16 @@
    setDefault(SETTING_SHOW_MAINWINDOW_AT_START, true);
    setDefault(SETTING_BROWSER_EXECUTABLE, "");
@@ -1740,7 +945,7 @@ diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidalia
  #else
 diff -Naur a/src/vidalia/mainwindow.cpp b/src/vidalia/mainwindow.cpp
 --- a/src/vidalia/mainwindow.cpp	2009-02-23 01:36:04.102244000 +0000
-+++ b/src/vidalia/mainwindow.cpp	2009-03-16 10:42:36.730528888 +0000
++++ b/src/vidalia/mainwindow.cpp	2009-03-16 10:42:36.000000000 +0000
 @@ -127,6 +127,7 @@
    createTrayIcon();
    /* Start with Tor initially stopped */
@@ -1816,7 +1021,7 @@ diff -Naur a/src/vidalia/mainwindow.cpp b/src/vidalia/mainwindow.cpp
    if (server.isServerEnabled() && !_delayedShutdownStarted) {
 diff -Naur a/src/vidalia/mainwindow.h b/src/vidalia/mainwindow.h
 --- a/src/vidalia/mainwindow.h	2009-02-03 02:09:39.844750000 +0000
-+++ b/src/vidalia/mainwindow.h	2009-03-16 10:33:26.545169776 +0000
++++ b/src/vidalia/mainwindow.h	2009-03-16 10:33:26.000000000 +0000
 @@ -241,6 +241,7 @@
    bool _useSavedPassword;
    /** The Vidalia icon that sits in the tray. */
@@ -1827,7 +1032,7 @@ diff -Naur a/src/vidalia/mainwindow.h b/src/vidalia/mainwindow.h
    /** Timer used to remind us to check for software updates. */
 diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
 --- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
-+++ b/src/vidalia/network/geoipresolver.cpp	2009-03-13 16:51:51.257918256 +0000
++++ b/src/vidalia/network/geoipresolver.cpp	2009-03-13 16:51:51.000000000 +0000
 @@ -24,25 +24,31 @@
  #endif
  
@@ -1866,19 +1071,17 @@ diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipre
  #endif
  }
 diff -Naur a/src/vidalia/network/tormapwidget.cpp b/src/vidalia/network/tormapwidget.cpp
---- a/src/vidalia/network/tormapwidget.cpp	2009-02-19 21:15:24.029490000 +0000
-+++ b/src/vidalia/network/tormapwidget.cpp	2009-03-07 03:57:41.695104072 +0000
-@@ -24,8 +24,8 @@
- using namespace Marble;
+--- a/src/vidalia/network/tormapwidget.cpp	2009-03-23 16:21:12.057893000 +0000
++++ b/src/vidalia/network/tormapwidget.cpp	2009-03-07 03:57:41.000000000 +0000
+@@ -10,7 +10,7 @@
  
- /** QPens to use for drawing different map elements */
--#define CIRCUIT_NORMAL_PEN      QPen(Qt::green,  2.0)
--#define CIRCUIT_SELECTED_PEN    QPen(Qt::yellow, 3.0)
-+#define CIRCUIT_NORMAL_PEN      QPen(Qt::blue,  2.0)
-+#define CIRCUIT_SELECTED_PEN    QPen(Qt::green, 3.0)
+ /*
+ ** \file tormapwidget.cpp
+-** \version $Id: tormapwidget.cpp 3642 2009-03-23 16:21:12Z coderman $
++** \version $Id: tormapwidget.cpp 3559 2009-02-19 21:15:24Z edmanm $
+ ** \brief Displays Tor servers and circuits on a map of the world
+ */
  
- 
- /** Default constructor */
 @@ -33,10 +33,11 @@
    : MarbleWidget(parent)
  {
@@ -1894,7 +1097,7 @@ diff -Naur a/src/vidalia/network/tormapwidget.cpp b/src/vidalia/network/tormapwi
    TorMapWidgetPopupMenu *popupMenu  = new TorMapWidgetPopupMenu(this);
 diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/entrust-secure-server-root.crt
 --- a/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-03-07 03:57:41.695104072 +0000
++++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-03-07 03:57:41.000000000 +0000
 @@ -0,0 +1,30 @@
 +-----BEGIN CERTIFICATE-----
 +MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UE
@@ -1928,7 +1131,7 @@ diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/en
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root.crt
 --- a/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/gd-class2-root.crt	2009-03-07 03:57:41.696103920 +0000
++++ b/src/vidalia/res/gd-class2-root.crt	2009-03-07 03:57:41.000000000 +0000
 @@ -0,0 +1,24 @@
 +-----BEGIN CERTIFICATE-----
 +MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh
@@ -1956,7 +1159,7 @@ diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
 --- a/src/vidalia/res/vidalia.qrc	2009-02-01 00:34:33.066938000 +0000
-+++ b/src/vidalia/res/vidalia.qrc	2009-03-07 03:57:41.696103920 +0000
++++ b/src/vidalia/res/vidalia.qrc	2009-03-07 03:57:41.000000000 +0000
 @@ -290,5 +290,7 @@
      </qresource>
      <qresource prefix="/geoip">
@@ -1966,9 +1169,19 @@ diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
      </qresource>
  </RCC>
 diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
---- a/src/vidalia/updateprocess.cpp	2009-01-03 20:10:16.806554000 +0000
-+++ b/src/vidalia/updateprocess.cpp	2009-03-07 03:57:41.698103616 +0000
-@@ -234,13 +234,23 @@
+--- a/src/vidalia/updateprocess.cpp	2009-03-12 05:06:19.591518000 +0000
++++ b/src/vidalia/updateprocess.cpp	2009-03-07 03:57:41.000000000 +0000
+@@ -39,8 +39,7 @@
+ {
+   QStringList args;
+ 
+-  args << "update"  << "--force-check"
+-       << " --controller-log-format"
++  args << "update"  << "--controller-log-format"
+        << "--repo=" + updateRepositoryDir()
+        << "--debug";
+   if (_socksPort)
+@@ -235,13 +234,23 @@
  QString
  UpdateProcess::updateExecutable()
  {
@@ -1995,7 +1208,7 @@ diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
  QString
 diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
 --- a/src/vidalia/vidalia.cpp	2009-02-24 04:56:35.504853000 +0000
-+++ b/src/vidalia/vidalia.cpp	2009-03-13 18:43:07.266010760 +0000
++++ b/src/vidalia/vidalia.cpp	2009-03-13 18:43:07.000000000 +0000
 @@ -45,6 +45,7 @@
  #define ARG_PIDFILE    "pidfile"  /**< Location and name of our pidfile.*/
  #define ARG_LOGFILE    "logfile"  /**< Location of our logfile.         */
@@ -2063,7 +1276,7 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  Vidalia::pidFile()
 diff -Naur a/src/vidalia/vidalia.h b/src/vidalia/vidalia.h
 --- a/src/vidalia/vidalia.h	2009-01-12 03:33:41.473092000 +0000
-+++ b/src/vidalia/vidalia.h	2009-03-13 18:42:45.044388960 +0000
++++ b/src/vidalia/vidalia.h	2009-03-13 18:42:45.000000000 +0000
 @@ -82,6 +82,8 @@
    static QString dataDirectory();
    /** Returns the default location of Vidalia's data directory. */
