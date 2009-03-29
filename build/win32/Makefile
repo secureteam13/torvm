@@ -217,7 +217,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3645
+VIDALIA_VER=3646
 
 # for package resources
 TORSVN_NAME=tor-latest
@@ -389,7 +389,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	$(UNZIP) $(WDLDIR)/$(WIXSRC_F) -d wixsrc; tar zcf $(ISODIR)/dl/$(WIXSRC_TGZ) wixsrc; rm -rf wixsrc $(ISODIR)/dl/$(WIXSRC_F); \
 	echo "--- Exporting Vidalia version $(VIDALIA_VER) from local mirror ..."; \
 	rm -rf $(VIDALIA_NAME); $(SVNCMD) export --revision $(VIDALIA_VER) $(SDLDIR)/$(VIDALIA_NAME) $(VIDALIA_NAME); \
-	( echo "Updating geoip cache in Vidalia source tree ..."; cd $(VIDALIA_NAME)/pkg; ./build-geoip-cache.sh ; ls -l geoip-cache ); \
+	( echo "Updating geoip cache in Vidalia source tree ..."; cp -f files/build-geoip-cache.sh $(VIDALIA_NAME)/pkg/; cd $(VIDALIA_NAME)/pkg; ./build-geoip-cache.sh ; ls -l geoip-cache ); \
 	tar zcf $(ISODIR)/dl/src/$(VIDALIA_TGZ) $(VIDALIA_NAME); rm -rf $(VIDALIA_NAME); \
 	echo "--- Exporting Marble revision $(MARBLE_VER) from local mirror ..."; \
 	rm -rf $(MARBLE_NAME); $(SVNCMD) export --revision $(MARBLE_VER) $(SDLDIR)/$(MARBLE_NAME) $(MARBLE_NAME) ; \

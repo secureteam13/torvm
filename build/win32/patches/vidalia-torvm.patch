@@ -17,40 +17,6 @@ diff -Naur a/CMakeLists.txt b/CMakeLists.txt
  
  ## Check for the sizes of various data types
  check_type_size(int SIZEOF_INT)
-diff -Naur a/pkg/build-geoip-cache.sh b/pkg/build-geoip-cache.sh
---- a/pkg/build-geoip-cache.sh	2008-02-29 04:30:11.928307000 +0000
-+++ b/pkg/build-geoip-cache.sh	2009-03-16 05:33:25.000000000 +0000
-@@ -1,4 +1,4 @@
--#!/bin/sh
-+#!/bin/bash
- ##
- ##  $Id: build-geoip-cache.sh 2362 2008-02-29 04:30:11Z edmanm $
- ## 
-@@ -13,15 +13,9 @@
- 
- 
- DIRURL="http://tor.noreply.org/tor/status/all"
--GEOIPURL="http://geoip.vidalia-project.net/cgi-bin/geoip"
-+GEOIPURL="http://peertech.org/geoip"
- CACHEFILE="geoip-cache"
- 
--if [ "$1" == "-notimestamp" -o "$1" == "--notimestamp" ]; then
--  timestamp=""
--else
--  timestamp=":$(date +%s)"
--fi
--
- # Fetch a list of server IP addresses
- ipaddrs=$(wget -q -O - "$DIRURL" | awk '$1 == "r" { print $7 }' | sort | uniq | tr "\n" ",")
- 
-@@ -32,6 +26,6 @@
- IFS=$'\n'
- rm -f $CACHEFILE
- for geoip in $geoips; do
--  echo "$geoip""$timestamp" >> "$CACHEFILE"
-+  echo "$geoip" >> "$CACHEFILE"
- done
- 
 diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
 --- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
 +++ b/pkg/win32/polipo.conf	2009-03-07 12:47:21.000000000 +0000
