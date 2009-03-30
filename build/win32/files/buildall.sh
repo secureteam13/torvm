@@ -150,7 +150,7 @@ if [[ "$1" != "dobuild" ]]; then
   export POLIPO_FILE=polipo-20080907.tar.gz
   export POLIPO_DIR=polipo-20080907
   
-  export TORBUTTON_FILE=torbutton-1.2.0-dev.xpi
+  export TORBUTTON_FILE=torbutton-1.2.1.xpi
   
   export NSIS_DIR=nsis-2.42
   export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
