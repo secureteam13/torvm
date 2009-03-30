@@ -50,7 +50,7 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 --- a/pkg/win32/vidalia.wxs.in	2009-03-21 04:03:31.345626000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-03-15 07:01:31.000000000 +0000
++++ b/pkg/win32/vidalia.wxs.in	2009-03-30 00:08:08.452635944 +0000
 @@ -1,345 +1,371 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
@@ -679,8 +679,8 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
      <UIRef Id="WixUI_Custom" />
 -    <Icon Id="vidalia.ico" SourceFile="@Vidalia_SOURCE_DIR@\src\vidalia\res\icons\vidalia.ico" />
 +    <Icon Id="vidalia.ico" SourceFile="src\vidalia\res\icons\vidalia.ico" />
-+    <WixVariable Id="WixUIBannerBmp" Value="pkg\win32\msi-header.bmp" />
-+    <WixVariable Id="WixUIDialogBmp" Value="pkg\win32\msi-welcome.bmp" />
++    <WixVariable Id="WixUIBannerBmp" Value="pkg\win32\default-header.bmp" />
++    <WixVariable Id="WixUIDialogBmp" Value="pkg\win32\default-welcome.bmp" />
    </Product>
  </Wix>
 diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp

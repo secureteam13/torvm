@@ -1169,7 +1169,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     if [ -f vidalia-intl.msi ]; then
       export BASEMSI=vidalia-intl.msi
     fi
-    if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
       for LANG in $VIDALIA_LANGS; do
         WIXCULTURE=$DEF_WXL_LANG
         for WIXLANG in $WXL_LANGS; do
@@ -1298,7 +1298,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f torvm-intl.msi ]; then
     export BASEMSI=torvm-intl.msi
   fi
-  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+  if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
       WIXCULTURE=$DEF_WXL_LANG
       for WIXLANG in $WXL_LANGS; do
@@ -1357,7 +1357,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f tor-intl.msi ]; then
     export BASEMSI=tor-intl.msi
   fi
-  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+  if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
       WIXCULTURE=$DEF_WXL_LANG
       for WIXLANG in $WXL_LANGS; do
@@ -1413,7 +1413,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f polipo-intl.msi ]; then
     export BASEMSI=polipo-intl.msi
   fi
-  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+  if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
       WIXCULTURE=$DEF_WXL_LANG
       for WIXLANG in $WXL_LANGS; do
@@ -1471,7 +1471,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     if [ -f torbutton-intl.msi ]; then
       export BASEMSI=torbutton-intl.msi
     fi
-    if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+    if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
       for LANG in $VIDALIA_LANGS; do
         WIXCULTURE=$DEF_WXL_LANG 
         for WIXLANG in $WXL_LANGS; do
@@ -1528,7 +1528,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   if [ -f thandy-intl.msi ]; then
     export BASEMSI=thandy-intl.msi
   fi
-  if [[ "$BUILD_IND_LANGS" == "yes" ]]; then
+  if [[ "$BASEMSI" != "" && "$BUILD_IND_LANGS" == "yes" ]]; then
     for LANG in $VIDALIA_LANGS; do
       WIXCULTURE=$DEF_WXL_LANG 
       for WIXLANG in $WXL_LANGS; do
