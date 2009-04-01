@@ -49,9 +49,6 @@ _______________________________________________________________________
      capability for situations where upgraded packages fail.
 
    Tor VM kernel networking improvements
-   . Implement tarpit target default until Tor is successfully up and
-     running to avoid cached failures and other annoying side effects
-     of immediate RST.
    - Collaborate with ioerror on making the iptables rules in torwall
      compatible with Tor VM (and other implementations) to avoid
      duplication and oversights where possible.
@@ -74,8 +71,11 @@ _______________________________________________________________________
    - Pass ARP parameters to VM kernel for faster IP setup.
 
    Tor VM controller hardening
-   - Provide at least minimal privilege separation for processes by
+   * Provide at least minimal privilege separation for processes by
      user account. (right now this is a manual process)
+     Use the Windows Station and Desktop functions to manage anon user
+     creation, logon with desktop, and switch to desktop for better
+     usability and less confusion.
    ? Integrate with SteadyState via registry backed configuration and
      provide deployment configuration scripts.
    ? Take advantage of fine grained authorization and permissions in
@@ -84,9 +84,6 @@ _______________________________________________________________________
      line for use in stronger seeding of first-run kernel random pool.
 
    Vidalia integration
-   . Clean up implementation of wixtool for upstream merge. Missing
-     ability to set defaults for missing tags and remove duplicate
-     tag IDs in documents.
    - Implement random control port password generation and delivery to
      Tor VM kernel and Vidalia using standard input file handles.
    - Implement external Tor based bundle support in a proper manner
