@@ -99,7 +99,7 @@ import: prereq
 	@if [ ! -d $(SDLDIR)/kamikaze ]; then \
 		echo "Mirroring local OpenWRT tree in $(SDLDIR) ..." >&2; \
 		cd $(SDLDIR); \
-		svn co https://svn.openwrt.org/openwrt/trunk/ kamikaze ; \
+		svn co svn://svn.openwrt.org/openwrt/trunk/ kamikaze ; \
 		if (( $$? != 0 )); then \
 			echo "ERROR: Unable to download a copy of the OpenWRT subversion tree." >&2; \
 			rm -rf kamikaze; \
