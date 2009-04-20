@@ -8,6 +8,7 @@ if [[ "$1" != "dobuild" ]]; then
 
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
+  export TORVMUSER_IMAGE=torvmuser.bmp
   export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
   export TVM_VIDCONF=/src/add/defvidalia.conf
   
@@ -590,6 +591,7 @@ if [[ "$W32CTL_BUILT" != "yes" ]]; then
     exit 1
   fi
   cp torvm.exe $ddir/
+  cp $TORVMUSER_IMAGE $bdlibdir/
 
   pkgbuilt W32CTL_BUILT
 fi
