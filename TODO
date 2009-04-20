@@ -71,11 +71,6 @@ _______________________________________________________________________
    - Pass ARP parameters to VM kernel for faster IP setup.
 
    Tor VM controller hardening
-   * Provide at least minimal privilege separation for processes by
-     user account. (right now this is a manual process)
-     Use the Windows Station and Desktop functions to manage anon user
-     creation, logon with desktop, and switch to desktop for better
-     usability and less confusion.
    ? Integrate with SteadyState via registry backed configuration and
      provide deployment configuration scripts.
    ? Take advantage of fine grained authorization and permissions in
