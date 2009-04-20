@@ -660,7 +660,7 @@ BOOL createruser (LPTSTR  hostname,
   ULONG prevaccess;
   NTSTATUS  ntstatus;
   SID *acctsid = NULL;
-  DWORD sidsz = 1024;
+  DWORD sidsz = CMDMAX;
   DWORD domainsz = 0;
   PROFILEINFO pi;
   LSA_OBJECT_ATTRIBUTES  policyattrs;
@@ -670,6 +670,8 @@ BOOL createruser (LPTSTR  hostname,
   LUID_AND_ATTRIBUTES luidattr;
   LSA_UNICODE_STRING lsaprivname;
   LPSTR errmsg;
+  LPSTR cmd = NULL;
+  cmd = malloc(CMDMAX);
 
   *info = NULL;
   *info = malloc(sizeof(userinfo));
@@ -688,12 +690,13 @@ BOOL createruser (LPTSTR  hostname,
       s_advapi->LookupAccountName &&
       s_advapi->LsaAddAccountRights) {
     ldebug("Creating restricted user account: %s\\%s", hostname, username);
-    runcommand("net.exe user Tor  \"\" /add",NULL);
-    runcommand("net.exe localgroup Users Tor /add",NULL);
+    snprintf(cmd, CMDMAX -1, "net.exe user %s \"\" /add", (*info)->name);
+    runcommand(cmd,NULL);
+    snprintf(cmd, CMDMAX -1, "net.exe localgroup Users %s /add", (*info)->name);
+    runcommand(cmd,NULL);
     /* just to be sure in case someone did something stupid with local or domain policy ... */
-    runcommand("net.exe localgroup Administrators Tor /delete",NULL);
-    /* this may need to be removed... */
-    runcommand("net.exe accounts /maxpwage:unlimited",NULL);
+    snprintf(cmd, CMDMAX -1, "net.exe localgroup Administrators %s /delete", (*info)->name);
+    runcommand(cmd,NULL);
 
     ntstatus = s_advapi->LsaOpenPolicy(&lsahostname,
                                        &policyattrs,
@@ -808,6 +811,9 @@ BOOL createruser (LPTSTR  hostname,
     ldebug("Failed to load all required advapi32 symbols in create restricted user.");
   }
 
+  free(cmd);
+  cmd = NULL;
+
   return (retval);
 }
 
@@ -834,8 +840,8 @@ BOOL initruserprofile(userinfo * info)
     lerror ("Unable to build path for profile image in lib dir.");
     return FALSE;
   }
-  relpath = malloc(1024);
-  snprintf(relpath, 1023, "Application Data\\Microsoft\\User Account Pictures\\%s.bmp", info->name);
+  relpath = malloc(CMDMAX);
+  snprintf(relpath, CMDMAX -1, "Application Data\\Microsoft\\User Account Pictures\\%s.bmp", info->name);
   if (!buildsyspath(SYSDIR_ALLPROFILE, relpath, &imgdest)) {
     lerror ("Unable to build path for all users profile destination.");
     free(imgsrc);
