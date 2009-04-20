@@ -8,6 +8,18 @@
 #include <ntsecpkg.h>
 #include <ntsecapi.h>
 
+typedef struct s_userinfo {
+  BOOL    isrestricted;
+  BOOL    isadmin;
+  BOOL    isinteractive;
+  LPTSTR  name;
+  LPTSTR  host;
+  HANDLE  hnd;
+  struct s_rconnelem * next;
+} userinfo;
+
+BOOL userswitcher (void);
+
 /* We gotta have 'em! */
 BOOL haveadminrights (void);
 
@@ -17,6 +29,14 @@ BOOL haveadminrights (void);
  * its form and function.
  */
 BOOL setdriversigning (BOOL sigcheck);
+
+/* Create or open restricted user account. */
+BOOL createruser (LPTSTR  hostname,
+                  LPTSTR  username,
+                  userinfo **info);
+
+BOOL initruserprofile(userinfo *info);
+                      
 
 /* Obtain entropy from Crypto API */
 BOOL entropy (LPBYTE buf,

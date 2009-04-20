@@ -4,12 +4,6 @@
 #include "torvm.h"
 #include <getopt.h>
 
-#define DEFAULT_WINDIR "C:\\WINDOWS"
-#define TOR_VM_BASE    "Tor_VM"
-#define W_TOR_VM_BASE  L"Tor_VM"
-#define TOR_VM_BIN     "bin"
-#define TOR_VM_LIB     "lib"
-#define TOR_VM_STATE   "state"
 #define WIN_DRV_DIR    "system32\\drivers"
 #define TOR_TAP_NAME   "Tor VM Tap32"
 #define TOR_TAP_SVC    "tortap91"
@@ -23,32 +17,6 @@
 #define TOR_HDD_FILE   "hdd.img"
 #define QEMU_DEF_MEM   32
 #define CAP_MTU        1480
-#define CMDMAX         4096
-
-BOOL buildpath (const TCHAR *dirname,
-                TCHAR **fullpath);
-
-#define PATH_FQ        1
-#define PATH_RELATIVE  2
-#define PATH_MSYS      3
-#define VMDIR_BASE     1
-#define VMDIR_BIN      2
-#define VMDIR_LIB      3
-#define VMDIR_STATE    4
-static BOOL buildfpath (DWORD   pathtype,
-                        DWORD   subdirtype,
-                        LPTSTR  wdpath,
-                        LPTSTR  append,
-			LPTSTR *fpath);
-
-#define SYSDIR_WINROOT     1
-#define SYSDIR_PROFILE     2
-#define SYSDIR_PROGRAMS    3
-#define SYSDIR_LCLDATA     4
-#define SYSDIR_LCLPROGRAMS 5
-static BOOL buildsyspath (DWORD   syspathtype,
-                          LPTSTR  append,
-                          LPTSTR *fpath);
 
 struct s_rconnelem {
   BOOL    isactive;
@@ -236,67 +204,6 @@ void ldebug (const char* format, ...)
   return;
 }
 
-static BOOL buildsyspath (DWORD  syspathtype,
-                          LPTSTR append,
-                          LPTSTR *fpath)
-{
-  DWORD   retval;
-  DWORD   errnum;
-  LPTSTR  defval = NULL;
-  LPTSTR  envvar;
-  LPTSTR  dsep = "\\";
-  *fpath = malloc(CMDMAX * sizeof(TCHAR));
-  if(*fpath == NULL) {
-    lerror ("buildsyspath: out of memory.");
-    free(envvar);
-    return FALSE;
-  }
-  if (syspathtype == SYSDIR_WINROOT) {
-    envvar = getenv("SYSTEMROOT");
-    defval = DEFAULT_WINDIR;
-  }
-  else if (syspathtype == SYSDIR_PROFILE)
-    envvar = getenv("USERPROFILE");
-  else if (syspathtype == SYSDIR_PROGRAMS)
-    envvar = getenv("PROGRAMFILES");
-  else if (syspathtype == SYSDIR_LCLDATA)
-    envvar = getenv("USERPROFILE");
-  else if (syspathtype == SYSDIR_LCLPROGRAMS)
-    envvar = getenv("USERPROFILE");
-  if(!envvar) {
-    if (defval) {
-      strncpy(*fpath, defval, (CMDMAX -1));
-      return TRUE;
-    }
-    free(*fpath);
-    *fpath = 0;
-    return FALSE;
-  }
-  if ( (syspathtype == SYSDIR_LCLPROGRAMS) || (syspathtype == SYSDIR_LCLDATA) ) {
-    LPTSTR lclpost = 0;
-    if (syspathtype == SYSDIR_LCLPROGRAMS)
-      lclpost = "Programs";
-    /* local appdata and programs is built against the user profile root */
-    snprintf (*fpath, (CMDMAX -1),
-              "%s%s%s%s%s%s%s",
-              envvar,
-              dsep,
-              "Local Settings\\Application Data",
-              lclpost ? dsep : "",
-              lclpost ? lclpost : "",
-              append ? dsep : "",
-              append ? append : "");
-  }
-  else {
-    snprintf (*fpath, (CMDMAX -1),
-              "%s%s%s",
-              envvar,
-              append ? dsep : "",
-              append ? append : "");
-  }
-  return TRUE;
-}
-
 static BOOL escquote(LPTSTR  path,
                      LPTSTR *epath)
 {
@@ -322,148 +229,6 @@ static BOOL escquote(LPTSTR  path,
     *ci++;
   }
   *cv = 0;
-  return TRUE;
-}
-
-/* initial attempt to keep file locations dynamic and configurable.
- */
-static BOOL buildfpath (DWORD   pathtype,
-                        DWORD   subdirtype,
-                        LPTSTR  wdpath,
-                        LPTSTR  append,
-			LPTSTR *fpath)
-{
-  LPTSTR basepath;
-  DWORD  buflen;
-  *fpath = NULL;
-  LPTSTR dsep = "\\";
-  if (pathtype == PATH_RELATIVE) {
-    if (!wdpath) {
-      basepath = strdup(".");
-    }
-    else {
-      /* TODO: for now, we check if we're in one of the bin/lib/state subdirs
-       * and adjust accordingly.  what we really need to do is is build a full
-       * relative path based on cwd for situations when we might be executing
-       * in a location other than the usual subdirs above.
-       */
-      if ( (strstr(wdpath, "\\" TOR_VM_BIN)) ||
-           (strstr(wdpath, "\\" TOR_VM_LIB)) || 
-           (strstr(wdpath, "\\" TOR_VM_STATE))   ) {
-	basepath = (pathtype == PATH_MSYS) ? strdup("../") : strdup("..\\");
-      }
-    }
-  }
-  else {
-    if (!getmypath(&basepath)) {
-      lerror ("Unable to get current process working directory.");
-      /* TODO: what fallbacks should be used? check common locations? */
-      return FALSE;
-    }
-    if (pathtype == PATH_MSYS) {
-      /* TODO: split drive and path, then sub dir separator */
-      dsep = "/";
-    }
-    /* truncate off our program name from the basepath */
-    if (strlen(basepath) > 1) {
-      LPTSTR cp = basepath + strlen(basepath) - 1;
-      while (cp > basepath && *cp) {
-        if (*cp == '\\')
-	  *cp = 0;
-	else
-	  cp--;
-      }
-    }
-  }
-  buflen = strlen(basepath) + 32; /* leave plenty of room for subdir */
-  if (append)
-    buflen += strlen(append);
-  *fpath = malloc(buflen);
-  **fpath = 0;
-  if (subdirtype == VMDIR_BASE) {
-    snprintf (*fpath, buflen-1,
-              "%s%s%s",
-	      basepath,
-	      append ? dsep : "",
-	      append ? append : "");
-  }
-  else {
-    LPTSTR csd = "";
-    if (subdirtype == VMDIR_BIN)
-      csd = TOR_VM_BIN;
-    else if (subdirtype == VMDIR_LIB)
-      csd = TOR_VM_LIB;
-    else if (subdirtype == VMDIR_STATE)
-      csd = TOR_VM_STATE;
-
-    snprintf (*fpath, buflen-1,
-              "%s%s%s%s%s",
-	      basepath,
-	      dsep,
-	      csd,
-	      append ? dsep : "",
-	      append ? append : "");
-  }
-  ldebug ("Returning build file path %s for path type %d subdir type %d working path %s and append %s", *fpath, pathtype, subdirtype, wdpath ? wdpath : "", append ? append : "");
-
-  free (basepath);
-  return TRUE;
-}
-
-BOOL exists(LPTSTR path)
-{
-  HANDLE  hnd;
-  hnd = CreateFile (path,
-                    GENERIC_READ,
-                    0,
-                    NULL,
-                    OPEN_EXISTING,
-                    FILE_ATTRIBUTE_NORMAL,
-                    NULL);
-  if (hnd == INVALID_HANDLE_VALUE) {
-    return FALSE;
-  }
-  CloseHandle(hnd);
-  return TRUE;
-}
-
-BOOL copyfile (LPTSTR srcpath,
-               LPTSTR destpath)
-{
-  HANDLE src, dest;
-  DWORD buffsz = CMDMAX;
-  DWORD len, written;
-  LPTSTR buff;
-  src = CreateFile (srcpath,
-                    GENERIC_READ,
-                    0,
-                    NULL,
-                    OPEN_EXISTING,
-                    FILE_ATTRIBUTE_NORMAL,
-                    NULL);
-  if (src == INVALID_HANDLE_VALUE) {
-    return FALSE;
-  }
-  DeleteFile (destpath);
-  dest = CreateFile (destpath,
-                     GENERIC_WRITE,
-                     0,
-                     NULL,
-                     CREATE_NEW,
-                     FILE_ATTRIBUTE_NORMAL,
-                     NULL);
-  if (dest == INVALID_HANDLE_VALUE) {
-    return FALSE;
-  }
-  buff = malloc(buffsz);
-  if (!buff) 
-    return FALSE;
-  while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
-    WriteFile(dest, buff, len, &written, NULL);
-  free (buff);
-  CloseHandle (src);
-  CloseHandle (dest);
-
   return TRUE;
 }
 
@@ -633,7 +398,7 @@ BOOL uninstalltap(void)
   free (cmd);
 
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    Sleep (200);
+    Sleep (500);
   }
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
@@ -854,7 +619,7 @@ BOOL uninstalltornpf (void)
 {
   LPTSTR fname = NULL;
   LPTSTR cmd = "\"net.exe\" stop tornpf";
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     lerror ("Unable to run net stop for tornpf service.");
   }
   if (0) { /* XXX: for now we don't ever delete the npf device file. */
@@ -893,7 +658,7 @@ BOOL savenetconfig(void)
    */
   if (getosversion() >= OS_VISTA) {
     cmd = "\"netsh.exe\" advfirewall export \"" TOR_VM_STATE "\\firewall.wfw\"";
-    runcommand(cmd);
+    runcommand(cmd,NULL);
     linfo ("Saved current firewall configuration state.");
   }
 
@@ -988,7 +753,7 @@ BOOL restorenetconfig(void)
 
   if (getosversion() >= OS_VISTA) {
     cmd = "\"netsh.exe\" advfirewall import \"" TOR_VM_STATE "\\firewall.wfw\"";
-    runcommand(cmd);
+    runcommand(cmd,NULL);
     linfo ("Imported saved firewall configuration.");
   }
 
@@ -1020,7 +785,7 @@ BOOL restorenetconfig(void)
   }
 
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    Sleep (200);
+    Sleep (500);
   }
 
   CloseHandle(pi.hThread);
@@ -1030,48 +795,6 @@ BOOL restorenetconfig(void)
   DeleteFile (savepath);
 
   linfo ("Restored current network configuration state.");
-  return TRUE;  
-}
-
-BOOL runcommand(LPSTR cmd)
-{
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-  LPTSTR dir = NULL;
-  DWORD exitcode;
-  DWORD opts = 0;
-
-  opts = CREATE_NEW_PROCESS_GROUP;
-
-  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &dir)) {
-    lerror ("Unable to build path for bin dir.");
-    return FALSE;
-  }
-
-  ZeroMemory( &pi, sizeof(pi) );
-  ZeroMemory( &si, sizeof(si) );
-  si.cb = sizeof(si);
-
-  if( !CreateProcess(NULL,
-                     cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
-                     opts,
-                     NULL,   // environment block
-                     dir,
-                     &si,
-                     &pi) ) {
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
-    return FALSE;
-  }
-
-  while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    Sleep (200);
-  }
-  CloseHandle(pi.hThread);
-  CloseHandle(pi.hProcess);
-
   return TRUE;  
 }
 
@@ -1088,7 +811,7 @@ BOOL disablefirewall(void)
 {
   LPTSTR cmd = "\"netsh.exe\" firewall set opmode disable";
   ldebug ("Disable firewall cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     return FALSE;
   }
   return TRUE;
@@ -1098,8 +821,13 @@ BOOL enablefirewall(void)
 {
   /* TODO: we need to check if exceptions are disabled, and set opmode enable disable accordingly. */
   LPTSTR cmd = "\"netsh.exe\" firewall set opmode enable";
+  LPTSTR dir = NULL;
+  if (!buildfpath(PATH_FQ, VMDIR_BIN, NULL, NULL, &dir)) {
+    lerror ("Unable to build path for bin dir.");
+    return FALSE;
+  }
   ldebug ("Re-enable firewall cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     return FALSE;
   }
   return TRUE;
@@ -1110,7 +838,7 @@ BOOL cleararpcache(void)
   LPSTR cmd;
   cmd = "\"netsh.exe\" interface ip delete arpcache";
   ldebug ("Clear ARP cache cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     return FALSE;
   }
   return TRUE;
@@ -1118,10 +846,9 @@ BOOL cleararpcache(void)
 
 BOOL flushdns(void)
 { 
-  LPSTR cmd;
-  cmd = "\"ipconfig.exe\" /flushdns";
+  LPSTR cmd = "\"ipconfig.exe\" /flushdns";
   ldebug ("Flush DNS cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     return FALSE;
   }
   return TRUE;
@@ -1129,10 +856,9 @@ BOOL flushdns(void)
 
 BOOL configtap(void)
 {
-  const DWORD  cmdlen = 1024;
+  const DWORD cmdlen = 1024;
   LPTSTR cmd;
   LPTSTR netsh = "netsh.exe";
-
   cmd = malloc(cmdlen);
 
   snprintf (cmd, cmdlen,
@@ -1143,7 +869,7 @@ BOOL configtap(void)
             TOR_TAP_NET,
             TOR_TAP_VMIP);
   ldebug ("Tap config cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     free (cmd);
     return FALSE;
   }
@@ -1153,7 +879,7 @@ BOOL configtap(void)
             TOR_TAP_NAME,
             TOR_TAP_DNS1);
   ldebug ("Tap dns config cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     free (cmd);
     return FALSE;
   }
@@ -1163,7 +889,7 @@ BOOL configtap(void)
             TOR_TAP_NAME,
             TOR_TAP_DNS2);
   ldebug ("Tap dns2 config cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     free (cmd);
     return FALSE;
   }
@@ -1177,7 +903,7 @@ BOOL configbridge(void)
   LPSTR cmd;
   cmd = "\"netsh.exe\" interface ip set address \"Local Area Connection\" static 10.231.254.1 255.255.255.254";
   ldebug ("Bridge interface null route cmd: %s", cmd);
-  if (! runcommand(cmd)) {
+  if (! runcommand(cmd,NULL)) {
     return FALSE;
   }
   return TRUE;
@@ -1967,7 +1693,7 @@ BOOL waitforit (PROCESS_INFORMATION * pi) {
   DWORD exitcode;
   while ( GetExitCodeProcess(pi->hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
     ldebug ("waiting for process to exit ...");
-    Sleep (2000);
+    Sleep (1000);
   }
   ldebug ("Done.");
   CloseHandle(pi->hThread);
@@ -2069,6 +1795,26 @@ BOOL detachself (void)
   return TRUE;
 }
 
+BOOL setupuser (void)
+{
+  BOOL retval = FALSE;
+  userinfo * ui;
+  char * myhostname = getenv("COMPUTERNAME");
+  if (!myhostname)
+    myhostname = getenv("HOSTNAME");
+  if (createruser (myhostname,
+                   "Tor",
+                   &ui)) {
+    if (!initruserprofile(ui)) {
+      ldebug ("Failed to initialize user profile data in setupuser.");
+    }
+    else {
+      retval = TRUE;
+    }
+  }
+  return retval;
+}
+
 BOOL setupenv (void)
 {
 #define EBUFSZ 4096
@@ -2158,6 +1904,7 @@ static struct option torvm_options[] =
    * int* flag | NULL,
    * 'x' (char)  OR  flag && lval
    */
+  { "accel" , no_argument , NULL, 'a' },
   { "verbose" , no_argument , NULL, 'v' },
   { "update" , no_argument , NULL, 'u' },
   { "bundle" , no_argument , NULL, 'b' },
@@ -2175,6 +1922,7 @@ void usage(void)
   fprintf(stderr, "Usage:\t"
     "torvm.exe [options]\n\n"
     "Valid options are:\n"
+    "  --accel\n"
     "  --verbose\n"
     "  --update\n"
     "  --bundle\n"
@@ -2194,6 +1942,7 @@ int main(int argc, char **argv)
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
   struct s_rconnelem *tapconn = NULL;
+  BOOL  vmaccel = FALSE;
   BOOL  bundle = FALSE;
   BOOL  indebug = FALSE;
   BOOL  vmnop = FALSE;
@@ -2205,11 +1954,16 @@ int main(int argc, char **argv)
   int c, optidx = 0;
 
   while (1) {
-    c = getopt_long(argc, argv, "vubshrcXZ", torvm_options, &optidx);
+    c = getopt_long(argc, argv, "avubshrcXZ", torvm_options, &optidx);
     if (c == -1)
       break;
 
     switch (c) {
+        case 'a':
+          ldebug ("Set option %s.", torvm_options[optidx].name);
+          vmaccel = TRUE;
+          break;
+
         case 'v':
           ldebug ("Set option %s.", torvm_options[optidx].name);
           indebug = TRUE;
@@ -2269,28 +2023,6 @@ int main(int argc, char **argv)
     }
   }
   
-  if (getosbits() > 32) {
-    lerror ("Error: only 32bit operating systems are currently supported.");
-    MessageBox(NULL,
-               "Sorry, only 32bit operating systems are currently supported.",
-               "Unsupported Operating System Architecture",
-               MB_OK);
-    exit (1);
-  }
-
-  if (!setupenv()) {
-    fatal ("Unable to prepare process environment.");
-  }
-
-  if (!haveadminrights()) {
-    if (promptrunasadmin()) {
-      if (respawnasadmin() == TRUE) {
-        return 0;
-      }
-    }
-    return 1;
-  }
-
   if (buildfpath(PATH_FQ, VMDIR_STATE, NULL, "vmlog.txt", &logfile)) {
     logto (logfile);
     free (logfile);
@@ -2302,9 +2034,35 @@ int main(int argc, char **argv)
     logfile = NULL;
   }
 
+  if (getosbits() > 32) {
+    lerror ("Error: only 32bit operating systems are currently supported.");
+    MessageBox(NULL,
+               "Sorry, only 32bit operating systems are currently supported.",
+               "Unsupported Operating System Architecture",
+               MB_OK);
+    exit (1);
+  }
+
+  if (!haveadminrights()) {
+    if (promptrunasadmin()) {
+      if (respawnasadmin() == TRUE) {
+        return 0;
+      }
+    }
+    return 1;
+  }
+
+  if (!setupenv()) {
+    fatal ("Unable to prepare process environment.");
+  }
+
   if (!vmnop) {
     if (!savenetconfig()) {
       fatal ("Unable to save current network configuration.");
+    }
+
+    if (!setupuser()) {
+      lerror ("Unable to setup restricted user.");
     }
 
     ce = NULL;
@@ -2439,7 +2197,17 @@ int main(int argc, char **argv)
    * for the 10. tap control port and externally managed Tor instance.
    */
   if (bundle) {
-    runvidalia(indebug);
+    /* try to confirm control port is up before launching vidalia... */
+    int i = 10;
+    while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
+      ldebug("Control port connect attempt failed, trying again... [%d left]", i);
+      Sleep(1000);
+    }
+    if (i > 0) {
+      ldebug("Control port connected. Starting controller ...");
+      runvidalia(indebug);
+      userswitcher();
+    }
   }
 
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we

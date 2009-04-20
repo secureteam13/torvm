@@ -4,6 +4,35 @@
 
 #include "apicommon.h"
 
+/* Depending on _WIN32_WINNT version and mingw32 api we may
+ * have all of the socket structures defined. Needed by default.
+ */
+#ifndef __HAVE_IN_ADDR
+typedef struct _in_addr {
+  union {
+    struct {
+      unsigned char s_b1,
+                    s_b2,
+                    s_b3,
+                    s_b4;
+    } S_un_b;
+    struct {
+      unsigned short s_w1,
+                     s_w2;
+    } S_un_w;
+    unsigned long S_addr;
+  } S_un;
+} in_addr;
+#endif
+#ifndef __HAVE_SOCKADDR_IN
+typedef struct _sockaddr_in{
+   short sin_family;
+   unsigned short sin_port;
+   struct in_addr sin_addr;
+   char sin_zero[8];
+} sockaddr_in;
+#endif
+
 /* jump hoops to read ethernet adapter MAC address.
  */
 #define _NDIS_CONTROL_CODE(request,method) \
@@ -32,17 +61,221 @@
 #define OID_WW_GEN_PERMANENT_ADDRESS            0x0901010B
 #define OID_WW_GEN_CURRENT_ADDRESS              0x0901010C
 
+BOOL buildsyspath (DWORD  syspathtype,
+                   LPTSTR append,
+                   LPTSTR *fpath)
+{
+  DWORD   retval;
+  DWORD   errnum;
+  LPTSTR  defval = NULL;
+  LPTSTR  envvar;
+  LPTSTR  dsep = "\\";
+  *fpath = malloc(CMDMAX * sizeof(TCHAR));
+  if(*fpath == NULL) {
+    lerror ("buildsyspath: out of memory.");
+    free(envvar);
+    return FALSE;
+  }
+  if (syspathtype == SYSDIR_WINROOT) {
+    envvar = getenv("SYSTEMROOT");
+    defval = DEFAULT_WINDIR;
+  }
+  else if (syspathtype == SYSDIR_ALLPROFILE)
+    envvar = getenv("ALLUSERSPROFILE");
+  else if (syspathtype == SYSDIR_PROFILE)
+    envvar = getenv("USERPROFILE");
+  else if (syspathtype == SYSDIR_PROGRAMS)
+    envvar = getenv("PROGRAMFILES");
+  else if (syspathtype == SYSDIR_LCLDATA)
+    envvar = getenv("USERPROFILE");
+  else if (syspathtype == SYSDIR_LCLPROGRAMS)
+    envvar = getenv("USERPROFILE");
+  if(!envvar) {
+    if (defval) {
+      strncpy(*fpath, defval, (CMDMAX -1));
+      return TRUE;
+    }
+    free(*fpath);
+    *fpath = 0;
+    return FALSE;
+  }
+  if ( (syspathtype == SYSDIR_LCLPROGRAMS) || (syspathtype == SYSDIR_LCLDATA) ) {
+    LPTSTR lclpost = 0;
+    if (syspathtype == SYSDIR_LCLPROGRAMS)
+      lclpost = "Programs";
+    /* local appdata and programs is built against the user profile root */
+    snprintf (*fpath, (CMDMAX -1),
+              "%s%s%s%s%s%s%s",
+              envvar,
+              dsep,
+              "Local Settings\\Application Data",
+              lclpost ? dsep : "",
+              lclpost ? lclpost : "",
+              append ? dsep : "",
+              append ? append : "");
+  }
+  else {
+    snprintf (*fpath, (CMDMAX -1),
+              "%s%s%s",
+              envvar,
+              append ? dsep : "",
+              append ? append : "");
+  }
+  ldebug ("Returning system path %s for path type %d and append %s", *fpath, syspathtype, append ? append : "");
+  return TRUE;
+}
+
+BOOL buildfpath (DWORD   pathtype,
+                 DWORD   subdirtype,
+                 LPTSTR  wdpath,
+                 LPTSTR  append,
+                 LPTSTR *fpath)
+{
+  LPTSTR basepath;
+  DWORD  buflen;
+  *fpath = NULL;
+  LPTSTR dsep = "\\";
+  if (pathtype == PATH_RELATIVE) {
+    if (!wdpath) {
+      basepath = strdup(".");
+    }
+    else {
+      /* TODO: for now, we check if we're in one of the bin/lib/state subdirs
+       * and adjust accordingly.  what we really need to do is is build a full
+       * relative path based on cwd for situations when we might be executing
+       * in a location other than the usual subdirs above.
+       */
+      if ( (strstr(wdpath, "\\" TOR_VM_BIN)) ||
+           (strstr(wdpath, "\\" TOR_VM_LIB)) || 
+           (strstr(wdpath, "\\" TOR_VM_STATE))   ) {
+	basepath = (pathtype == PATH_MSYS) ? strdup("../") : strdup("..\\");
+      }
+    }
+  }
+  else {
+    if (!getmypath(&basepath)) {
+      lerror ("Unable to get current process working directory.");
+      /* TODO: what fallbacks should be used? check common locations? */
+      return FALSE;
+    }
+    if (pathtype == PATH_MSYS) {
+      /* TODO: split drive and path, then sub dir separator */
+      dsep = "/";
+    }
+    /* truncate off our program name from the basepath */
+    if (strlen(basepath) > 1) {
+      LPTSTR cp = basepath + strlen(basepath) - 1;
+      while (cp > basepath && *cp) {
+        if (*cp == '\\')
+	  *cp = 0;
+	else
+	  cp--;
+      }
+    }
+  }
+  buflen = strlen(basepath) + 32; /* leave plenty of room for subdir */
+  if (append)
+    buflen += strlen(append);
+  *fpath = malloc(buflen);
+  **fpath = 0;
+  if (subdirtype == VMDIR_BASE) {
+    snprintf (*fpath, buflen-1,
+              "%s%s%s",
+	      basepath,
+	      append ? dsep : "",
+	      append ? append : "");
+  }
+  else {
+    LPTSTR csd = "";
+    if (subdirtype == VMDIR_BIN)
+      csd = TOR_VM_BIN;
+    else if (subdirtype == VMDIR_LIB)
+      csd = TOR_VM_LIB;
+    else if (subdirtype == VMDIR_STATE)
+      csd = TOR_VM_STATE;
+
+    snprintf (*fpath, buflen-1,
+              "%s%s%s%s%s",
+	      basepath,
+	      dsep,
+	      csd,
+	      append ? dsep : "",
+	      append ? append : "");
+  }
+  ldebug ("Returning build file path %s for path type %d subdir type %d working path %s and append %s", *fpath, pathtype, subdirtype, wdpath ? wdpath : "", append ? append : "");
+
+  free (basepath);
+  return TRUE;
+}
+
 BOOL getmypath (TCHAR **path)
 {
-  TCHAR  mypath[MAX_PATH];
+  CHAR  mypath[MAX_PATH];
   memset (mypath, 0, sizeof(mypath));
-  if (! GetModuleFileName(NULL,
-                          &mypath,
-                          sizeof(mypath)-1)) {
+  if (! GetModuleFileNameA(NULL,
+                           mypath,
+                           sizeof(mypath)-1)) {
     lerror ("Unable to obtain current program path.");
     return FALSE;
   }
   *path = strdup(mypath);
+  return TRUE;
+}
+
+BOOL exists (LPTSTR path)
+{
+  HANDLE  hnd;
+  hnd = CreateFile (path,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (hnd == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  } 
+  CloseHandle(hnd);
+  return TRUE;
+} 
+
+BOOL copyfile (LPTSTR srcpath,
+               LPTSTR destpath)
+{ 
+  HANDLE src, dest;
+  DWORD buffsz = CMDMAX;   
+  DWORD len, written;
+  LPTSTR buff;
+  src = CreateFile (srcpath,
+                    GENERIC_READ,
+                    0,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  if (src == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }                 
+  DeleteFile (destpath);
+  dest = CreateFile (destpath,
+                     GENERIC_WRITE,
+                     0,
+                     NULL,
+                     CREATE_NEW,
+                     FILE_ATTRIBUTE_NORMAL,
+                     NULL);
+  if (dest == INVALID_HANDLE_VALUE) {
+    return FALSE;
+  }
+  buff = malloc(buffsz);
+  if (!buff)
+    return FALSE;
+  while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0))
+    WriteFile(dest, buff, len, &written, NULL);
+  free (buff);
+  CloseHandle (src);
+  CloseHandle (dest);
+
   return TRUE;
 }
 
@@ -55,6 +288,42 @@ void bgstartupinfo (STARTUPINFO *si)
   si->wShowWindow = SW_HIDE;
   si->dwFlags |= STARTF_USECOUNTCHARS | STARTF_USEFILLATTRIBUTE | STARTF_USESHOWWINDOW;
   return;
+}
+
+BOOL runcommand(LPSTR cmd,
+                LPSTR dir)
+{ 
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+  DWORD exitcode;
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+   
+  ZeroMemory( &pi, sizeof(pi) );
+  ZeroMemory( &si, sizeof(si) );
+  si.cb = sizeof(si);
+         
+  if( !CreateProcess(NULL,
+                     cmd,
+                     NULL,   // process handle no inherit
+                     NULL,   // thread handle no inherit
+                     FALSE,  // default handle inheritance false
+                     opts,
+                     NULL,   // environment block
+                     dir,
+                     &si,
+                     &pi) ) {
+    lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    return FALSE;
+  }
+
+  while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
+    Sleep (500);
+  }
+  ldebug ("runcommand process %s exited with status: %d", cmd, exitcode);
+  CloseHandle(pi.hThread); 
+  CloseHandle(pi.hProcess);
+  
+  return TRUE;
 }
 
 BOOL localhnd (HANDLE  *hnd)
@@ -144,9 +413,9 @@ int getosversion (void) {
     }
   }
   else if (info.dwMajorVersion == 6) {
-    OSVERSIONINFOEX exinfo;
-    ZeroMemory(&exinfo, sizeof(OSVERSIONINFOEX));
-    exinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    OSVERSIONINFOEXA exinfo;
+    ZeroMemory(&exinfo, sizeof(OSVERSIONINFOEXA));
+    exinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
     GetVersionEx(&exinfo);
     if (exinfo.wProductType != VER_NT_WORKSTATION) {
       ldebug ("Operating system version is Windows Vista");
@@ -284,6 +553,33 @@ BOOL isconnected(const char *  devguid)
   return retval;
 }
 
+BOOL tryconnect(const char * addr,
+                DWORD port)
+{
+  WSADATA wsadata;
+  SOCKET csocket;
+  int result = WSAStartup(MAKEWORD(2,2), &wsadata);
+  csocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (csocket == INVALID_SOCKET) {
+    ldebug("Error at socket(): %ld\n", WSAGetLastError());
+    WSACleanup();
+    return FALSE;
+  }
+  sockaddr_in dest;
+  dest.sin_family = AF_INET;
+  dest.sin_addr.s_addr = inet_addr(addr);
+  dest.sin_port = htons(port);
+  if (connect(csocket,
+              (SOCKADDR*)&dest,
+              sizeof(dest)) == SOCKET_ERROR) {
+    WSACleanup();
+    return FALSE;
+  }
+  closesocket(csocket);
+  WSACleanup();
+  return TRUE;
+}
+
 BOOL base16encode(LPBYTE   data,
                   DWORD    len,
                   char **  hexstr)
@@ -305,9 +601,9 @@ BOOL base16encode(LPBYTE   data,
     return FALSE;
   }
   for (i = 0; i < len; i++) {
-    snprintf(*hexstr[i * 2], 3, "%02hhx", data[i]);
+    snprintf(*hexstr+(i*2), 3, "%02hhx", (short)data[i]);
   }
-  *hexstr[i] = NULL;
+  (*hexstr)[olen-1] = NULL;
   return retval;
 }
 

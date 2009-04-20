@@ -1,7 +1,7 @@
 diff -Naur a/Configure b/Configure
---- a/Configure	2008-12-29 00:18:23.000000000 +0000
-+++ b/Configure	2009-01-31 10:43:44.940555920 +0000
-@@ -475,7 +475,7 @@
+--- a/Configure	2009-02-16 08:44:22.000000000 +0000
++++ b/Configure	2009-04-05 02:24:48.927195384 +0000
+@@ -480,7 +480,7 @@
  "BC-32","bcc32::::WIN32::BN_LLONG DES_PTR RC4_INDEX EXPORT_VAR_AS_FN:${no_asm}:win32",
  
  # MinGW
@@ -10,7 +10,7 @@ diff -Naur a/Configure b/Configure
  
  # UWIN 
  "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:win32",
-@@ -1051,7 +1051,7 @@
+@@ -1059,7 +1059,7 @@
  
  my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
  
@@ -20,8 +20,8 @@ diff -Naur a/Configure b/Configure
  $no_shared = 0 if ($fipsdso && !$IsMK1MF);
  
 diff -Naur a/Makefile.org b/Makefile.org
---- a/Makefile.org	2008-12-30 13:26:26.000000000 +0000
-+++ b/Makefile.org	2009-01-31 10:46:23.025523352 +0000
+--- a/Makefile.org	2009-03-03 22:40:29.000000000 +0000
++++ b/Makefile.org	2009-04-05 02:24:48.928195232 +0000
 @@ -131,7 +131,7 @@
  
  BASEADDR=

@@ -89,7 +89,7 @@ if [[ "$1" != "dobuild" ]]; then
   export PTHREAD_DIR="pthreads-w32-${PTHREAD_VER}-release"
   export PTHREAD_FILE="${PTHREAD_DIR}.tar.gz"
   
-  export OPENSSL_VER="0.9.8j"
+  export OPENSSL_VER="0.9.8k"
   export OPENSSL_DIR="openssl-${OPENSSL_VER}"
   export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
   
@@ -554,8 +554,8 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
   ./configure --prefix=/usr --interp-prefix=qemu-%M \
     --enable-uname-release="Tor VM 2.6-alpha i386" \
     --disable-werror \
-    --disable-kqemu \
     --disable-system \
+    --disable-kqemu \
     --disable-vnc-tls \
     --extra-cflags="-DHAVE_INTSZ_TYPES -I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
     --extra-ldflags="-L/src/$ZLIB_DIR -L/usr/lib -L/usr/local/lib $WPCAP_LDFLAGS -L/src/pthreads-w32" \
@@ -1094,7 +1094,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         tail +4c fulldata-dir.wxs > fulldata-dir.wxs.tmp; dos2unix fulldata-dir.wxs.tmp; cat fulldata-dir.wxs.tmp > fulldata-dir.wxs; rm -f fulldata-dir.wxs.tmp
         wixtool.exe splice -i pkg/win32/vidalia.wxs -o fulldata-tmpdir.wxs Directory:LocalPluginsDataDir=fulldata-dir.wxs:Directory:data
         wixtool.exe splice -i fulldata-tmpdir.wxs -o fulldata-tmpall.wxs Feature:MainApplication=fulldata-dir.wxs:Feature:ProductFeature
-        wixtool.exe userlocal -i fulldata-tmpall.wxs -o fulldata-all.wxs "Software/Vidalia:MainApplication"
+        wixtool.exe userlocal -i fulldata-tmpall.wxs -o fulldata-all.wxs "Software\\Vidalia:MainApplication"
         rm -f fulldata-tmpdir.wxs fulldata-tmpall.wxs
         candle.exe $CANDLE_OPTS fulldata-all.wxs
         WIX_CAB_CACHE=_vidmrbl.cabcache
@@ -1127,7 +1127,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
         tail +4c mindata-dir.wxs > mindata-dir.wxs.tmp; dos2unix mindata-dir.wxs.tmp; cat mindata-dir.wxs.tmp > mindata-dir.wxs; rm -f mindata-dir.wxs.tmp
         wixtool.exe splice -i pkg/win32/vidalia.wxs -o mindata-tmpdir.wxs Directory:LocalPluginsDataDir=mindata-dir.wxs:Directory:data
         wixtool.exe splice -i mindata-tmpdir.wxs -o mindata-tmpall.wxs Feature:MainApplication=mindata-dir.wxs:Feature:ProductFeature
-        wixtool.exe userlocal -i mindata-tmpall.wxs -o mindata-all.wxs "Software/Vidalia:MainApplication"
+        wixtool.exe userlocal -i mindata-tmpall.wxs -o mindata-all.wxs "Software\\Vidalia:MainApplication"
         rm -f mindata-tmpdir.wxs mindata-tmpall.wxs
         candle.exe $CANDLE_OPTS mindata-all.wxs
         rm -rf $WIX_CAB_CACHE
@@ -1243,7 +1243,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     tail +4c license-dir.wxs > license-dir.wxs.tmp; dos2unix license-dir.wxs.tmp; cat license-dir.wxs.tmp > license-dir.wxs; rm -f license-dir.wxs.tmp
     wixtool.exe splice -i license.wxs -o license-tmpdir.wxs Directory:ProgramsInstDir=license-dir.wxs:Directory:LicenseDocs
     wixtool.exe splice -i license-tmpdir.wxs -o license-tmpall.wxs Feature:MainApplication=license-dir.wxs:Feature:ProductFeature
-    wixtool.exe userlocal -i license-tmpall.wxs -o license-all.wxs "Software/Tor License:MainApplication"
+    wixtool.exe userlocal -i license-tmpall.wxs -o license-all.wxs "Software\\Tor License:MainApplication"
     rm -f license-tmpdir.wxs license-tmpall.wxs
     candle.exe $CANDLE_OPTS license-all.wxs
     echo "Linking Tor Vidalia bundle license docs package ..."
@@ -1274,7 +1274,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-lib.wxs:Feature:ProductFeature
   wixtool.exe splice -i torvm-tmpall.wxs -o torvm-tmpdir.wxs Directory:ProgramsInstDir=torvm-state.wxs:Directory:TARGETDIR
   wixtool.exe splice -i torvm-tmpdir.wxs -o torvm-tmpall.wxs Feature:MainApplication=torvm-state.wxs:Feature:ProductFeature
-  wixtool.exe userlocal -i torvm-tmpall.wxs -o torvm-all.wxs "Software/Tor VM:MainApplication"
+  wixtool.exe userlocal -i torvm-tmpall.wxs -o torvm-all.wxs "Software\\Tor VM:MainApplication"
   rm -f torvm-tmpdir.wxs torvm-tmpall.wxs
   candle.exe $CANDLE_OPTS torvm-all.wxs
   WIX_CAB_CACHE=_torvm.cabcache

@@ -20,6 +20,7 @@
 #include <winioctl.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <winsock2.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -35,7 +36,40 @@
 
 /* misc win32 api utility functions
  */
+#define CMDMAX         4096
+#define DEFAULT_WINDIR "C:\\WINDOWS"
+#define TOR_VM_BASE    "Tor_VM"
+#define W_TOR_VM_BASE  L"Tor_VM"
+#define TOR_VM_BIN     "bin"
+#define TOR_VM_LIB     "lib"
+#define TOR_VM_STATE   "state"
+BOOL buildpath (const TCHAR *dirname,
+                TCHAR **fullpath);
+#define PATH_FQ        1
+#define PATH_RELATIVE  2
+#define PATH_MSYS      3
+#define VMDIR_BASE     1
+#define VMDIR_BIN      2
+#define VMDIR_LIB      3
+#define VMDIR_STATE    4
+BOOL buildfpath (DWORD   pathtype,
+                 DWORD   subdirtype,
+                 LPTSTR  wdpath,
+                 LPTSTR  append,
+                 LPTSTR *fpath);
+#define SYSDIR_WINROOT     1
+#define SYSDIR_PROFILE     2
+#define SYSDIR_ALLPROFILE  3
+#define SYSDIR_PROGRAMS    4
+#define SYSDIR_LCLDATA     5
+#define SYSDIR_LCLPROGRAMS 6
+BOOL buildsyspath (DWORD   syspathtype,
+                   LPTSTR  append,
+                   LPTSTR *fpath);
 BOOL getmypath (TCHAR **path);
+BOOL exists (LPTSTR path);
+BOOL copyfile (LPTSTR srcpath,
+               LPTSTR destpath);
 BOOL getprocwd (TCHAR **cwd);
 BOOL setprocwd (const TCHAR *cwd);
 
@@ -83,10 +117,15 @@ int getosbits (void);
 
 BOOL getcompguid (TCHAR **guid);
 void bgstartupinfo (STARTUPINFO *si);
+BOOL runcommand(LPSTR cmd,
+                LPSTR dir);
 
 BOOL getmacaddr(const char *  devguid,
                 char **       mac);
 BOOL isconnected(const char *  devguid);
+
+BOOL tryconnect(const char * addr,
+                DWORD port);
 
 /* Caller is responsible for free'ing hexstr.  Note that it will be exactly
  * twice as long plus 1 (null terminated) as the input buffer.

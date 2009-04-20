@@ -456,8 +456,8 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +exit 0
 diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 --- a/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torrc	2009-03-26 06:18:45.619258728 +0000
-@@ -0,0 +1,19 @@
++++ b/package/tor/files/torrc	2009-04-04 19:53:45.195224832 +0000
+@@ -0,0 +1,21 @@
 +# Configuration for Tor VM
 +User tor
 +Group tor
@@ -476,4 +476,6 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +# options appended from command line placed below:
 +SocksPort 9050
 +DNSPort 9093
++DNSListenAddress 0.0.0.0
 +TransPort 9095
++TransListenAddress 0.0.0.0
