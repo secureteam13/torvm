@@ -101,4 +101,6 @@ _______________________________________________________________________
    ? PortableFirefox in bundle.
    ? Multiple VM networking.
    ? Authenticated VM images.
+   ? SCTP over UDP (with DTLS) in VM.  kernel 2.6.26+
+   ? STUN (rfc5389) nat busting in VM.
 
