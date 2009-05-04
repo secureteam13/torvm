@@ -1,25 +1,6 @@
-diff -Naur a/CMakeLists.txt b/CMakeLists.txt
---- a/CMakeLists.txt	2009-03-22 02:22:05.164345000 +0000
-+++ b/CMakeLists.txt	2009-03-15 06:58:51.000000000 +0000
-@@ -1,5 +1,5 @@
- ##
--##  $Id: CMakeLists.txt 3640 2009-03-22 02:22:05Z edmanm $
-+##  $Id: CMakeLists.txt 3598 2009-03-04 23:38:18Z edmanm $
- ## 
- ##  This file is part of Vidalia, and is subject to the license terms in the
- ##  LICENSE file, found in the top level directory of this distribution. If 
-@@ -104,6 +104,8 @@
- ## Check for system header files
- check_include_file("limits.h" HAVE_LIMITS_H)
- check_include_file("sys/limits.h" HAVE_SYS_LIMITS_H)
-+check_include_file("math.h"  HAVE_MATH_H)
-+check_include_file_cxx("cmath" HAVE_CMATH)
- 
- ## Check for the sizes of various data types
- check_type_size(int SIZEOF_INT)
 diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
 --- a/pkg/win32/polipo.conf	2008-04-06 00:00:07.066809000 +0000
-+++ b/pkg/win32/polipo.conf	2009-03-07 12:47:21.000000000 +0000
++++ b/pkg/win32/polipo.conf	2009-05-04 08:16:00.566347824 +0000
 @@ -35,7 +35,6 @@
  # parentProxy = "squid.example.org:3128"
  
@@ -50,7 +31,7 @@ diff -Naur a/pkg/win32/polipo.conf b/pkg/win32/polipo.conf
  ### HTTP
 diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
 --- a/pkg/win32/vidalia.wxs.in	2009-03-21 04:03:31.345626000 +0000
-+++ b/pkg/win32/vidalia.wxs.in	2009-03-30 00:08:08.452635944 +0000
++++ b/pkg/win32/vidalia.wxs.in	2009-05-04 08:16:00.602521595 +0000
 @@ -1,345 +1,371 @@
  <?xml version="1.0" encoding="Windows-1252" ?>
  <!-- 
@@ -685,7 +666,7 @@ diff -Naur a/pkg/win32/vidalia.wxs.in b/pkg/win32/vidalia.wxs.in
  </Wix>
 diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
 --- a/src/common/win32.cpp	2009-02-16 22:53:13.437184000 +0000
-+++ b/src/common/win32.cpp	2009-03-07 03:57:41.000000000 +0000
++++ b/src/common/win32.cpp	2009-05-04 08:16:00.610349670 +0000
 @@ -67,16 +67,20 @@
  QString
  win32_program_files_folder()
@@ -713,7 +694,7 @@ diff -Naur a/src/common/win32.cpp b/src/common/win32.cpp
  /** Returns the value in keyName at keyLocation. 
 diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
 --- a/src/torcontrol/torcontrol.cpp	2009-02-24 03:20:58.105033000 +0000
-+++ b/src/torcontrol/torcontrol.cpp	2009-03-25 13:27:02.000000000 +0000
++++ b/src/torcontrol/torcontrol.cpp	2009-05-04 08:16:00.634352824 +0000
 @@ -57,6 +57,12 @@
  /** Default destructor */
  TorControl::~TorControl()
@@ -811,7 +792,7 @@ diff -Naur a/src/torcontrol/torcontrol.cpp b/src/torcontrol/torcontrol.cpp
      return _controlConn->send(cmd, errmsg);
 diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings.cpp
 --- a/src/vidalia/config/torsettings.cpp	2009-01-30 05:20:24.536180000 +0000
-+++ b/src/vidalia/config/torsettings.cpp	2009-03-16 10:58:45.000000000 +0000
++++ b/src/vidalia/config/torsettings.cpp	2009-05-04 08:16:00.642352223 +0000
 @@ -61,16 +61,28 @@
  {
  #if defined(Q_OS_WIN32)
@@ -888,7 +869,7 @@ diff -Naur a/src/vidalia/config/torsettings.cpp b/src/vidalia/config/torsettings
  
 diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidaliasettings.cpp
 --- a/src/vidalia/config/vidaliasettings.cpp	2009-02-03 02:09:39.844750000 +0000
-+++ b/src/vidalia/config/vidaliasettings.cpp	2009-03-07 03:57:41.000000000 +0000
++++ b/src/vidalia/config/vidaliasettings.cpp	2009-05-04 08:16:00.658349562 +0000
 @@ -71,9 +71,16 @@
    setDefault(SETTING_SHOW_MAINWINDOW_AT_START, true);
    setDefault(SETTING_BROWSER_EXECUTABLE, "");
@@ -911,7 +892,7 @@ diff -Naur a/src/vidalia/config/vidaliasettings.cpp b/src/vidalia/config/vidalia
  #else
 diff -Naur a/src/vidalia/mainwindow.cpp b/src/vidalia/mainwindow.cpp
 --- a/src/vidalia/mainwindow.cpp	2009-02-23 01:36:04.102244000 +0000
-+++ b/src/vidalia/mainwindow.cpp	2009-03-16 10:42:36.000000000 +0000
++++ b/src/vidalia/mainwindow.cpp	2009-05-04 08:16:00.694347004 +0000
 @@ -127,6 +127,7 @@
    createTrayIcon();
    /* Start with Tor initially stopped */
@@ -987,7 +968,7 @@ diff -Naur a/src/vidalia/mainwindow.cpp b/src/vidalia/mainwindow.cpp
    if (server.isServerEnabled() && !_delayedShutdownStarted) {
 diff -Naur a/src/vidalia/mainwindow.h b/src/vidalia/mainwindow.h
 --- a/src/vidalia/mainwindow.h	2009-02-03 02:09:39.844750000 +0000
-+++ b/src/vidalia/mainwindow.h	2009-03-16 10:33:26.000000000 +0000
++++ b/src/vidalia/mainwindow.h	2009-05-04 08:16:00.702348291 +0000
 @@ -241,6 +241,7 @@
    bool _useSavedPassword;
    /** The Vidalia icon that sits in the tray. */
@@ -997,9 +978,9 @@ diff -Naur a/src/vidalia/mainwindow.h b/src/vidalia/mainwindow.h
  #if defined(USE_AUTOUPDATE)
    /** Timer used to remind us to check for software updates. */
 diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipresolver.cpp
---- a/src/vidalia/network/geoipresolver.cpp	2008-12-30 18:48:55.745877000 +0000
-+++ b/src/vidalia/network/geoipresolver.cpp	2009-03-13 16:51:51.000000000 +0000
-@@ -24,25 +24,31 @@
+--- a/src/vidalia/network/geoipresolver.cpp	2009-04-19 20:55:52.106192000 +0000
++++ b/src/vidalia/network/geoipresolver.cpp	2009-05-04 08:19:22.450335176 +0000
+@@ -24,19 +24,19 @@
  #endif
  
  /** Host for the geo ip information. */ 
@@ -1012,7 +993,7 @@ diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipre
 +#define GEOIP_SSL_PORT  443
  /** Page that we request the geo ip information from. */
 -#define GEOIP_PAGE    "/cgi-bin/geoip"
-+#define GEOIP_PAGE    "/geoip"
++#define GEOIP_PAGE    "geoip"
  
  
  /** Default constructor. */
@@ -1021,24 +1002,11 @@ diff -Naur a/src/vidalia/network/geoipresolver.cpp b/src/vidalia/network/geoipre
 -  _socksAddr = QHostAddress::LocalHost;
 +  _socksAddr = Vidalia::torAddress();
    _socksPort = 9050;
- 
- #if defined(USE_QSSLSOCKET)
-   QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
-   if (! QSslSocket::addDefaultCaCertificates(":/geoip/cacert_root.crt"))
--    vWarn("Failed to add the GeoIP CA certificate to the default CA "
-+    vWarn("Failed to add the CACert root certificate to the default CA "
-+          "certificate database.");
-+  if (! QSslSocket::addDefaultCaCertificates(":/geoip/gd-class2-root.crt"))
-+    vWarn("Failed to add the GoDaddy Class2 root certificate to the default CA "
-+          "certificate database.");
-+  if (! QSslSocket::addDefaultCaCertificates(":/geoip/entrust-secure-server-root.crt"))
-+    vWarn("Failed to add the Entrust Secure Server root certificate to the default CA "
-           "certificate database.");
- #endif
  }
+ 
 diff -Naur a/src/vidalia/network/tormapwidget.cpp b/src/vidalia/network/tormapwidget.cpp
 --- a/src/vidalia/network/tormapwidget.cpp	2009-03-23 16:21:12.057893000 +0000
-+++ b/src/vidalia/network/tormapwidget.cpp	2009-03-07 03:57:41.000000000 +0000
++++ b/src/vidalia/network/tormapwidget.cpp	2009-05-04 08:16:00.726349547 +0000
 @@ -10,7 +10,7 @@
  
  /*
@@ -1063,7 +1031,7 @@ diff -Naur a/src/vidalia/network/tormapwidget.cpp b/src/vidalia/network/tormapwi
    TorMapWidgetPopupMenu *popupMenu  = new TorMapWidgetPopupMenu(this);
 diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/entrust-secure-server-root.crt
 --- a/src/vidalia/res/entrust-secure-server-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-03-07 03:57:41.000000000 +0000
++++ b/src/vidalia/res/entrust-secure-server-root.crt	2009-05-04 08:16:00.726349547 +0000
 @@ -0,0 +1,30 @@
 +-----BEGIN CERTIFICATE-----
 +MIIE2DCCBEGgAwIBAgIEN0rSQzANBgkqhkiG9w0BAQUFADCBwzELMAkGA1UE
@@ -1097,7 +1065,7 @@ diff -Naur a/src/vidalia/res/entrust-secure-server-root.crt b/src/vidalia/res/en
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root.crt
 --- a/src/vidalia/res/gd-class2-root.crt	1970-01-01 00:00:00.000000000 +0000
-+++ b/src/vidalia/res/gd-class2-root.crt	2009-03-07 03:57:41.000000000 +0000
++++ b/src/vidalia/res/gd-class2-root.crt	2009-05-04 08:16:00.726349547 +0000
 @@ -0,0 +1,24 @@
 +-----BEGIN CERTIFICATE-----
 +MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh
@@ -1124,19 +1092,18 @@ diff -Naur a/src/vidalia/res/gd-class2-root.crt b/src/vidalia/res/gd-class2-root
 +ReYNnyicsbkqWletNw+vHX/bvZ8=
 +-----END CERTIFICATE-----
 diff -Naur a/src/vidalia/res/vidalia.qrc b/src/vidalia/res/vidalia.qrc
---- a/src/vidalia/res/vidalia.qrc	2009-02-01 00:34:33.066938000 +0000
-+++ b/src/vidalia/res/vidalia.qrc	2009-03-07 03:57:41.000000000 +0000
-@@ -290,5 +290,7 @@
-     </qresource>
-     <qresource prefix="/geoip">
+--- a/src/vidalia/res/vidalia.qrc	2009-04-19 20:55:52.106192000 +0000
++++ b/src/vidalia/res/vidalia.qrc	2009-05-04 08:22:03.890347049 +0000
+@@ -291,5 +291,6 @@
+     <qresource prefix="/pki">
          <file>cacert_root.crt</file>
+         <file>EntrustSecureServerCA.crt</file>
 +        <file>gd-class2-root.crt</file>
-+        <file>entrust-secure-server-root.crt</file>
      </qresource>
  </RCC>
 diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
 --- a/src/vidalia/updateprocess.cpp	2009-03-12 05:06:19.591518000 +0000
-+++ b/src/vidalia/updateprocess.cpp	2009-03-07 03:57:41.000000000 +0000
++++ b/src/vidalia/updateprocess.cpp	2009-05-04 08:16:00.742348688 +0000
 @@ -39,8 +39,7 @@
  {
    QStringList args;
@@ -1173,9 +1140,9 @@ diff -Naur a/src/vidalia/updateprocess.cpp b/src/vidalia/updateprocess.cpp
  
  QString
 diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
---- a/src/vidalia/vidalia.cpp	2009-02-24 04:56:35.504853000 +0000
-+++ b/src/vidalia/vidalia.cpp	2009-03-13 18:43:07.000000000 +0000
-@@ -45,6 +45,7 @@
+--- a/src/vidalia/vidalia.cpp	2009-04-19 20:55:52.106192000 +0000
++++ b/src/vidalia/vidalia.cpp	2009-05-04 08:24:57.787200131 +0000
+@@ -48,6 +48,7 @@
  #define ARG_PIDFILE    "pidfile"  /**< Location and name of our pidfile.*/
  #define ARG_LOGFILE    "logfile"  /**< Location of our logfile.         */
  #define ARG_LOGLEVEL   "loglevel" /**< Log verbosity.                   */
@@ -1183,7 +1150,7 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  #define ARG_READ_PASSWORD_FROM_STDIN  \
    "read-password-from-stdin" /**< Read password from stdin. */
  
-@@ -55,6 +56,7 @@
+@@ -58,6 +59,7 @@
  TorControl* Vidalia::_torControl = 0;  /**< Main TorControl object.          */
  Log Vidalia::_log;
  QList<QTranslator *> Vidalia::_translators;
@@ -1191,7 +1158,7 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  
  /** Catches debugging messages from Qt and sends them to Vidalia's logs. If Qt
   * emits a QtFatalMsg, we will write the message to the log and then abort().
-@@ -89,6 +91,11 @@
+@@ -92,6 +94,11 @@
  Vidalia::Vidalia(QStringList args, int &argc, char **argv)
  : QApplication(argc, argv)
  {
@@ -1203,18 +1170,21 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
    qInstallMsgHandler(qt_msg_handler);
  
    /* Read in all our command-line arguments. */
-@@ -120,17 +127,16 @@
+@@ -123,6 +130,9 @@
    /* Set the GUI style appropriately. */
    setStyle(_args.value(ARG_GUISTYLE));
  
-+  if (_args.contains(ARG_TORADDR))
++  if (_args.contains(ARG_TORADDR)) 
 +    _torAddress = QHostAddress(_args.value(ARG_TORADDR));
 +
    /* Creates a TorControl object, used to talk to Tor. */
    _torControl = new TorControl();
  
+@@ -131,13 +141,8 @@
+   loadDefaultCaCertificates();
+ 
  #ifdef USE_MARBLE
-   /* Tell Marble where to stash its generated data */
+-  /* Tell Marble where to stash its generated data */
 -  Marble::MarbleDirs::setMarbleDataPath(dataDirectory());
 -
 -#ifdef Q_OS_WIN32
@@ -1226,7 +1196,7 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  #endif
  }
  
-@@ -346,6 +352,13 @@
+@@ -353,6 +358,13 @@
  #endif
  }
  
@@ -1240,9 +1210,19 @@ diff -Naur a/src/vidalia/vidalia.cpp b/src/vidalia/vidalia.cpp
  /** Returns the location of Vidalia's pid file. */
  QString
  Vidalia::pidFile()
+@@ -499,6 +511,9 @@
+     vWarn("Failed to add the Entrust Secure Server CA certificate to the "
+           "default CA certificate database.");
+ 
++  if (! QSslSocket::addDefaultCaCertificates(":/pki/gd-class2-root.crt"))
++    vWarn("Failed to add the GoDaddy Class2 CA certificate to the default CA "
++          "certificate database.");
+ #endif
+ }
+ 
 diff -Naur a/src/vidalia/vidalia.h b/src/vidalia/vidalia.h
---- a/src/vidalia/vidalia.h	2009-01-12 03:33:41.473092000 +0000
-+++ b/src/vidalia/vidalia.h	2009-03-13 18:42:45.000000000 +0000
+--- a/src/vidalia/vidalia.h	2009-04-19 20:55:52.106192000 +0000
++++ b/src/vidalia/vidalia.h	2009-05-04 08:16:00.754340645 +0000
 @@ -82,6 +82,8 @@
    static QString dataDirectory();
    /** Returns the default location of Vidalia's data directory. */
@@ -1252,7 +1232,7 @@ diff -Naur a/src/vidalia/vidalia.h b/src/vidalia/vidalia.h
    
    /** Returns the location of Vidalia's pid file. */
    static QString pidFile();
-@@ -156,6 +158,7 @@
+@@ -163,6 +165,7 @@
    static TorControl* _torControl;      /**< Vidalia's main TorControl object.*/
    static Log _log; /**< Logs debugging messages to file or stdout. */
    static QList<QTranslator *> _translators; /**< List of installed translators. */

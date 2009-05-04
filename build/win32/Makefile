@@ -198,10 +198,10 @@ WINDDK_F=1830_usa_ddk.iso
 WINDDK_URL=http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/$(WINDDK_F)
 WINDDK_SUM=0d2154d88a5ee252cc908630c77863bb42777387
 
-QT_VER=4.5.0
+QT_VER=4.5.1
 QT_F=qt-all-opensource-src-$(QT_VER).tar.bz2
 QT_URL=ftp://ftp.qtsoftware.com/qt/source/$(QT_F)
-QT_SUM=51dc8c66bc0866e480e71b50a8ffe577b2937fcc
+QT_SUM=43f07468553ba14270a0dea351f549ebfd98a56a
 
 POLIPO_F=polipo-20080907.tar.gz
 POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
@@ -217,7 +217,7 @@ VIDALIA_NAME=vidalia-latest
 VIDALIA_TGZ=$(VIDALIA_NAME).tar.gz
 VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
-VIDALIA_VER=3646
+VIDALIA_VER=3730
 
 # for package resources
 TORSVN_NAME=tor-latest

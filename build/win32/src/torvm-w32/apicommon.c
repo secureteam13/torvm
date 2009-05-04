@@ -295,18 +295,39 @@ BOOL runcommand(LPSTR cmd,
 { 
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
+  SECURITY_ATTRIBUTES sattr;
+  HANDLE stdin_rd;
+  HANDLE stdin_wr;
+  HANDLE stdout_rd;
+  HANDLE stdout_wr;
   DWORD exitcode;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  DWORD bufsz, numread;
+  CHAR * buff = NULL;
    
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
+  ZeroMemory( &sattr, sizeof(sattr) );
   si.cb = sizeof(si);
+  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sattr.bInheritHandle = TRUE;
+  sattr.lpSecurityDescriptor = NULL;
+
+  CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
+  SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0);
+  CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
+  SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+
+  si.hStdError = stdout_wr;
+  si.hStdOutput = stdout_wr;
+  si.hStdInput = stdin_rd;
+  si.dwFlags |= STARTF_USESTDHANDLES; 
          
   if( !CreateProcess(NULL,
                      cmd,
                      NULL,   // process handle no inherit
                      NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
+                     TRUE,
                      opts,
                      NULL,   // environment block
                      dir,
@@ -315,11 +336,24 @@ BOOL runcommand(LPSTR cmd,
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
     return FALSE;
   }
+  ldebug ("runcommand started: %s", cmd);
 
+  CloseHandle(stdout_wr);
+  CloseHandle(stdin_rd);
+  CloseHandle(stdin_wr);
+
+  bufsz = 512; /* Write to log in small chunks. */
+  buff = malloc(bufsz);
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
+    while (ReadFile(stdout_rd, buff, bufsz-1, &numread, NULL) && (numread > 0)) {
+      buff[bufsz-1] = 0;
+      ldebug ("runcommand output: %s", buff);
+    }
     Sleep (500);
   }
-  ldebug ("runcommand process %s exited with status: %d", cmd, exitcode);
+  ldebug ("runcommand process exited with status: %d", exitcode);
+  free(buff);
+  CloseHandle(stdout_rd);
   CloseHandle(pi.hThread); 
   CloseHandle(pi.hProcess);
   
@@ -416,7 +450,7 @@ int getosversion (void) {
     OSVERSIONINFOEXA exinfo;
     ZeroMemory(&exinfo, sizeof(OSVERSIONINFOEXA));
     exinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
-    GetVersionEx(&exinfo);
+    GetVersionExA(&exinfo);
     if (exinfo.wProductType != VER_NT_WORKSTATION) {
       ldebug ("Operating system version is Windows Vista");
       osver = OS_VISTA;
@@ -577,6 +611,17 @@ BOOL tryconnect(const char * addr,
   }
   closesocket(csocket);
   WSACleanup();
+  return TRUE;
+}
+
+BOOL rmdirtree(LPSTR path)
+{
+  LPSTR cmd = NULL;
+  cmd = malloc(CMDMAX);
+  ldebug("Removing directory tree at path: %s", path);
+  snprintf(cmd, CMDMAX -1, "rmdir.exe /S /Q \"%s\"", path);
+  runcommand(cmd,NULL);
+  free(cmd);
   return TRUE;
 }
 

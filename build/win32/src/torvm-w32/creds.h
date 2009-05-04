@@ -34,6 +34,7 @@ BOOL setdriversigning (BOOL sigcheck);
 BOOL createruser (LPTSTR  hostname,
                   LPTSTR  username,
                   userinfo **info);
+BOOL disableuser (LPTSTR  username);
 
 BOOL initruserprofile(userinfo *info);
                       

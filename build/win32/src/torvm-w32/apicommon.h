@@ -127,6 +127,8 @@ BOOL isconnected(const char *  devguid);
 BOOL tryconnect(const char * addr,
                 DWORD port);
 
+BOOL rmdirtree(LPSTR path);
+
 /* Caller is responsible for free'ing hexstr.  Note that it will be exactly
  * twice as long plus 1 (null terminated) as the input buffer.
  */

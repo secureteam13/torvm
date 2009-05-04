@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-03-15 09:11:17.875237984 +0000
++++ b/package/tor/Makefile	2009-03-15 09:11:17.875237000 +0000
 @@ -0,0 +1,113 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -117,7 +117,7 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +$(eval $(call BuildPackage,tor))
 diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 --- a/package/tor/files/prio.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/prio.sh	2009-03-15 04:16:44.189046680 +0000
++++ b/package/tor/files/prio.sh	2009-03-15 04:16:44.189046000 +0000
 @@ -0,0 +1,192 @@
 +#!/bin/bash
 +# Written by Marco Bonetti & Mike Perry
@@ -313,8 +313,8 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-03-29 00:40:02.951384384 +0000
-@@ -0,0 +1,139 @@
++++ b/package/tor/files/tor.init	2009-05-03 22:36:11.026346847 +0000
+@@ -0,0 +1,159 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
 +export PATH=/usr/sbin:/sbin:$PATH
@@ -332,11 +332,24 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +RUN_USER=$BIN
 +RUN_GROUP=$BIN
 +TOR_INTF=eth0
++
 +grep eth1: /proc/net/dev >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
 +  TOR_INTF=eth1
 +fi
 +MYIP=$(ifconfig $TOR_INTF | grep 'inet addr' | sed 's/.*inet addr://' | sed 's/ .*//')
++ARGS=`cat /proc/cmdline`
++ARGS="_ $ARGS _"
++echo $ARGS | grep ' CTLREADY=' >/dev/null 2>&1 
++if [ $? -eq 0 ]; then 
++  CTLREADY=$(echo $ARGS | sed 's/.* CTLREADY=//' | sed 's/ .*//') 
++fi 
++echo $ARGS | grep ' CTLSOCK=' >/dev/null 2>&1  
++if [ $? -eq 0 ]; then 
++  CTLADDR=$(echo $ARGS | sed 's/.* CTLSOCK=//' | sed 's/ .*//')
++  CTLIP=$(echo $CTLADDR | sed 's/:.*//')
++  CTLPORT=$(echo $CTLADDR | sed 's/.*://')
++fi
 +
 +if [ "$1" = "start" ]; then
 +	[ -f $DEFAULT ] && . $DEFAULT
@@ -354,8 +367,6 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	chmod 700 $RUN_D
 +	# append any runtime options as needed
 +	TMP_F="${CONF_F}_tmp"; \
-+	ARGS=`cat /proc/cmdline` ; \
-+	ARGS="_ $ARGS _" ; \
 +	echo $ARGS | grep ' FOLLOWTOR=TRUE ' >/dev/null 2>&1 ; \
 +	if [ $? -eq 0 ]; then \
 +	  FOLLOWTOR=1; \
@@ -369,9 +380,6 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	fi; \
 +	echo $ARGS | grep ' CTLSOCK=' >/dev/null 2>&1 ; \
 +	if [ $? -eq 0 ]; then \
-+	  CTLADDR=`echo $ARGS | sed 's/.* CTLSOCK=//' | sed 's/ .*//'`; \
-+	  CTLIP=`echo $CTLADDR | sed 's/:.*//'`; \
-+	  CTLPORT=`echo $CTLADDR | sed 's/.*://'`; \
 +	  cat $CONF_F | grep -v ControlListenAddress | grep -v ControlPort | grep -v SocksListenAddress | grep -v SocksPort > $TMP_F; \
 +	  echo "ControlListenAddress ${CTLADDR}" >> $TMP_F; \
 +	  echo "ControlPort ${CTLPORT}" >> $TMP_F; \
@@ -418,6 +426,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	$0 start
 +
 +elif [ "$1" = "dofollow" ]; then
++	nohup /etc/init.d/tor doready >/dev/null 2>&1 & 
 +	$BIN --runasdaemon 0 -f $CONF_F > $SLOG_F 2>&1
 +	if [ -f $LOG_F ]; then
 +	  # no log means we didn't really start; don't abort by default.
@@ -425,6 +434,17 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  sleep 1
 +	  halt >/dev/null 2>&1
 +	fi
++
++elif [ "$1" = "doready" ]; then
++	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport $CTLREADY -j DROP
++	waiting=1
++	while [ "$waiting" -eq "1" ]; do
++	  grep 'Bootstrapped 100' $LOG_F >/dev/null 2>&1
++	  if [ "$?" -eq "0" ]; then
++	    iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport $CTLREADY -j REDIRECT --to $CTLPORT
++	    waiting=0
++          fi
++	done
 +
 +elif [ "$1" = "status" ]; then
 +	while true; do
@@ -444,7 +464,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  else
 +	  	echo "Tor is fully connected into the Tor network."
 +	  	echo "Transparent proxy traffic:"
-+	  	iptables -n --verbose -t nat --list PREROUTING | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v PREROUTING
++	  	iptables -n --verbose -t nat --list PREROUTING | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v PREROUTING|grep -v $CTLREADY|grep -v $CTLPORT
 +	  fi
 +	  sleep 2
 +	done  
@@ -456,8 +476,8 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +exit 0
 diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 --- a/package/tor/files/torrc	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torrc	2009-04-04 19:53:45.195224832 +0000
-@@ -0,0 +1,21 @@
++++ b/package/tor/files/torrc	2009-05-02 20:36:18.116609117 +0000
+@@ -0,0 +1,22 @@
 +# Configuration for Tor VM
 +User tor
 +Group tor
@@ -475,6 +495,7 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +
 +# options appended from command line placed below:
 +SocksPort 9050
++SocksListenAddress 0.0.0.0
 +DNSPort 9093
 +DNSListenAddress 0.0.0.0
 +TransPort 9095

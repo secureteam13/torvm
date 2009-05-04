@@ -689,6 +689,7 @@ BOOL createruser (LPTSTR  hostname,
   if (s_advapi->LsaOpenPolicy &&
       s_advapi->LookupAccountName &&
       s_advapi->LsaAddAccountRights) {
+    /* XXX: Should check if use exists and if so, what groups. For now this causes no harm... */
     ldebug("Creating restricted user account: %s\\%s", hostname, username);
     snprintf(cmd, CMDMAX -1, "net.exe user %s \"\" /add", (*info)->name);
     runcommand(cmd,NULL);
@@ -696,6 +697,8 @@ BOOL createruser (LPTSTR  hostname,
     runcommand(cmd,NULL);
     /* just to be sure in case someone did something stupid with local or domain policy ... */
     snprintf(cmd, CMDMAX -1, "net.exe localgroup Administrators %s /delete", (*info)->name);
+    runcommand(cmd,NULL);
+    snprintf(cmd, CMDMAX -1, "net.exe user %s /ACTIVE:YES", (*info)->name);
     runcommand(cmd,NULL);
 
     ntstatus = s_advapi->LsaOpenPolicy(&lsahostname,
@@ -853,6 +856,80 @@ BOOL initruserprofile(userinfo * info)
   free(relpath);
   free(imgsrc);
   free(imgdest);
+  return TRUE;
+}
+
+BOOL setupruserfollow(userinfo * info,
+                      LPTSTR     ctlip,
+                      LPTSTR     ctlport)
+{
+  LPTSTR relpath;
+  LPTSTR auppath;
+  LPTSTR binpath;
+  LPTSTR coff;
+  LPTSTR cmd;
+  HANDLE fh;
+  DWORD numwritten;
+  
+  ldebug ("Setting up restricted user Tor control port follower for %s on host %s.", info->name, info->host);
+  if (!buildsyspath(SYSDIR_ALLPROFILE, NULL, &auppath)) {
+    lerror ("Unable to build path for all users profile destination.");
+    return FALSE;
+  }
+  if (!buildfpath(PATH_FQ, VMDIR_BASE, NULL, "torvm.exe", &binpath)) {
+    free(auppath);
+    lerror ("Unable to build path to self (executing exe).");
+    return FALSE;
+  }
+  /* Trim off the "All Users" part as we just want Documents and Settings
+   * XXX: all of the path handling needs to be cleaned up, localized, collected.
+   */
+  coff = auppath + strlen(auppath) - 1;
+  while ( (coff > auppath) && (*coff != '\\') ) coff--;
+  if (coff > auppath)
+    *coff = 0;
+  relpath = malloc(CMDMAX);
+  snprintf(relpath, CMDMAX -1, "%s\\%s\\Start Menu\\Programs\\Startup\\torfollow.bat", auppath, info->name);
+  free(auppath);
+  ldebug ("Creating Tor follow script at %s using exe at %s", relpath, binpath); 
+
+  DeleteFile(relpath);
+  fh = CreateFile(relpath,
+                  GENERIC_WRITE,
+                  0,
+                  NULL,
+                  CREATE_ALWAYS,
+                  FILE_ATTRIBUTE_NORMAL,
+                  NULL);
+  if (fh == INVALID_HANDLE_VALUE) {
+    ldebug ("Unable to open Startup Tor follow script file. Error code: %d", GetLastError());
+    return FALSE;
+  }
+  cmd = "@echo off\r\n";
+  WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
+  cmd = "echo Tor VM is running!\r\n";
+  WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
+  cmd = "echo Press the Windows Key + \'L\' at the same time to change back to Admin user.\r\n";
+  WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
+  cmd = "echo Waiting for Tor VM to exit...\r\n";
+  WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
+  cmd = malloc(CMDMAX);
+  snprintf(cmd, CMDMAX -1, "\"%s\" --follow --ctlip %s --ctlport %s\r\n", binpath, ctlip, ctlport);
+  WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
+  CloseHandle(fh);
+  free(relpath);
+  free(cmd);
+  return TRUE;
+}
+
+BOOL disableuser (LPTSTR username)
+{
+  LPSTR cmd = NULL;
+  cmd = malloc(CMDMAX);
+  ldebug("Disabling user account: %s", username);
+  snprintf(cmd, CMDMAX -1, "net.exe user %s /ACTIVE:NO", username);
+  runcommand(cmd,NULL);
+  free(cmd);
   return TRUE;
 }
 

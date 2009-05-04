@@ -122,12 +122,12 @@ if [[ "$1" != "dobuild" ]]; then
   export CMAKEBIN="/$sysdrive/Program Files/CMake/bin"
   export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
   
-  export QT_VER="4.5.0"
+  export QT_VER="4.5.1"
   export QT_DIR="qt-all-opensource-src-${QT_VER}"
   export QT_FILE="${QT_DIR}.tar.bz2"
   export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
   export QT_BIN="${QT_ROOT}/bin"
-  export QTDIR="${sysdrive}:\Qt\4.5.0"
+  export QTDIR="${sysdrive}:\Qt\4.5.1"
   export QMAKESPEC=win32-g++
   export PATH="$PATH:$QT_BIN:$QTDIR\bin"
   

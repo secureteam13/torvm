@@ -15,6 +15,7 @@
 #define TOR_TAP_DNS2   "4.2.2.2"
 #define TOR_CAP_SYS    "tornpf.sys"
 #define TOR_HDD_FILE   "hdd.img"
+#define TOR_RESTRICTED_USER "Tor"
 #define QEMU_DEF_MEM   32
 #define CAP_MTU        1480
 
@@ -1360,7 +1361,6 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                    BOOL                  noinit,
                    char **               cmdline)
 {
-/* DHCPSVR DHCPNAME LEASE ISDHCP CTLSOCK HASHPW */
   const DWORD  cmdlen = CMDMAX;
   *cmdline = malloc(cmdlen);
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
@@ -1384,11 +1384,11 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s %s %s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
-                myhostname ? " USEHOSTNAME=" : "",
+                myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
-                bundle ? " FOLLOWTOR=TRUE" : "",
+                bundle ? "FOLLOWTOR=TRUE" : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1404,11 +1404,11 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s%s%s%s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s",
+                "%s %s %s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s",
                 usedebug ? dbgcmds : basecmds,
-                myhostname ? " USEHOSTNAME=" : "",
+                myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
-                bundle ? " FOLLOWTOR=TRUE" : "",
+                bundle ? "FOLLOWTOR=TRUE" : "",
                 brif->ipaddr,
                 brif->netmask,
                 brif->gateway,
@@ -1540,7 +1540,7 @@ BOOL runvidalia (BOOL  indebug)
 
   cmd = malloc(CMDMAX);
   snprintf (cmd, CMDMAX -1,
-            "\"%s\" -tor-address %s%s",
+            "\"%s\" -tor-address %s %s",
             exe,
             TOR_TAP_VMIP,
             indebug ? " -loglevel debug -logfile debuglog.txt" :
@@ -1795,7 +1795,9 @@ BOOL detachself (void)
   return TRUE;
 }
 
-BOOL setupuser (void)
+BOOL setupuser (LPTSTR username,
+                LPTSTR ctlip,
+                LPTSTR ctlport)
 {
   BOOL retval = FALSE;
   userinfo * ui;
@@ -1803,16 +1805,58 @@ BOOL setupuser (void)
   if (!myhostname)
     myhostname = getenv("HOSTNAME");
   if (createruser (myhostname,
-                   "Tor",
+                   username,
                    &ui)) {
     if (!initruserprofile(ui)) {
       ldebug ("Failed to initialize user profile data in setupuser.");
     }
     else {
-      retval = TRUE;
+      if (!setupruserfollow(ui, ctlip, ctlport)) {
+        ldebug ("Failed to setup Tor follow startup script for user %s.", username);
+      }
+      else {
+        ldebug ("All setup completed for restricted user %s.", username);
+        retval = TRUE;
+      }
     }
   }
   return retval;
+}
+
+/* XXX: This is a temporary method to clean out the usual culprits.
+ * Note that there are many other places to store data, particularly the registry.
+ */
+BOOL cleanruserfiles (LPTSTR username)
+{
+  LPTSTR dirpath;
+  LPTSTR auppath;
+  LPTSTR coff;
+  if (!buildsyspath(SYSDIR_ALLPROFILE, NULL, &auppath)) {
+    lerror ("Unable to build path for all users profile destination.");
+    return FALSE;
+  }
+  /* Trim off the "All Users" part as we just want Documents and Settings
+   * XXX: all of the path handling needs to be cleaned up, localized, collected.
+   */
+  coff = auppath + strlen(auppath) - 1;
+  while ( (coff > auppath) && (*coff != '\\') ) coff--;
+  if (coff > auppath)
+    *coff = 0;
+  dirpath = malloc(CMDMAX);
+  snprintf(dirpath, CMDMAX -1, "%s\\%s\\Local Settings\\Temporary Internet Files", auppath, username);
+  rmdirtree(dirpath);
+  snprintf(dirpath, CMDMAX -1, "%s\\%s\\Local Settings\\Temp", auppath, username);
+  rmdirtree(dirpath);
+  snprintf(dirpath, CMDMAX -1, "%s\\%s\\Local Settings\\SendTo", auppath, username);
+  rmdirtree(dirpath);
+  snprintf(dirpath, CMDMAX -1, "%s\\%s\\Local Settings\\Cookies", auppath, username);
+  rmdirtree(dirpath);
+  snprintf(dirpath, CMDMAX -1, "%s\\%s\\Local Settings\\History", auppath, username);
+  rmdirtree(dirpath);
+
+  free(auppath);
+  free(dirpath);  
+  return TRUE;
 }
 
 BOOL setupenv (void)
@@ -1914,6 +1958,9 @@ static struct option torvm_options[] =
   { "vmnop" , no_argument , NULL, 'X' },
   { "noinit" , no_argument , NULL, 'Z' },
   { "help" , no_argument , NULL, 'h' },
+  { "follow" , no_argument , NULL, 'F' },
+  { "ctlip" , required_argument, NULL, 'I' },
+  { "ctlport" , required_argument, NULL, 'P' },
   {0}
 };
 
@@ -1938,18 +1985,21 @@ void usage(void)
 int main(int argc, char **argv)
 {
   const char *cmd;
-  int  numintf;
+  int numintf;
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
   struct s_rconnelem *tapconn = NULL;
-  BOOL  vmaccel = FALSE;
-  BOOL  bundle = FALSE;
-  BOOL  indebug = FALSE;
-  BOOL  vmnop = FALSE;
-  BOOL  noinit = FALSE;
-  BOOL  foundit = FALSE;
-  char *  cmdline = NULL;
-  LPTSTR  logfile = NULL;
+  BOOL vmaccel = FALSE;
+  BOOL bundle = FALSE;
+  BOOL follow = FALSE;
+  BOOL indebug = FALSE;
+  BOOL vmnop = FALSE;
+  BOOL noinit = FALSE;
+  BOOL foundit = FALSE;
+  char *cmdline = NULL;
+  LPTSTR logfile = NULL;
+  LPTSTR ctliparg = NULL;
+  LPTSTR ctlportarg = NULL;
   DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
   int c, optidx = 0;
 
@@ -2009,6 +2059,24 @@ int main(int argc, char **argv)
           noinit = TRUE;
           break;
 
+        case 'F':
+          follow = TRUE;
+          break;
+
+        case 'I':
+          if (optarg)
+            ctliparg = optarg;
+          else
+            ctliparg = TOR_TAP_VMIP;
+          break;
+
+        case 'P':
+          if (optarg)
+            ctlportarg = optarg;
+          else
+            ctlportarg = "9051";
+          break;
+
         case 'h':
           linfo ("Help for command usage invoked.");
           usage();
@@ -2017,12 +2085,25 @@ int main(int argc, char **argv)
         case 0:  /* not used for flags currently. */
           break;
       default:
-        lerror ("Unrecognized command line argument or option passed.");
         usage();
         break;
     }
   }
-  
+ 
+  /* The Tor follow mode is a special case. All we do is loop until the control
+   * port is no longer accepting connections and then we issue a logoff request.
+   */ 
+  if (follow) {
+    while(tryconnect(ctliparg, atol(ctlportarg))) {
+      Sleep(1000);
+    }
+    /* At this point Tor in the Admin user desktop inside the VM has failed or exited.
+     * This is our cue to force the restricted user to log off.
+     */
+    runcommand("shutdown -l -f", NULL);
+    return 0;
+  }
+
   if (buildfpath(PATH_FQ, VMDIR_STATE, NULL, "vmlog.txt", &logfile)) {
     logto (logfile);
     free (logfile);
@@ -2061,8 +2142,11 @@ int main(int argc, char **argv)
       fatal ("Unable to save current network configuration.");
     }
 
-    if (!setupuser()) {
-      lerror ("Unable to setup restricted user.");
+    if (bundle) {
+      /* XXX: note we're using the "all ready" alias for the control port. */
+      if (!setupuser(TOR_RESTRICTED_USER, TOR_TAP_VMIP, "9052")) {
+        lerror ("Unable to setup restricted user.");
+      }
     }
 
     ce = NULL;
@@ -2194,7 +2278,10 @@ int main(int argc, char **argv)
   }
 
   /* XXX: temp hack - in bundle mode launch Vidalia with a custom config
-   * for the 10. tap control port and externally managed Tor instance.
+   * for the 10.x tap control port and externally managed Tor instance.
+   * The control port is used to signal both Tor starting correctly, and
+   * once Tor is stopped the no longer listening control port signals
+   * restricted user log off and clean shutdown.
    */
   if (bundle) {
     /* try to confirm control port is up before launching vidalia... */
@@ -2206,7 +2293,25 @@ int main(int argc, char **argv)
     if (i > 0) {
       ldebug("Control port connected. Starting controller ...");
       runvidalia(indebug);
-      userswitcher();
+
+      /* XXX: Now we wait for the ALL READY socket to be listening before switching.
+       * If we don't get bootstrapped within this period of time something is broken/blocked.
+       */
+      ldebug("Waiting for Tor to bootstrap ...");
+      i = 60 * 5; 
+      while ( (!tryconnect(TOR_TAP_VMIP, 9052)) && (i > 0) ) {
+        Sleep(1000);
+        ldebug("Tor has not bootstrapped yet, checking again... [%d left]", i);
+        if (!isrunning(&pi)) 
+          i = 0;
+        else
+          i--;
+      }
+      if (i > 0) {
+        /* Once/if bootstrapped allow the user to run applications with restricted privs. */
+        cleanruserfiles(TOR_RESTRICTED_USER);
+        userswitcher();
+      }
     }
   }
 
@@ -2217,6 +2322,11 @@ int main(int argc, char **argv)
   waitforit(&pi);
 
   linfo ("Tor VM closed, restoring host network and services.");
+
+  if (bundle) {
+    disableuser(TOR_RESTRICTED_USER);
+    cleanruserfiles(TOR_RESTRICTED_USER);
+  }
 
  shutdown:
   if (getosversion() > OS_2000) {
