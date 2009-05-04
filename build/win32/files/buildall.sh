@@ -841,7 +841,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   if [ -f /src/qt-mingwssl.patch ]; then
     patch -p1 < /src/qt-mingwssl.patch
   fi 
-  QT_CONF="-confirm-license -release -shared -fast"
+  QT_CONF="-confirm-license -opensource -release -shared -fast"
   QT_CONF="$QT_CONF -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns"
   QT_CONF="$QT_CONF -qt-style-windowsxp -no-style-windowsvista"
   QT_CONF="$QT_CONF -no-sql-sqlite -no-sql-sqlite2 -no-sql-odbc"
