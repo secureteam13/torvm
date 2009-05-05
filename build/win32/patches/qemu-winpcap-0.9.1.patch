@@ -1,6 +1,6 @@
-diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
---- orig-qemu-0.9.1/Makefile.target	2008-01-06 19:38:41.000000000 +0000
-+++ mod-qemu-0.9.1/Makefile.target	2008-11-30 09:35:06.913417440 +0000
+diff -Naur a/Makefile.target b/Makefile.target
+--- a/Makefile.target	2008-01-06 19:38:41.000000000 +0000
++++ b/Makefile.target	2009-05-04 18:27:30.000000000 +0000
 @@ -237,7 +237,7 @@
  LIBS+=-lz
  endif
@@ -10,9 +10,9 @@ diff -Naur orig-qemu-0.9.1/Makefile.target mod-qemu-0.9.1/Makefile.target
  endif
  ifdef CONFIG_SOLARIS
  LIBS+=-lsocket -lnsl -lresolv
-diff -Naur orig-qemu-0.9.1/configure mod-qemu-0.9.1/configure
---- orig-qemu-0.9.1/configure	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/configure	2008-11-30 09:35:06.914417288 +0000
+diff -Naur a/configure b/configure
+--- a/configure	2008-01-06 19:38:42.000000000 +0000
++++ b/configure	2008-11-30 09:35:06.914417288 +0000
 @@ -600,7 +600,7 @@
  #undef main /* We don't want SDL to override our main() */
  int main( void ) { return SDL_Init (SDL_INIT_VIDEO); }
@@ -33,9 +33,9 @@ diff -Naur orig-qemu-0.9.1/configure mod-qemu-0.9.1/configure
  fi
  if test "$adlib" = "yes" ; then
    echo "CONFIG_ADLIB=yes" >> $config_mak
-diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
---- orig-qemu-0.9.1/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/dyngen-exec.h	2008-11-30 09:35:06.915417136 +0000
+diff -Naur a/dyngen-exec.h b/dyngen-exec.h
+--- a/dyngen-exec.h	2008-01-06 19:38:42.000000000 +0000
++++ b/dyngen-exec.h	2008-11-30 09:35:06.915417136 +0000
 @@ -32,6 +32,7 @@
     host headers do not allow that. */
  #include <stddef.h>
@@ -66,9 +66,9 @@ diff -Naur orig-qemu-0.9.1/dyngen-exec.h mod-qemu-0.9.1/dyngen-exec.h
  #ifdef _BSD
  typedef struct __sFILE FILE;
  #else
-diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
---- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-11-30 10:48:37.382924160 +0000
+diff -Naur a/vl.c b/vl.c
+--- a/vl.c	2008-01-06 19:38:42.000000000 +0000
++++ b/vl.c	2009-05-04 18:27:30.000000000 +0000
 @@ -3858,6 +3858,263 @@
  
  #endif /* CONFIG_SLIRP */
@@ -219,7 +219,7 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +     */
 +    if ( (strlen(pcap_devicename) == NETGUIDLEN) && (*pcap_devicename == '{') ) {
 +        snprintf(dev_guid, sizeof(dev_guid), "%s%s", DEVICE_PREFIX, pcap_devicename);
-+        fprintf(stderr, "qemu: pcap bridge using explicit device guid: %s\n", dev_guid);
++        /* fprintf(stderr, "qemu: pcap bridge using explicit device guid: %s\n", dev_guid); */
 +    }
 +    else {
 +        if (get_net_device_guid (pcap_devicename, sizeof(pcap_devicename), dev_guid, sizeof(dev_guid))) {
@@ -297,10 +297,10 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +            exit (1);
 +        }
 +        msg = "Eth: opened non-promisc %s\r\n";
-+        fprintf (stderr, msg, name);
++        /* fprintf (stderr, msg, name); */
 +    } else {
 +        msg = "Eth: opened promisc %s\r\n";
-+        fprintf (stderr, msg, name);
++        /* fprintf (stderr, msg, name); */
 +    }
 +
 +#if defined (USE_READER_THREAD)

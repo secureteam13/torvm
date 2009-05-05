@@ -205,6 +205,21 @@ void ldebug (const char* format, ...)
   return;
 }
 
+/* XXX: for now we just print some things to console to indicate what is going on.
+ * At some point a better interface with localized string will be needed.
+ * We always grab a current stdout handle in case it gets redirected at some point.
+ * (For example, as a service these messages would go into events)
+ */
+static void dispmsg(LPTSTR msg)
+{
+  HANDLE  hnd;
+  hnd = GetStdHandle(STD_OUTPUT_HANDLE);
+  WriteFile(hnd, msg, strlen(msg), NULL, NULL);
+  msg = "\r\n";
+  WriteFile(hnd, msg, strlen(msg), NULL, NULL);
+  CloseHandle(hnd);
+}
+
 static BOOL escquote(LPTSTR  path,
                      LPTSTR *epath)
 {
@@ -2137,6 +2152,7 @@ int main(int argc, char **argv)
     fatal ("Unable to prepare process environment.");
   }
 
+  dispmsg("Tor VM is starting. Please be patient...");
   if (!vmnop) {
     if (!savenetconfig()) {
       fatal ("Unable to save current network configuration.");
@@ -2178,6 +2194,7 @@ int main(int argc, char **argv)
       tapconn = tapconn->next;
     }
 
+    dispmsg("Configuring network settings.");
     if (!installtornpf()) {
       lerror ("Unable to install Tor NPF service driver.");
       goto shutdown;
@@ -2236,6 +2253,7 @@ int main(int argc, char **argv)
     ldebug ("Generated kernel command line: %s", cmdline);
   }
 
+  dispmsg("Launching virtual machine.");
   PROCESS_INFORMATION pi;
   if (vmnop) {
     if (! spawnprocess(&pi, "qemu.exe")) {
@@ -2284,6 +2302,7 @@ int main(int argc, char **argv)
    * restricted user log off and clean shutdown.
    */
   if (bundle) {
+    dispmsg("Waiting for Tor control port to open...");
     /* try to confirm control port is up before launching vidalia... */
     int i = 10;
     while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
@@ -2292,6 +2311,7 @@ int main(int argc, char **argv)
     }
     if (i > 0) {
       ldebug("Control port connected. Starting controller ...");
+      dispmsg("Launching Vidalia.");
       runvidalia(indebug);
 
       /* XXX: Now we wait for the ALL READY socket to be listening before switching.
@@ -2315,13 +2335,16 @@ int main(int argc, char **argv)
     }
   }
 
+  dispmsg("Tor VM is running, waiting for exit...");
+  dispmsg("");
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
    * add an exception for the control port on the Tap adapter.
    */
-
   waitforit(&pi);
 
   linfo ("Tor VM closed, restoring host network and services.");
+  dispmsg("Shutting down...");
+  dispmsg("CAUTION: Do NOT close this window while restoring network settings!");
 
   if (bundle) {
     disableuser(TOR_RESTRICTED_USER);
