@@ -214,10 +214,11 @@ static void dispmsg(LPTSTR msg)
 {
   HANDLE  hnd;
   hnd = GetStdHandle(STD_OUTPUT_HANDLE);
-  WriteFile(hnd, msg, strlen(msg), NULL, NULL);
-  msg = "\r\n";
-  WriteFile(hnd, msg, strlen(msg), NULL, NULL);
-  CloseHandle(hnd);
+  if (hnd != INVALID_HANDLE_VALUE) {
+    WriteFile(hnd, msg, strlen(msg), NULL, NULL);
+    msg = "\r\n";
+    WriteFile(hnd, msg, strlen(msg), NULL, NULL);
+  }
 }
 
 static BOOL escquote(LPTSTR  path,
@@ -1637,7 +1638,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   cmd = malloc(CMDMAX);
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=1,model=pcnet -net tap,vlan=1,ifname=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
 	      qemubin,
               cmdline,
               QEMU_DEF_MEM,
