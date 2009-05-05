@@ -2303,7 +2303,7 @@ int main(int argc, char **argv)
    * restricted user log off and clean shutdown.
    */
   if (bundle) {
-    dispmsg("Waiting for Tor control port to open...");
+    dispmsg("Waiting for Tor control port to open.");
     /* try to confirm control port is up before launching vidalia... */
     int i = 10;
     while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
@@ -2336,7 +2336,7 @@ int main(int argc, char **argv)
     }
   }
 
-  dispmsg("Tor VM is running, waiting for exit...");
+  dispmsg("Tor VM is running.  Waiting for VM to exit...");
   dispmsg("");
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
    * add an exception for the control port on the Tap adapter.
@@ -2344,7 +2344,7 @@ int main(int argc, char **argv)
   waitforit(&pi);
 
   linfo ("Tor VM closed, restoring host network and services.");
-  dispmsg("Shutting down...");
+  dispmsg("Shutting down.");
   dispmsg("CAUTION: Do NOT close this window while restoring network settings!");
 
   if (bundle) {

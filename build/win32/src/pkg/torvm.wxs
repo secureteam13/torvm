@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?define ThisProductVersion="0.0.2" ?>
-  <?define ThisProductVersionDisp="0.0.1-dev" ?>
+  <?define ThisProductVersionDisp="0.0.2" ?>
   <?define UpgradeCode="3f874171-34a0-4af8-8c66-27a681ac5fb6" ?>
   
-  <?define CurrProductGUID="b7b6edad-8da7-4b13-b9ac-31dde19747af" ?>
-  <?define CurrExecutableGUID="56f51f0a-53b7-4013-9b9e-70d827161f04" ?>
-  <?define CurrStartMenuGUID="449d8599-a423-40b6-bb0f-1694ea76d4e0" ?>
-  <?define CurrDesktopGUID="1f81b070-a7f4-49ec-adf4-6d95ede8cf6b" ?>
-  <?define CurrDocsOnDesktopGUID="5faf209e-7e99-46d8-94fe-3ac13f51bea5" ?>
-  <?define CurrStartupGUID="8e2d6296-7596-4740-b53e-f0cc3a49e3b6" ?>
+  <?define CurrProductGUID="44ba55fc-8812-4767-b5ae-596016f0fb5b" ?>
+  <?define CurrExecutableGUID="566f9def-df17-4e55-af5e-8f15ee458228" ?>
+  <?define CurrStartMenuGUID="f31bb770-7858-45d8-a626-76b75d20f566" ?>
+  <?define CurrDesktopGUID="dba2f82b-f158-47c9-b8b0-fd558acc4b4c" ?>
+  <?define CurrDocsOnDesktopGUID="275fad61-2dd9-4ed5-b3a2-aa388060e470" ?>
+  <?define CurrStartupGUID="c186dcb3-71d2-48d9-a478-17c450b143db" ?>
 
   <Product Name="Tor VM $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
            Language="!(loc.LCID)"

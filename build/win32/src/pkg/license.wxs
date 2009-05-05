@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <?define ThisProductVersion="0.0.3" ?>
+  <?define ThisProductVersion="0.0.4" ?>
   <?define ThisProductVersionDisp="$(var.ThisProductVersion)" ?>
   <?define UpgradeCode="bda6a744-0815-4fdc-88a8-d40d8c154133" ?>
-  <?define CurrProductGUID="b7cdfe31-cf2f-4e50-bf13-900b6e46badc" ?>
-  <?define CurrDocsOnDesktopGUID="d54b7085-ac10-42c7-a82a-198020d97ab7" ?>
-  <?define CurrLocalProgramsGUID="7bcd39dd-9aae-48c7-92ad-95837ee2f6b7" ?>
+  <?define CurrProductGUID="5b286e81-56b4-4efb-bc59-9f6cce69a07d" ?>
+  <?define CurrDocsOnDesktopGUID="14b00c23-1dbe-4874-a035-5c1033fa9cd1" ?>
+  <?define CurrLocalProgramsGUID="e342387b-ab0f-4896-8106-76d9867282db" ?>
 
   <Product Name="Tor License Documents $(var.ThisProductVersionDisp)" Id="$(var.CurrProductGUID)"
            Language="!(loc.LCID)"
