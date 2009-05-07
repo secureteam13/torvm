@@ -2153,7 +2153,7 @@ int main(int argc, char **argv)
     fatal ("Unable to prepare process environment.");
   }
 
-  dispmsg("Tor VM is starting. Please be patient...");
+  dispmsg("Tor VM is starting. Please be patient.");
   if (!vmnop) {
     if (!savenetconfig()) {
       fatal ("Unable to save current network configuration.");
@@ -2195,7 +2195,7 @@ int main(int argc, char **argv)
       tapconn = tapconn->next;
     }
 
-    dispmsg("Configuring network settings.");
+    dispmsg(" - Configuring network settings");
     if (!installtornpf()) {
       lerror ("Unable to install Tor NPF service driver.");
       goto shutdown;
@@ -2254,7 +2254,7 @@ int main(int argc, char **argv)
     ldebug ("Generated kernel command line: %s", cmdline);
   }
 
-  dispmsg("Launching virtual machine.");
+  dispmsg(" - Launching QEMU virtual machine");
   PROCESS_INFORMATION pi;
   if (vmnop) {
     if (! spawnprocess(&pi, "qemu.exe")) {
@@ -2303,7 +2303,7 @@ int main(int argc, char **argv)
    * restricted user log off and clean shutdown.
    */
   if (bundle) {
-    dispmsg("Waiting for Tor control port to open.");
+    dispmsg(" - Waiting for Tor control port to open");
     /* try to confirm control port is up before launching vidalia... */
     int i = 10;
     while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
@@ -2312,13 +2312,14 @@ int main(int argc, char **argv)
     }
     if (i > 0) {
       ldebug("Control port connected. Starting controller ...");
-      dispmsg("Launching Vidalia.");
+      dispmsg(" - Launching Vidalia");
       runvidalia(indebug);
 
       /* XXX: Now we wait for the ALL READY socket to be listening before switching.
        * If we don't get bootstrapped within this period of time something is broken/blocked.
        */
       ldebug("Waiting for Tor to bootstrap ...");
+      dispmsg(" - Waiting for Tor to establish a circuit");
       i = 60 * 5; 
       while ( (!tryconnect(TOR_TAP_VMIP, 9052)) && (i > 0) ) {
         Sleep(1000);
@@ -2336,7 +2337,13 @@ int main(int argc, char **argv)
     }
   }
 
-  dispmsg("Tor VM is running.  Waiting for VM to exit...");
+  dispmsg("");
+  dispmsg("GOOD! Tor VM is running.");
+  dispmsg(" - Waiting for VM to exit ...");
+  if (bundle)
+    dispmsg(" NOTE: Select the \"Exit\" option in Vidalia to shutdown.");
+  else
+    dispmsg(" NOTE: Close the \"QEMU (Tor VM)\" window to shutdown.");
   dispmsg("");
   /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
    * add an exception for the control port on the Tap adapter.
@@ -2345,7 +2352,7 @@ int main(int argc, char **argv)
 
   linfo ("Tor VM closed, restoring host network and services.");
   dispmsg("Shutting down.");
-  dispmsg("CAUTION: Do NOT close this window while restoring network settings!");
+  dispmsg("CAUTION: Restoring network settings. Do NOT close this window!");
 
   if (bundle) {
     disableuser(TOR_RESTRICTED_USER);
