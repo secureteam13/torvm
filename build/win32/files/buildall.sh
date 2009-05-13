@@ -151,7 +151,7 @@ if [[ "$1" != "dobuild" ]]; then
   export POLIPO_FILE=polipo-20080907.tar.gz
   export POLIPO_DIR=polipo-20080907
   
-  export TORBUTTON_FILE=torbutton-1.2.1.xpi
+  export TORBUTTON_FILE=torbutton.xpi
   
   export NSIS_DIR=nsis-2.42
   export PATH="${PATH}:/${NSIS_DIR}/Bin:/${NSIS_DIR}:/${NSIS_DIR}/bin"
@@ -1007,7 +1007,6 @@ cd /src
 if [ -f $TVM_VIDCONF ]; then
   cp $TVM_VIDCONF $bdlibdir/
 fi
-
 
 # Microsoft Installer package build
 TOR_WXS_DIR=contrib

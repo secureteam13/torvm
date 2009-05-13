@@ -266,9 +266,11 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
                     OPEN_EXISTING,
                     FILE_ATTRIBUTE_NORMAL,
                     NULL);
+ /* XXX: nobody cares
   if (src == INVALID_HANDLE_VALUE) {
     return FALSE;
   }
+ */
   dest = CreateFile (destpath,
                      GENERIC_WRITE,
                      0,
@@ -282,6 +284,8 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
   buff = malloc(buffsz);
   if (!buff) 
     return FALSE;
+  snprintf(buff, buffsz -1, "RunTorAtStart=true\r\n\r\n");
+  WriteFile(dest, buff, strlen(buff), &written, NULL);
 
   if (escquote(polipocfg, &epath)) {
     snprintf(buff, buffsz -1,
@@ -292,13 +296,24 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
   }
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
     WriteFile(dest, buff, len, &written, NULL);
+
+  snprintf(buff, buffsz -1, "[Tor]\r\nChanged=true\r\nTorExecutable=\r\n");
+  WriteFile(dest, buff, strlen(buff), &written, NULL);
   if (escquote(datadir, &epath)) {
     snprintf(buff, buffsz -1,
-             "DataDirectory=%s\n",
+             "DataDirectory=%s\r\n",
              epath);
     WriteFile(dest, buff, strlen(buff), &written, NULL);
     free(epath);
   }
+  snprintf(buff, buffsz -1, "ControlAddr=%s\r\n",
+           TOR_TAP_VMIP);
+  WriteFile(dest, buff, strlen(buff), &written, NULL);
+  snprintf(buff, buffsz -1, "UseRandomPassword=false\r\n");
+  WriteFile(dest, buff, strlen(buff), &written, NULL);
+  snprintf(buff, buffsz -1, "ControlPassword=%s\r\n",
+           "password"); /* XXX: TEMP static default passwd */
+  WriteFile(dest, buff, strlen(buff), &written, NULL);
   free (buff);
   CloseHandle (src);
   CloseHandle (dest);
@@ -308,16 +323,11 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
 
 BOOL installtap(void)
 {
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
+  BOOL retval = TRUE;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   LPTSTR devcon = NULL;
   DWORD cmdlen;
-  DWORD exitcode;
-  DWORD opts = 0;
-
-  opts = CREATE_NEW_PROCESS_GROUP;
 
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, NULL, &dir)) {
     lerror ("Unable to build path for lib dir.");
@@ -327,49 +337,25 @@ BOOL installtap(void)
     lerror ("Unable to build path for devcon.exe utility.");
     return FALSE;
   }
-  ZeroMemory( &pi, sizeof(pi) );
-  ZeroMemory( &si, sizeof(si) );
-  si.cb = sizeof(si);
+
   cmdlen = strlen(devcon) + 64;
   cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap install pwd: %s, cmd: %s", dir, cmd);
-
-  if( !CreateProcess(NULL,
-                     cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
-                     opts,
-                     NULL,   // environment block
-                     dir,
-                     &si,
-                     &pi) ) {
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
-  }
-  free (cmd);
-
-  linfo ("waiting for TAP-Win32 driver install to complete ...");
-  while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    Sleep (500);
-  }
-  linfo ("TAP-Win32 install exited with value %d", exitcode);
-  CloseHandle(pi.hThread);
-  CloseHandle(pi.hProcess);
-
-  return TRUE;  
+  if (runcommand(cmd,dir))
+    retval = TRUE;
+  if (cmd)
+    free(cmd);
+  return retval;
 }
 
 BOOL uninstalltap(void)
 {
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
+  BOOL retval = FALSE;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   LPTSTR devcon = NULL;
   DWORD cmdlen;
-  DWORD exitcode;
-  DWORD opts = 0;
   LONG status;
   HKEY key;
   DWORD len;
@@ -379,8 +365,6 @@ BOOL uninstalltap(void)
   const char name_string[] = "Name";
   char svc_string[REG_NAME_MAX];
   
-  opts = CREATE_NEW_PROCESS_GROUP;
-  
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, NULL, &dir)) {
     lerror ("Unable to build path for lib dir.");
     return FALSE;
@@ -390,35 +374,14 @@ BOOL uninstalltap(void)
     return FALSE;
   }
 
-  ZeroMemory( &pi, sizeof(pi) );
-  ZeroMemory( &si, sizeof(si) );
-  si.cb = sizeof(si);
   cmdlen = strlen(devcon) + 64;
   cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap un-install pwd: %s, cmd: %s", dir, cmd);
- 
-  ldebug ("Removing TORTAP91 device via devcon."); 
-  if( !CreateProcess(NULL,
-                     cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-                     FALSE,  // default handle inheritance false
-                     opts,   
-                     NULL,   // environment block
-                     dir,
-                     &si, 
-                     &pi) ) { 
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
-    return FALSE;
-  }
-  free (cmd);
-
-  while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    Sleep (500);
-  }
-  CloseHandle(pi.hThread);
-  CloseHandle(pi.hProcess);
+  if (runcommand(cmd,dir))
+    retval = TRUE; 
+  if (cmd)
+    free (cmd);
 
   ldebug ("Removal complete.  Checking registry for Tor Tap connection entries.");
   /* clean up registry keys left after tap adapter is removed
@@ -1549,11 +1512,6 @@ BOOL runvidalia (BOOL  indebug)
    */
   ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
   copyfile(pcfgtmp, pcfgdest);
-  if (!exists(pcfgdestsave)) {
-    ldebug ("Copying default polipo config from %s to save-file %s", pcfgtmp, pcfgdestsave);
-    copyfile(pcfgtmp, pcfgdestsave);
-  }
-
   cmd = malloc(CMDMAX);
   snprintf (cmd, CMDMAX -1,
             "\"%s\" -tor-address %s %s",
@@ -2016,6 +1974,7 @@ int main(int argc, char **argv)
   LPTSTR logfile = NULL;
   LPTSTR ctliparg = NULL;
   LPTSTR ctlportarg = NULL;
+  LPTSTR polipodir;
   DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
   int c, optidx = 0;
 
@@ -2284,7 +2243,7 @@ int main(int argc, char **argv)
   ldebug ("Done waiting.");
 
   if (! isrunning(&pi)) {
-    lerror ("Qemu VM failed to start properly.");
+    lerror ("Virtual machine failed to start properly.");
     goto shutdown;
   }
   if (! isconnected(tapconn->guid)) {
@@ -2309,11 +2268,25 @@ int main(int argc, char **argv)
     while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
       ldebug("Control port connect attempt failed, trying again... [%d left]", i);
       Sleep(1000);
+      if (!isrunning(&pi)) 
+        i = 0;
+      else
+        i--;
     }
     if (i > 0) {
       ldebug("Control port connected. Starting controller ...");
+
+      /* XXX: Why does vidalia have trouble immediately after start?
+       * May need a few seconds for Tor in the VM to get up to speed
+       * even though control socket is accepting in event loop.
+       */
+      Sleep(2000);
       dispmsg(" - Launching Vidalia");
       runvidalia(indebug);
+      /* XXX: Next step to launch polipo and vidalia separately, then handle restart/kill as needed.
+       * buildsyspath(SYSDIR_LCLPROGRAMS, "Polipo", &polipdir);
+       * runcommand("polipo.exe -c polipo.conf", polipodir);
+       */
 
       /* XXX: Now we wait for the ALL READY socket to be listening before switching.
        * If we don't get bootstrapped within this period of time something is broken/blocked.
@@ -2331,32 +2304,36 @@ int main(int argc, char **argv)
       }
       if (i > 0) {
         /* Once/if bootstrapped allow the user to run applications with restricted privs. */
-        cleanruserfiles(TOR_RESTRICTED_USER);
         userswitcher();
       }
     }
   }
 
-  dispmsg("");
-  dispmsg("GOOD! Tor VM is running.");
-  dispmsg(" - Waiting for VM to exit ...");
-  if (bundle)
-    dispmsg(" NOTE: Select the \"Exit\" option in Vidalia to shutdown.");
-  else
-    dispmsg(" NOTE: Close the \"QEMU (Tor VM)\" window to shutdown.");
-  dispmsg("");
-  /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
-   * add an exception for the control port on the Tap adapter.
-   */
-  waitforit(&pi);
-
-  linfo ("Tor VM closed, restoring host network and services.");
+  if (isrunning(&pi)) {
+    dispmsg("");
+    dispmsg("GOOD! Tor VM is running.");
+    dispmsg(" - Waiting for VM to exit ...");
+    if (bundle)
+      dispmsg(" NOTE: Select the \"Exit\" option in Vidalia to shutdown.");
+    else
+      dispmsg(" NOTE: Close the \"QEMU (Tor VM)\" window to shutdown.");
+    dispmsg("");
+    /* TODO: once the pcap bridge is up we can re-enable the firewall IF we
+     * add an exception for the control port on the Tap adapter.
+     */
+    waitforit(&pi);
+    linfo ("Tor VM closed, restoring host network and services.");
+  }
+  else {
+    lerror ("Virtual machine failed to start properly.");
+    linfo ("Tor VM Qemu failed to start properly.");
+  }
   dispmsg("Shutting down.");
   dispmsg("CAUTION: Restoring network settings. Do NOT close this window!");
 
   if (bundle) {
     disableuser(TOR_RESTRICTED_USER);
-    cleanruserfiles(TOR_RESTRICTED_USER);
+    /* cleanruserfiles(TOR_RESTRICTED_USER); */
   }
 
  shutdown:

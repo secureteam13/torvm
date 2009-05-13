@@ -836,26 +836,75 @@ BOOL userswitcher(void)
 BOOL initruserprofile(userinfo * info)
 {
   LPTSTR relpath;
-  LPTSTR imgsrc;
-  LPTSTR imgdest;
+  LPTSTR mozpath;
+  LPTSTR auppath;
+  LPTSTR profpath;
+  LPTSTR filesrc;
+  LPTSTR filedest;
+  LPTSTR cmd;
+  LPTSTR coff;
   ldebug ("Initializing user profile %s on host %s.", info->name, info->host);
-  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "torvmuser.bmp", &imgsrc)) {
+  if (!buildsyspath(SYSDIR_ALLPROFILE, NULL, &auppath)) {
+    lerror ("Unable to build path for all users profile destination.");
+    return FALSE;
+  }
+  /* Trim off the "All Users" part as we just want Documents and Settings
+   * XXX: all of the path handling needs to be cleaned up, localized, collected.
+   */
+  coff = auppath + strlen(auppath) - 1;
+  while ( (coff > auppath) && (*coff != '\\') ) coff--;
+  if (coff > auppath)
+    *coff = 0;
+  profpath = malloc(CMDMAX);
+  snprintf(profpath, CMDMAX -1, "%s\\%s", auppath, info->name);
+  free(auppath);
+
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "torvmuser.bmp", &filesrc)) {
     lerror ("Unable to build path for profile image in lib dir.");
     return FALSE;
   }
   relpath = malloc(CMDMAX);
   snprintf(relpath, CMDMAX -1, "Application Data\\Microsoft\\User Account Pictures\\%s.bmp", info->name);
-  if (!buildsyspath(SYSDIR_ALLPROFILE, relpath, &imgdest)) {
+  if (!buildsyspath(SYSDIR_ALLPROFILE, relpath, &filedest)) {
     lerror ("Unable to build path for all users profile destination.");
-    free(imgsrc);
+    free(filesrc);
     return FALSE;
   } 
-  if (!copyfile(imgsrc, imgdest)) {
-    ldebug ("Failed to copy user profile image from %s to %s.", imgsrc, imgdest);
+  if (!copyfile(filesrc, filedest)) {
+    ldebug ("Failed to copy user profile image from %s to %s.", filesrc, filedest);
   }
+  free(filesrc);
+  free(filedest);
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "prefs.js", &filesrc)) {
+    lerror ("Unable to build path for Torbutton preference file in lib dir.");
+    return FALSE;
+  }
+  if (!buildsyspath(SYSDIR_PROGRAMS, "Mozilla Firefox\\defaults\\pref\\all.js", &filedest)) {
+    lerror ("Unable to build path for Mozilla default preference file.");
+    return FALSE;
+  }
+  if (!copyfile(filesrc, filedest)) {
+    ldebug ("Failed to copy default Torbutton prefs from %s to %s.", filesrc, filedest);
+  }
+  free(filesrc);
+  free(filedest);
+  if (!buildsyspath(SYSDIR_LCLDATA, "TorButton\\torbutton.xpi", &filesrc)) {
+    lerror ("Unable to build path for Torbutton extension file.");
+    return FALSE;
+  }
+  if (!buildsyspath(SYSDIR_PROGRAMS, "Mozilla Firefox\\firefox.exe", &mozpath)) {
+    lerror ("Unable to build path for Mozilla firefox.");
+    return FALSE;
+  }
+  cmd = malloc(CMDMAX);
+  snprintf(cmd, CMDMAX -1, "\"%s\" -install-global-extension \"%s\"", mozpath, filesrc);
+  runcommand(cmd,NULL);
+  snprintf(relpath, CMDMAX -1, "%s\\Start Menu\\Programs\\Startup\\firefox.lnk", profpath);
+  snprintf(cmd, CMDMAX -1, "makelink \"%s\" \"\" \"%s\" \"\"", mozpath, relpath);
+  runcommand(cmd,NULL);
   free(relpath);
-  free(imgsrc);
-  free(imgdest);
+  free(mozpath);
+  free(cmd);
   return TRUE;
 }
 
@@ -924,12 +973,19 @@ BOOL setupruserfollow(userinfo * info,
 
 BOOL disableuser (LPTSTR username)
 {
+  LPSTR path;
   LPSTR cmd = NULL;
   cmd = malloc(CMDMAX);
   ldebug("Disabling user account: %s", username);
   snprintf(cmd, CMDMAX -1, "net.exe user %s /ACTIVE:NO", username);
   runcommand(cmd,NULL);
   free(cmd);
+  if (!buildsyspath(SYSDIR_PROGRAMS, "Mozilla Firefox\\defaults\\pref\\all.js", &path)) {
+    lerror ("Unable to build path for Mozilla default preference file.");
+    return FALSE;
+  }
+  DeleteFile(path);
+  free(path);
   return TRUE;
 }
 

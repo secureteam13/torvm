@@ -115,8 +115,25 @@ BOOL proclocalhnd (HANDLE srcproc,
 int getosversion (void);
 int getosbits (void);
 
+typedef struct s_CmdInfo {
+  BOOL   isrunning;
+  DWORD  status;
+  HANDLE hnd;
+  HANDLE stdin_rd;
+  HANDLE stdin_wr;
+  HANDLE stdout_rd;
+  HANDLE stdout_wr;
+} CmdInfo;
+
 BOOL getcompguid (TCHAR **guid);
 void bgstartupinfo (STARTUPINFO *si);
+/*
+BOOL launchcommand(LPSTR cmd,
+                   LPSTR dir,
+                   CmdInfo **info);
+BOOL checkcommand(CmdInfo *info);
+BOOL killcommand(CmdInfo *info);
+*/
 BOOL runcommand(LPSTR cmd,
                 LPSTR dir);
 

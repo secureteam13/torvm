@@ -646,7 +646,7 @@ BOOL base16encode(LPBYTE   data,
     return FALSE;
   }
   for (i = 0; i < len; i++) {
-    snprintf(*hexstr+(i*2), 3, "%02hhx", (short)data[i]);
+    snprintf((*hexstr)+(i*2), 3, "%02hhx", (short)data[i]);
   }
   (*hexstr)[olen-1] = NULL;
   return retval;

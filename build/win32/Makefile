@@ -207,6 +207,11 @@ POLIPO_F=polipo-20080907.tar.gz
 POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
 POLIPO_SUM=dda211e3027310891fb555c1fe5fa2f5b274aa0f
 
+TORBUTTON_XPI_VER=1.2.1
+TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
+TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_NAME)
+TORBUTTON_XPI_SUM=204766e5c9112aba7313e3ab98023f57f1668978
+
 MARBLE_NAME=marble-latest
 MARBLE_TGZ=$(MARBLE_NAME).tar.gz
 MARBLE_SVN=https://svn.vidalia-project.net/svn/marble/
@@ -247,7 +252,7 @@ THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 # buildscripts need some dire clean up...
 OK:=echo -n
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(MSYSSSL_F) $(MSYSSSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PYTHON_F) $(PY2EXE_F) $(WIX_F) $(WIXSRC_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(OVPN_F)
+ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYS_F) $(MSYSCORE_F) $(BASH_F) $(DIFFUTIL_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(M4_F) $(MSYSSSL_F) $(MSYSSSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PYTHON_F) $(PY2EXE_F) $(WIX_F) $(WIXSRC_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(TORBUTTON_XPI_F) $(OVPN_F)
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -307,6 +312,7 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
+	@if [ ! -e $(WDLDIR)/$(TORBUTTON_XPI_F) ]; then $(DLCMD) "$(TORBUTTON_XPI_URL)" $(TORBUTTON_XPI_SUM) "$(WDLDIR)/$(TORBUTTON_XPI_F)"; fi
 	@$(SEVNZIP_OPT_DL); $(OK)
 	@( export ddir=`pwd`/iso; if [ ! -f $ddir ]; then export ddir="$(ISODIR)"; fi; cd $(SDLDIR); if [ -d $(TORSVN_NAME) ]; then cd $(TORSVN_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORSVN_SVN)$(TORSVN_BR)" $(TORSVN_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
@@ -352,6 +358,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	cp files/hdd.img.gz $(ISODIR)/add/; \
 	cp files/defvidalia.conf $(ISODIR)/add/; \
 	cp files/defpolipo.conf $(ISODIR)/add/; \
+	cp files/prefs.js $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \
@@ -405,10 +412,15 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	rm -rf $(PYCRYPTO_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(PYCRYPTO_NAME) $(PYCRYPTO_NAME) ; \
 	( cd $(PYCRYPTO_NAME); $(GITCMD) checkout $(PYCRYPTO_VER); ); \
 	tar zcf $(ISODIR)/dl/src/$(PYCRYPTO_TGZ) $(PYCRYPTO_NAME); rm -rf $(PYCRYPTO_NAME); \
-	echo "--- Exporting and archiving Tor Button version $(TORBUTTON_VER) from local mirror ..."; \
-	rm -rf $(TORBUTTON_NAME); $(SVNCMD) export --revision $(TORBUTTON_VER) $(SDLDIR)/$(TORBUTTON_NAME) $(TORBUTTON_NAME) ; \
-	( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
-	mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/ ; rm -rf $(TORSVN_NAME); \
+	if [ -f $(WDLDIR)/$(TORBUTTON_XPI_F) ]; then \
+		echo "--- Using Mozilla.org TorButton $(TORBUTTON_XPI_F) ..."; \
+		cp -f $(WDLDIR)/$(TORBUTTON_XPI_F) $(ISODIR)/dl/src/torbutton.xpi; \
+	else \
+		echo "--- Exporting and archiving Tor Button version $(TORBUTTON_VER) from local mirror ..."; \
+		rm -rf $(TORBUTTON_NAME); $(SVNCMD) export --revision $(TORBUTTON_VER) $(SDLDIR)/$(TORBUTTON_NAME) $(TORBUTTON_NAME) ; \
+		( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
+		mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/torbutton.xpi ; rm -rf $(TORSVN_NAME); \
+	fi; \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/pkg.tgz pkg ); \

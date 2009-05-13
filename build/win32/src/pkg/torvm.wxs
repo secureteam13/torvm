@@ -109,7 +109,7 @@
         <RegistryKey Root="HKCU"
                      Key="Software\Microsoft\Windows\CurrentVersion\Run"
                      Action="createAndRemoveOnUninstall">
-          <RegistryValue Name="Tor VM" Value='"[ProgramsInstDir]torvm.exe"' Type="string" />
+          <RegistryValue Name="Tor VM" Value='"[ProgramsInstDir]torvm.exe --bundle"' Type="string" />
         </RegistryKey>
       </Component>
     </Directory>
