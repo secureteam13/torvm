@@ -1966,6 +1966,7 @@ int main(int argc, char **argv)
   BOOL vmaccel = FALSE;
   BOOL bundle = FALSE;
   BOOL follow = FALSE;
+  BOOL clean = FALSE;
   BOOL indebug = FALSE;
   BOOL vmnop = FALSE;
   BOOL noinit = FALSE;
@@ -2018,9 +2019,8 @@ int main(int argc, char **argv)
 
         case 'c':
           ldebug ("Set option %s.", torvm_options[optidx].name);
-          uninstalltap();
-          restorenetconfig();
-          exit(0);
+          clean = TRUE;
+          break;
 
         case 'X':
           ldebug ("Set option %s.", torvm_options[optidx].name);
@@ -2069,8 +2069,15 @@ int main(int argc, char **argv)
    * port is no longer accepting connections and then we issue a logoff request.
    */ 
   if (follow) {
-    while(tryconnect(ctliparg, atol(ctlportarg))) {
+    while(follow) {
       Sleep(1000);
+      if (!tryconnect(ctliparg, atol(ctlportarg))) {
+        Sleep(1000);
+        /* XXX: Increase prio if intermittent connect timeouts? */
+        if (!tryconnect(ctliparg, atol(ctlportarg))) {
+          follow = FALSE;
+        }
+      }
     }
     /* At this point Tor in the Admin user desktop inside the VM has failed or exited.
      * This is our cue to force the restricted user to log off.
@@ -2110,6 +2117,11 @@ int main(int argc, char **argv)
 
   if (!setupenv()) {
     fatal ("Unable to prepare process environment.");
+  }
+
+  if (clean) {
+    uninstalltap();
+    goto shutdown;
   }
 
   dispmsg("Tor VM is starting. Please be patient.");
@@ -2331,12 +2343,11 @@ int main(int argc, char **argv)
   dispmsg("Shutting down.");
   dispmsg("CAUTION: Restoring network settings. Do NOT close this window!");
 
+ shutdown:
   if (bundle) {
     disableuser(TOR_RESTRICTED_USER);
     /* cleanruserfiles(TOR_RESTRICTED_USER); */
   }
-
- shutdown:
   if (getosversion() > OS_2000) {
     if (! enablefirewall()) {
       lerror ("Unable to re-enable windows firewall.");
