@@ -305,7 +305,7 @@ diff -Naur a/package/base-files/files/etc/banner b/package/base-files/files/etc/
 +
 +
 +
-+ Tor Virtual Machine - version 0.0.1-dev
++ Tor Virtual Machine - version 0.0.2-dev
 +
 diff -Naur a/package/base-files/files/etc/config/fstab b/package/base-files/files/etc/config/fstab
 --- a/package/base-files/files/etc/config/fstab	2007-09-22 13:47:20.783817000 +0000
