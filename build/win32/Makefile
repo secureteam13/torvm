@@ -209,7 +209,7 @@ POLIPO_SUM=dda211e3027310891fb555c1fe5fa2f5b274aa0f
 
 TORBUTTON_XPI_VER=1.2.1
 TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
-TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_NAME)
+TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_F)
 TORBUTTON_XPI_SUM=204766e5c9112aba7313e3ab98023f57f1668978
 
 MARBLE_NAME=marble-latest
