@@ -10,9 +10,6 @@ Legend:
  *  Top priority
 _______________________________________________________________________
 
- * Update end user documentation
-   . Expand trouble shooting and bug reporting instructions.
-
  * Update documentation
    . Update Kyle's build documents at janusvm with new bundle details
      and commit to Tor VM svn.
@@ -41,9 +38,6 @@ _______________________________________________________________________
    ? Keep as few Thandy package files on disk as possible after an
      upgrade. Ideally no more than two packages of the same product
      would be kept.
-   ? Improve package removal to support real clean uninstall.
-     (removing all installed directories and data, including cached
-      package files and program data)
    ? Improve package removal to iterate through products and remove
      by name rather than MSI file or product GUID; include rollback
      capability for situations where upgraded packages fail.
@@ -101,6 +95,5 @@ _______________________________________________________________________
    ? PortableFirefox in bundle.
    ? Multiple VM networking.
    ? Authenticated VM images.
-   ? SCTP over UDP (with DTLS) in VM.  kernel 2.6.26+
    ? STUN (rfc5389) nat busting in VM.
 

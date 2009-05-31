@@ -1,6 +1,6 @@
 diff -Naur a/package/libevent/Makefile b/package/libevent/Makefile
 --- a/package/libevent/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/libevent/Makefile	2009-02-01 10:05:07.224105888 +0000
++++ b/package/libevent/Makefile	2009-02-01 10:05:07.224105000 +0000
 @@ -0,0 +1,66 @@
 +# 
 +# Copyright (C) 2006 OpenWrt.org

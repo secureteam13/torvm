@@ -30,12 +30,16 @@ endif
 ifeq (,$(SDLDIR))
 	SDLDIR=./build/repos
 endif
+ifeq (,$(SRCDLDIR))
+	SRCDLDIR=./build/sources
+endif
 override DLDIR:=$(realpath $(DLDIR))
 override WDLDIR:=$(realpath $(WDLDIR))
 override SDLDIR:=$(realpath $(SDLDIR))
+override SRCDLDIR:=$(realpath $(SRCDLDIR))
 
 # OpenWRT version for build
-override CVER:=14298
+override CWRTVER:=16018
 
 export BUSER
 export BGROUP
@@ -43,6 +47,7 @@ export TGTNAME
 export DLDIR
 export WDLDIR
 export SDLDIR
+export SRCDLDIR
 
 default all: prereq import buildtree buildkern buildlicense buildw32
 
@@ -115,7 +120,7 @@ buildtree: import
 	@if [ ! -d build/kamikaze/$(TGTNAME) ]; then \
 		echo "Creating Tor VM build tree ..."; \
 		cd build/kamikaze; \
-		svn export -r$(CVER) $(SDLDIR)/kamikaze $(TGTNAME); \
+		svn export -r$(CWRTVER) $(SDLDIR)/kamikaze $(TGTNAME); \
 		if (( $$? != 0 )); then \
 			echo "ERROR: Unable to export working copy of local OpenWRT tree." >&2; \
 			rm -rf $(TGTNAME); \

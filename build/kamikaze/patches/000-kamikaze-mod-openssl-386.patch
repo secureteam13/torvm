@@ -1,22 +1,22 @@
 diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
---- a/package/openssl/Makefile	2009-01-19 09:50:41.579748000 +0000
-+++ b/package/openssl/Makefile	2009-03-14 23:01:32.442069224 +0000
-@@ -19,8 +19,6 @@
+--- a/package/openssl/Makefile	2009-05-17 00:25:41.209156000 +0000
++++ b/package/openssl/Makefile	2009-05-30 05:06:49.549118296 +0000
+@@ -18,8 +18,6 @@
  	ftp://ftp.sunet.se/pub/security/tools/net/openssl/source/
- PKG_MD5SUM:=a5cb5f6c3d11affb387ecf7a997cac0c
+ PKG_MD5SUM:=e555c6d58d276aec7fdc53363e338ab3
  
 -PKG_BUILD_DEPENDS:=ocf-crypto-headers
 -
  include $(INCLUDE_DIR)/package.mk
  
  define Package/openssl/Default
-@@ -73,25 +71,26 @@
+@@ -72,25 +70,25 @@
  OPENSSL_OPTIONS:= shared no-ec no-err no-hw no-threads zlib-dynamic \
  					no-sse2 no-perlasm --with-cryptodev
  else
 -OPENSSL_OPTIONS:= shared no-ec no-err no-hw no-threads zlib-dynamic \
-+OPENSSL_OPTIONS:= shared no-ec no-err no-hw threads zlib-dynamic \
- 					no-engines no-sse2 no-perlasm
+-					no-engines no-sse2 no-perlasm
++OPENSSL_OPTIONS:= shared no-ec no-err no-hw threads zlib-dynamic
  endif
  
  
@@ -26,6 +26,7 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
 +		./Configure linux-elf \
  			--prefix=/usr \
  			--openssldir=/etc/ssl \
++			--with-fipslibdir="$(PKG_INSTALL_DIR)\ssl/fips-1.0/lib" \
  			$(TARGET_CPPFLAGS) \
  			$(TARGET_LDFLAGS) -ldl \
 -			-DOPENSSL_SMALL_FOOTPRINT \
@@ -35,12 +36,11 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
  endef
  
  TARGET_CFLAGS += $(FPIC)
-+# apps is currently broken
 +TARGET_BUILDDIRS=crypto fips ssl
  
  define Build/Compile
- 	rm -rf $(PKG_INSTALL_DIR)
-@@ -99,21 +98,24 @@
+ 	# XXX: OpenSSL "make depend" will look for installed headers before its own,
+@@ -99,21 +97,18 @@
  	$(MAKE) -C $(PKG_BUILD_DIR) \
  		MAKEDEPPROG="$(TARGET_CROSS)gcc" \
  		OPENWRT_OPTIMIZATION_FLAGS="$(TARGET_CFLAGS)" \
@@ -53,53 +53,163 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
  		OPENWRT_OPTIMIZATION_FLAGS="$(TARGET_CFLAGS)" \
 +		DIRS="$(TARGET_BUILDDIRS)" \
  		all build-shared
- 	# Work around openssl build bug to link libssl.so with libcrypto.so.
+-	# Work around openssl build bug to link libssl.so with libcrypto.so.
 -	-rm $(PKG_BUILD_DIR)/libssl.so.*.*.*
 -	$(MAKE) -C $(PKG_BUILD_DIR) \
 -		CC="$(TARGET_CC)" \
 -		OPENWRT_OPTIMIZATION_FLAGS="$(TARGET_CFLAGS)" \
 -		do_linux-shared
-+	# -rm $(PKG_BUILD_DIR)/libssl.so.*.*.*
-+	# $(MAKE) -C $(PKG_BUILD_DIR) \
-+	#	CC="$(TARGET_CC)" \
-+	#	OPENWRT_OPTIMIZATION_FLAGS="$(TARGET_CFLAGS)" \
-+	#	do_linux-shared
  	$(MAKE) -C $(PKG_BUILD_DIR) \
  		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 +		DIRS="$(TARGET_BUILDDIRS)" \
  		install
  endef
  
-diff -Naur a/package/openssl/patches/100-parallel-build.patch b/package/openssl/patches/100-parallel-build.patch
---- a/package/openssl/patches/100-parallel-build.patch	2009-01-19 09:50:41.579748000 +0000
-+++ b/package/openssl/patches/100-parallel-build.patch	1970-01-01 00:00:00.000000000 +0000
-@@ -1,24 +0,0 @@
--diff -uNr openssl-0.9.8j.ORIG/Makefile.org openssl-0.9.8j/Makefile.org
----- openssl-0.9.8j.ORIG/Makefile.org	2009-01-07 18:06:31.000000000 +0000
--+++ openssl-0.9.8j/Makefile.org	2009-01-07 18:08:38.000000000 +0000
--@@ -333,15 +333,15 @@
-- 		dir=crypto; target=all; $(BUILD_ONE_CMD)
-- build_fips:
-- 	@dir=fips; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
---build_ssl:
--+build_ssl: build_crypto
-- 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
---build_engines:
--+build_engines: build_crypto
-- 	@dir=engines; target=all; $(BUILD_ONE_CMD)
---build_apps:
--+build_apps: build_libs
-- 	@dir=apps; target=all; $(BUILD_ONE_CMD)
---build_tests:
--+build_tests: build_libs
-- 	@dir=test; target=all; $(BUILD_ONE_CMD)
---build_tools:
--+build_tools: build_libs
-- 	@dir=tools; target=all; $(BUILD_ONE_CMD)
+diff -Naur a/package/openssl/patches/001-upstream_dtls_cisco.patch b/package/openssl/patches/001-upstream_dtls_cisco.patch
+--- a/package/openssl/patches/001-upstream_dtls_cisco.patch	2009-04-25 16:33:00.317897000 +0000
++++ b/package/openssl/patches/001-upstream_dtls_cisco.patch	1970-01-01 00:00:00.000000000 +0000
+@@ -1,139 +0,0 @@
+---- a/ssl/d1_clnt.c
+-+++ b/ssl/d1_clnt.c
+-@@ -130,7 +130,7 @@ static int dtls1_get_hello_verify(SSL *s
 - 
-- all_testapps: build_libs build_testapps
+- static SSL_METHOD *dtls1_get_client_method(int ver)
+- 	{
+--	if (ver == DTLS1_VERSION)
+-+	if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
+- 		return(DTLSv1_client_method());
+- 	else
+- 		return(NULL);
+-@@ -181,7 +181,8 @@ int dtls1_connect(SSL *s)
+- 			s->server=0;
+- 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
+- 
+--			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00))
+-+			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00) &&
+-+			    (s->version & 0xff00 ) != (DTLS1_BAD_VER & 0xff00))
+- 				{
+- 				SSLerr(SSL_F_DTLS1_CONNECT, ERR_R_INTERNAL_ERROR);
+- 				ret = -1;
+---- a/ssl/d1_lib.c
+-+++ b/ssl/d1_lib.c
+-@@ -187,7 +187,10 @@ void dtls1_free(SSL *s)
+- void dtls1_clear(SSL *s)
+- 	{
+- 	ssl3_clear(s);
+--	s->version=DTLS1_VERSION;
+-+	if (s->options & SSL_OP_CISCO_ANYCONNECT)
+-+		s->version=DTLS1_BAD_VER;
+-+	else
+-+		s->version=DTLS1_VERSION;
+- 	}
+- 
+- /*
+---- a/ssl/d1_pkt.c
+-+++ b/ssl/d1_pkt.c
+-@@ -987,15 +987,17 @@ start:
+- 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
+- 		{
+- 		struct ccs_header_st ccs_hdr;
+-+		int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
+- 
+- 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
+- 
+- 		/* 'Change Cipher Spec' is just a single byte, so we know
+- 		 * exactly what the record payload has to look like */
+- 		/* XDTLS: check that epoch is consistent */
+--		if (	(s->client_version == DTLS1_BAD_VER && rr->length != 3) ||
+--			(s->client_version != DTLS1_BAD_VER && rr->length != DTLS1_CCS_HEADER_LENGTH) || 
+--			(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
+-+		if (s->client_version == DTLS1_BAD_VER || s->version == DTLS1_BAD_VER)
+-+			ccs_hdr_len = 3;
+-+
+-+		if ((rr->length != ccs_hdr_len) || (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
+- 			{
+- 			i=SSL_AD_ILLEGAL_PARAMETER;
+- 			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
+-@@ -1311,7 +1313,7 @@ int do_dtls1_write(SSL *s, int type, con
+- #if 0
+- 	/* 'create_empty_fragment' is true only when this function calls itself */
+- 	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done
+--		&& SSL_version(s) != DTLS1_VERSION)
+-+	    && SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
+- 		{
+- 		/* countermeasure against known-IV weakness in CBC ciphersuites
+- 		 * (see http://www.openssl.org/~bodo/tls-cbc.txt) 
+---- a/ssl/s3_clnt.c
+-+++ b/ssl/s3_clnt.c
+-@@ -708,7 +708,7 @@ int ssl3_get_server_hello(SSL *s)
+- 
+- 	if (!ok) return((int)n);
+- 
+--	if ( SSL_version(s) == DTLS1_VERSION)
+-+	if ( SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+- 		{
+- 		if ( s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST)
+- 			{
+---- a/ssl/ssl.h
+-+++ b/ssl/ssl.h
+-@@ -510,6 +510,8 @@ typedef struct ssl_session_st
+- #define SSL_OP_COOKIE_EXCHANGE              0x00002000L
+- /* Don't use RFC4507 ticket extension */
+- #define SSL_OP_NO_TICKET	            0x00004000L
+-+/* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
+-+#define SSL_OP_CISCO_ANYCONNECT		    0x00008000L
+- 
+- /* As server, disallow session resumption on renegotiation */
+- #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
+---- a/ssl/ssl_lib.c
+-+++ b/ssl/ssl_lib.c
+-@@ -995,7 +995,8 @@ long SSL_ctrl(SSL *s,int cmd,long larg,v
+- 		s->max_cert_list=larg;
+- 		return(l);
+- 	case SSL_CTRL_SET_MTU:
+--		if (SSL_version(s) == DTLS1_VERSION)
+-+		if (SSL_version(s) == DTLS1_VERSION ||
+-+		    SSL_version(s) == DTLS1_BAD_VER)
+- 			{
+- 			s->d1->mtu = larg;
+- 			return larg;
+---- a/ssl/ssl_sess.c
+-+++ b/ssl/ssl_sess.c
+-@@ -211,6 +211,11 @@ int ssl_get_new_session(SSL *s, int sess
+- 			ss->ssl_version=TLS1_VERSION;
+- 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+- 			}
+-+		else if (s->version == DTLS1_BAD_VER)
+-+			{
+-+			ss->ssl_version=DTLS1_BAD_VER;
+-+			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+-+			}
+- 		else if (s->version == DTLS1_VERSION)
+- 			{
+- 			ss->ssl_version=DTLS1_VERSION;
+---- a/ssl/t1_enc.c
+-+++ b/ssl/t1_enc.c
+-@@ -765,10 +765,10 @@ int tls1_mac(SSL *ssl, unsigned char *md
+- 	HMAC_CTX_init(&hmac);
+- 	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash,NULL);
+- 
+--	if (ssl->version == DTLS1_VERSION && ssl->client_version != DTLS1_BAD_VER)
+-+	if (ssl->version == DTLS1_BAD_VER ||
+-+	    (ssl->version == DTLS1_VERSION && ssl->client_version != DTLS1_BAD_VER))
+- 		{
+- 		unsigned char dtlsseq[8],*p=dtlsseq;
+--
+- 		s2n(send?ssl->d1->w_epoch:ssl->d1->r_epoch, p);
+- 		memcpy (p,&seq[2],6);
+- 
+-@@ -793,7 +793,7 @@ printf("rec=");
+- {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
+- #endif
+- 
+--	if ( SSL_version(ssl) != DTLS1_VERSION)
+-+	if ( SSL_version(ssl) != DTLS1_VERSION && SSL_version(ssl) != DTLS1_BAD_VER)
+- 		{
+- 		for (i=7; i>=0; i--)
+- 			{
 diff -Naur a/package/openssl/patches/110-optimize-for-size.patch b/package/openssl/patches/110-optimize-for-size.patch
---- a/package/openssl/patches/110-optimize-for-size.patch	2008-05-31 15:52:11.560038000 +0000
+--- a/package/openssl/patches/110-optimize-for-size.patch	2009-04-17 14:32:29.989894000 +0000
 +++ b/package/openssl/patches/110-optimize-for-size.patch	1970-01-01 00:00:00.000000000 +0000
 @@ -1,12 +0,0 @@
 -diff -ur openssl-0.9.8h.orig/Configure openssl-0.9.8h/Configure
@@ -114,6 +224,34 @@ diff -Naur a/package/openssl/patches/110-optimize-for-size.patch b/package/opens
 - 
 - #### *BSD [do see comment about ${BSDthreads} above!]
 - "BSD-generic32","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+diff -Naur a/package/openssl/patches/121-ocf-config.patch b/package/openssl/patches/121-ocf-config.patch
+--- a/package/openssl/patches/121-ocf-config.patch	2009-04-04 18:30:56.800798000 +0000
++++ b/package/openssl/patches/121-ocf-config.patch	1970-01-01 00:00:00.000000000 +0000
+@@ -1,24 +0,0 @@
+-diff -burN openssl-0.9.8k/config openssl-0.9.8k.patched/config
+---- openssl-0.9.8k/config	2009-02-16 09:43:41.000000000 +0100
+-+++ openssl-0.9.8k.patched/config	2009-03-27 19:38:37.262255825 +0100
+-@@ -399,8 +399,11 @@
+- # this is where the translation occurs into SSLeay terms
+- # ---------------------------------------------------------------------------
+- 
+-+# figure out if gcc is available and if so we use it otherwise
+-+# we fallback to whatever cc does on the system
+- GCCVER=`(gcc -dumpversion) 2>/dev/null`
+- if [ "$GCCVER" != "" ]; then
+-+  CC=gcc
+-   # then strip off whatever prefix egcs prepends the number with...
+-   # Hopefully, this will work for any future prefixes as well.
+-   GCCVER=`echo $GCCVER | LC_ALL=C sed 's/^[a-zA-Z]*\-//'`
+-@@ -409,6 +412,8 @@
+-   # major and minor version numbers.
+-   # peak single digit before and after first dot, e.g. 2.95.1 gives 29
+-   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
+-+else
+-+  CC=cc
+- fi
+- 
+- # Only set CC if not supplied already
 diff -Naur a/package/openssl/patches/150-no_engines.patch b/package/openssl/patches/150-no_engines.patch
 --- a/package/openssl/patches/150-no_engines.patch	2008-11-03 21:26:27.396977000 +0000
 +++ b/package/openssl/patches/150-no_engines.patch	1970-01-01 00:00:00.000000000 +0000

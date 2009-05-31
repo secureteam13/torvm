@@ -2119,10 +2119,8 @@ int main(int argc, char **argv)
     fatal ("Unable to prepare process environment.");
   }
 
-  if (clean) {
-    uninstalltap();
+  if (clean)
     goto shutdown;
-  }
 
   dispmsg("Tor VM is starting. Please be patient.");
   if (!vmnop) {
