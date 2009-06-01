@@ -1,6 +1,6 @@
 diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
 --- a/package/openssl/Makefile	2009-05-17 00:25:41.209156000 +0000
-+++ b/package/openssl/Makefile	2009-05-30 05:06:49.549118296 +0000
++++ b/package/openssl/Makefile	2009-05-30 07:56:24.508738701 +0000
 @@ -18,8 +18,6 @@
  	ftp://ftp.sunet.se/pub/security/tools/net/openssl/source/
  PKG_MD5SUM:=e555c6d58d276aec7fdc53363e338ab3
@@ -10,7 +10,7 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
  include $(INCLUDE_DIR)/package.mk
  
  define Package/openssl/Default
-@@ -72,25 +70,25 @@
+@@ -72,25 +70,24 @@
  OPENSSL_OPTIONS:= shared no-ec no-err no-hw no-threads zlib-dynamic \
  					no-sse2 no-perlasm --with-cryptodev
  else
@@ -26,7 +26,6 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
 +		./Configure linux-elf \
  			--prefix=/usr \
  			--openssldir=/etc/ssl \
-+			--with-fipslibdir="$(PKG_INSTALL_DIR)\ssl/fips-1.0/lib" \
  			$(TARGET_CPPFLAGS) \
  			$(TARGET_LDFLAGS) -ldl \
 -			-DOPENSSL_SMALL_FOOTPRINT \
@@ -36,11 +35,11 @@ diff -Naur a/package/openssl/Makefile b/package/openssl/Makefile
  endef
  
  TARGET_CFLAGS += $(FPIC)
-+TARGET_BUILDDIRS=crypto fips ssl
++TARGET_BUILDDIRS=crypto ssl
  
  define Build/Compile
  	# XXX: OpenSSL "make depend" will look for installed headers before its own,
-@@ -99,21 +97,18 @@
+@@ -99,21 +96,18 @@
  	$(MAKE) -C $(PKG_BUILD_DIR) \
  		MAKEDEPPROG="$(TARGET_CROSS)gcc" \
  		OPENWRT_OPTIMIZATION_FLAGS="$(TARGET_CFLAGS)" \
@@ -252,6 +251,18 @@ diff -Naur a/package/openssl/patches/121-ocf-config.patch b/package/openssl/patc
 - fi
 - 
 - # Only set CC if not supplied already
+diff -Naur a/package/openssl/patches/140-makefile-dirs.patch b/package/openssl/patches/140-makefile-dirs.patch
+--- a/package/openssl/patches/140-makefile-dirs.patch	2009-04-17 14:32:29.989894000 +0000
++++ b/package/openssl/patches/140-makefile-dirs.patch	2009-06-01 09:03:17.371197313 +0000
+@@ -5,7 +5,7 @@
+  BASEADDR=
+  
+ -DIRS=   crypto fips ssl engines apps test tools
+-+DIRS=   crypto fips ssl apps
+++DIRS=   crypto ssl
+  SHLIBDIRS= crypto ssl fips
+  
+  # dirs in crypto to build
 diff -Naur a/package/openssl/patches/150-no_engines.patch b/package/openssl/patches/150-no_engines.patch
 --- a/package/openssl/patches/150-no_engines.patch	2008-11-03 21:26:27.396977000 +0000
 +++ b/package/openssl/patches/150-no_engines.patch	1970-01-01 00:00:00.000000000 +0000
