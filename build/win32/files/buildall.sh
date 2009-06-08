@@ -806,6 +806,9 @@ if [[ "$CMAKE_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $CMAKE_FILE
   cd $CMAKE_DIR
+  # cmake bootstrap does not detect msys correctly. give it some help...
+  export SAVE_MSYSTEM="$MSYSTEM"
+  export MSYSTEM=MINGW32
   ./bootstrap --no-qt-gui
   if (( $? != 0 )); then
     echo "ERROR: CMake bootstrap / configure failed."
@@ -821,6 +824,8 @@ if [[ "$CMAKE_BUILT" != "yes" ]]; then
     echo "ERROR: CMake install failed."
     exit 1
   fi
+  export MSYSTEM="$SAVE_MSYSTEM"
+  unset SAVE_MSYSTEM
 
   pkgbuilt CMAKE_BUILT
 fi
