@@ -10,7 +10,6 @@ if [[ "$1" != "dobuild" ]]; then
   export VMHDD_IMAGE=/src/add/hdd.img
   export TORVMUSER_IMAGE=torvmuser.bmp
   export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
-  export TVM_VIDCONF=/src/add/defvidalia.conf
   
   # set sysdrive, ddir, and brootdir in parent env if needed.
   if [[ "$sysdrive" == "" ]]; then
@@ -79,7 +78,7 @@ if [[ "$1" != "dobuild" ]]; then
   export ZLIB_DIR="zlib-${ZLIB_VER}"
   export ZLIB_FILE="zlib-${ZLIB_VER}.tar.gz"
 
-  export LIBEVENT_VER=1.4.8-stable
+  export LIBEVENT_VER=2.0.1-alpha
   export LIBEVENT_FILE="libevent-${LIBEVENT_VER}.tar.gz"
   export LIBEVENT_DIR="libevent-${LIBEVENT_VER}"
   
@@ -515,6 +514,7 @@ if [[ "$WPCAP_BUILT" != "yes" ]]; then
   fi
   cp $NPFDRV_F $bdlibdir/tornpf.sys
   cd Dll/Project
+  export CC=gcc
   make
   if (( $? != 0 )); then
     echo "ERROR: WinPcap Packet user space library build failed." >&2

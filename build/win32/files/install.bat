@@ -31,12 +31,10 @@ cd /d %ISODRV%
 cd dl
 copy *.* %DDRV%%MDIR%\%MVER%\dl\
 cd /d %DDRV%
-cd %MDIR%\%MVER%\dl\
-bzip2 -d *.bz2
-gzip -d *.gz
-cd /d %DDRV%
 cd %MDIR%\%MVER%
-for %%f in (dl\*.tar) do bsdtar xvf %%f
+for %%f in (dl\*.tar.gz) do bsdtar.exe zxvf %%f
+for %%f in (dl\*.tar.bz2) do bsdtar.exe jxvf %%f
+for %%f in (dl\*.tar) do bsdtar.exe xvf %%f
 cd /d %ISODRV%
 cd bin
 copy fstab %DDRV%%MDIR%\%MVER%\etc\
