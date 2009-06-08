@@ -3,8 +3,10 @@
 # and also transfer over the build log and shutdown, if needed.
 if [[ "$1" != "dobuild" ]]; then
   # only set various environment settings on the first pass
-  export PATH=.:/usr/local/bin:/usr/bin:/bin:/mingw/bin:/wix:/lib:/usr/local/lib:/usr/libexec:$PATH
+  export PATH=$PATH:/usr/local/bin:/wix:/lib:/usr/local/lib:/usr/libexec:$PATH
   export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib:$LD_LIBRARY_PATH
+  export CC=gcc
+  export DEF_CONF_BUILD="--build=i686-pc-mingw32"
 
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
@@ -170,8 +172,6 @@ if [[ "$1" != "dobuild" ]]; then
   fi
   if [ -f "$VSTOOLSENV" ]; then
     echo "Using VisualStudio environment script at $VSTOOLSENV."
-    export PATH="$PATH:$VSTOOLSDIR:$VSTOOLSDIR\Bin:$VSTOOLSDIR\VC\bin:$VSTOOLSDIR\Common7\IDE:$VSTOOLSDIR\SDK\v2.0\bin"
-    echo "Using new PATH=$PATH"
   fi
   
   # always set these since we may need to copy over failure logs
@@ -195,7 +195,7 @@ if [[ "$1" != "dobuild" ]]; then
     fi
   fi
   cd /usr/src
-  /usr/src/buildall.sh dobuild 2>&1 | tee build.log
+  ./buildall.sh dobuild 2>&1 | tee build.log
   if (( $? != 0 )); then
     echo "BUILD_FAILED" >> build.log
   else
@@ -238,22 +238,15 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     fi
   done
 
-  # enforce particular versions of some build utils
-  cd /
-  tar xf /dl/m4*
-
   if [ -d /usr/usr ]; then
     # ahh, gotta love the msys /usr <-> / equivalence hack.
     cd /usr/usr
     if [ -d local ]; then
-      mv local ../
-    fi
-    if [ -d bin ]; then
-      mv bin/* ../bin/
-      rmdir bin
+      mkdir ../local
+      mv local/* ../local/
     fi
     cd ..
-    rmdir usr
+    rm -rf usr
   fi
   cp /usr/local/bin/aclocal-* /bin/aclocal
   cp /usr/local/bin/autoconf-* /bin/autoconf
@@ -400,7 +393,7 @@ if [[ "$LIBEVENT_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $LIBEVENT_FILE
   cd $LIBEVENT_DIR
-  ./configure --prefix=/usr --enable-static --disable-shared
+  ./configure --prefix=/usr --enable-static --disable-shared $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: libevent configure failed." >&2
     exit 1
@@ -422,7 +415,7 @@ if [[ "$SDL_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $SDL_FILE
   cd $SDL_DIR
-  ./configure --prefix=/usr
+  ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: SDL configure failed." >&2
     exit 1
@@ -459,7 +452,8 @@ if [[ "$OPENVPN_BUILT" != "yes" ]]; then
    --disable-debug \
    --disable-lzo \
    --disable-ssl \
-   --disable-crypto 
+   --disable-crypto \
+   $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: openvpn configure failed." >&2
     exit 1
@@ -514,7 +508,6 @@ if [[ "$WPCAP_BUILT" != "yes" ]]; then
   fi
   cp $NPFDRV_F $bdlibdir/tornpf.sys
   cd Dll/Project
-  export CC=gcc
   make
   if (( $? != 0 )); then
     echo "ERROR: WinPcap Packet user space library build failed." >&2
@@ -553,14 +546,15 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
     exit 1
   fi
   ./configure --prefix=/usr --interp-prefix=qemu-%M \
-    --enable-uname-release="Tor VM 2.6-alpha i386" \
+    --enable-uname-release="Tor VM" \
     --disable-werror \
     --disable-system \
     --disable-kqemu \
     --disable-vnc-tls \
     --extra-cflags="-DHAVE_INTSZ_TYPES -I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
     --extra-ldflags="-L/src/$ZLIB_DIR -L/usr/lib -L/usr/local/lib $WPCAP_LDFLAGS -L/src/pthreads-w32" \
-    --target-list=i386-softmmu
+    --target-list=i386-softmmu \
+    --enable-mingw32 --cross-prefix=""
   if (( $? != 0 )); then
     echo "ERROR: Qemu configure failed." >&2
     exit 1
@@ -602,7 +596,7 @@ if [[ "$GROFF_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $GROFF_FILE
   cd $GROFF_DIR
-  ./configure --prefix=/usr
+  ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: groff configure failed." >&2
     exit 1
@@ -689,7 +683,8 @@ if [[ "$TOR_BUILT" != "yes" ]]; then
             --enable-shared \
             --enable-threads \
             --enable-local-appdata \
-            --disable-transparent
+            --disable-transparent \
+            $DEF_CONF_BUILD
     if (( $? != 0 )); then
       echo "ERROR: torsvn autoconf configure failed." >&2
       exit 1
@@ -841,6 +836,8 @@ if [[ "$QT_BUILT" != "yes" ]]; then
   if [ -f /src/qt-mingwssl.patch ]; then
     patch -p1 < /src/qt-mingwssl.patch
   fi 
+  # note: for some reason -O2 can fail builds, and -O is default for CFLAGS but -O2 for CXXFLAGS?
+  export QMAKE_CFLAGS_RELEASE="-O3"
   QT_CONF="-confirm-license -opensource -release -shared -fast"
   QT_CONF="$QT_CONF -no-dbus -no-phonon -no-webkit -no-qdbus -no-opengl -no-qt3support -no-xmlpatterns"
   QT_CONF="$QT_CONF -qt-style-windowsxp -no-style-windowsvista"
@@ -859,6 +856,7 @@ if [[ "$QT_BUILT" != "yes" ]]; then
       echo "ERROR: Qt build failed."
     fi
   fi
+  unset QMAKE_CFLAGS_RELEASE
 
   # XXX: so it seems some things (marble) want to try and load
   # image plugins that are not plugins, namely the .a libtool
@@ -881,7 +879,7 @@ if [[ "$GNUREGEX_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf $GNURX_FILE
   cd $GNURX_DIR
-  ./configure --prefix=/usr
+  ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: GNU regex configure failed."
   fi

@@ -228,11 +228,10 @@ VIDALIA_BR=trunk
 VIDALIA_VER=3730
 
 # for package resources
-TORSVN_NAME=tor-latest
-TORSVN_TGZ=$(TORSVN_NAME).tar.gz
-TORSVN_SVN=https://tor-svn.freehaven.net/svn/tor/
-TORSVN_BR=trunk
-TORSVN_VER=19114
+TORSRC_NAME=tor-latest
+TORSRC_TGZ=$(TORSRC_NAME).tar.gz
+TORSRC_GIT=git://git.torproject.org/git/tor
+TORSRC_VER=358efe1eea9be4c0e1c5e0e5e90dfb2cb0e24235
 
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
@@ -313,7 +312,8 @@ downloads: Makefile
 	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
 	@if [ ! -e $(WDLDIR)/$(TORBUTTON_XPI_F) ]; then $(DLCMD) "$(TORBUTTON_XPI_URL)" $(TORBUTTON_XPI_SUM) "$(WDLDIR)/$(TORBUTTON_XPI_F)"; fi
 	@$(SEVNZIP_OPT_DL); $(OK)
-	@( export ddir=`pwd`/iso; if [ ! -f $ddir ]; then export ddir="$(ISODIR)"; fi; cd $(SDLDIR); if [ -d $(TORSVN_NAME) ]; then cd $(TORSVN_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORSVN_SVN)$(TORSVN_BR)" $(TORSVN_NAME) ; fi )
+	@( cd $(SDLDIR); if [ -d $(TORSRC_NAME) ]; then if [ ! -d $(TORSRC_NAME)/.git ]; then rm -rf $(TORSRC_NAME); fi; $(OK); fi )
+	@( cd $(SDLDIR); if [ -d $(TORSRC_NAME) ]; then cd $(TORSRC_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(TORSRC_GIT) $(TORSRC_NAME); fi )
 	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(VIDALIA_NAME) ]; then cd $(VIDALIA_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(VIDALIA_SVN)$(VIDALIA_BR)" $(VIDALIA_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(MARBLE_NAME) ]; then cd $(MARBLE_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(MARBLE_SVN)$(MARBLE_BR)" $(MARBLE_NAME) ; fi )
@@ -362,13 +362,11 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	cp files/buildall.sh $(ISODIR)/dl/src; \
 	cp patches/* $(ISODIR)/dl/src; \
 	cp $(addprefix $(WDLDIR)/, $(ALLFILES)) $(ISODIR)/dl/; \
+	tar zxf $(WDLDIR)/$(MINGWRUN_F) bin; mv bin/* $(ISODIR)/bin/;rmdir bin; \
+	$(UNZIP) $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	$(UNZIP) $(WDLDIR)/$(ZLIB_F) -d $(ISODIR)/; \
 	$(UNZIP) $(WDLDIR)/$(GZIP_F) -d $(ISODIR)/; \
 	$(UNZIP) $(WDLDIR)/$(BZIP2_F) -d $(ISODIR)/; \
-	tar zxf $(WDLDIR)/$(MINGWRUN_F) bin; mv bin/* $(ISODIR)/bin/;rmdir bin; \
-	tar zxf $(WDLDIR)/$(MSYSCORE_F) ./bin; mv bin/* $(ISODIR)/bin/;rmdir bin; \
-	tar jxf $(WDLDIR)/$(MSYSZLIB_F) bin/msys-z.dll; mv bin/* $(ISODIR)/bin/;rmdir bin; \
-	$(UNZIP) $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(GROFF_F) $(ISODIR)/dl/src/; \
@@ -403,9 +401,10 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 	rm -rf $(THANDY_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(THANDY_NAME) $(THANDY_NAME) ; \
 	( cd $(THANDY_NAME); $(GITCMD) checkout $(THANDY_VER); ); \
 	tar zcf $(ISODIR)/dl/src/$(THANDY_TGZ) $(THANDY_NAME); rm -rf $(THANDY_NAME); \
-	echo "--- Exporting Tor version $(TORSVN_VER) from local mirror ..."; \
-	rm -rf $(TORSVN_NAME); $(SVNCMD) export --revision $(TORSVN_VER) $(SDLDIR)/$(TORSVN_NAME) $(TORSVN_NAME) ; \
-	tar zcf $(ISODIR)/dl/src/$(TORSVN_TGZ) $(TORSVN_NAME); rm -rf $(TORSVN_NAME); \
+	echo "--- Exporting Tor version $(TORSRC_VER) from local mirror ..."; \
+	rm -rf $(TORSRC_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(TORSRC_NAME) $(TORSRC_NAME) ; \
+	( cd $(TORSRC_NAME); $(GITCMD) checkout $(TORSRC_VER); ); \
+	tar zcf $(ISODIR)/dl/src/$(TORSRC_TGZ) $(TORSRC_NAME); rm -rf $(TORSRC_NAME); \
 	echo "--- Exporting PyCrypto version $(PYCRYPTO_VER) from local mirror ..."; \
 	rm -rf $(PYCRYPTO_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(PYCRYPTO_NAME) $(PYCRYPTO_NAME) ; \
 	( cd $(PYCRYPTO_NAME); $(GITCMD) checkout $(PYCRYPTO_VER); ); \
@@ -417,7 +416,7 @@ extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
 		echo "--- Exporting and archiving Tor Button version $(TORBUTTON_VER) from local mirror ..."; \
 		rm -rf $(TORBUTTON_NAME); $(SVNCMD) export --revision $(TORBUTTON_VER) $(SDLDIR)/$(TORBUTTON_NAME) $(TORBUTTON_NAME) ; \
 		( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
-		mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/torbutton.xpi ; rm -rf $(TORSVN_NAME); \
+		mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/torbutton.xpi ; rm -rf $(TORBUTTON_NAME); \
 	fi; \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \

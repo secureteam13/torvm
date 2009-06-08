@@ -51,9 +51,9 @@ cd add
 copy *.* %DDRV%%MDIR%\%MVER%\src\add\
 cd /d %DDRV%
 cd %MDIR%\%MVER%
-set PATH=%DDRV%%MDIR%\%MVER%\bin;%DDRV%%MDIR%\%MVER%;%PATH%
 set BUILDER=/usr/src/buildall.sh
 set MSYSROOT=C:\\msys\\1.0
+set MSYSTEM=msys
 md etc\profile.d
 ECHO export MSYSROOT="%MSYSROOT%" > etc\profile.d\defpaths.sh
 IF EXIST %ISODRV%\ssh (
@@ -68,10 +68,8 @@ cd %MDIR%\%MVER%
 IF EXIST %ISODRV%\bldopts (
   copy %ISODRV%\bldopts etc\profile.d\bldopts.sh
 )
-set WD=C:\msys\1.0\bin\
-set PATH=%WD%;%PATH%
-
-%WD%bash --login %BUILDER%
+cd bin
+sh.exe --login %BUILDER%
 ECHO "Build completed."
 GOTO DONE
 
