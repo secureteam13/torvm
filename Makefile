@@ -39,13 +39,9 @@ endif
 ifeq (,$(SDLDIR))
 	SDLDIR=./build/repos
 endif
-ifeq (,$(SRCDLDIR))
-	SRCDLDIR=./build/sources
-endif
 override DLDIR:=$(realpath $(DLDIR))
 override WDLDIR:=$(realpath $(WDLDIR))
 override SDLDIR:=$(realpath $(SDLDIR))
-override SRCDLDIR:=$(realpath $(SRCDLDIR))
 
 ifeq (,$(NO_PRECACHE))
 PRECACHE_OPT=precache
@@ -60,7 +56,8 @@ export TGTNAME
 export DLDIR
 export WDLDIR
 export SDLDIR
-export SRCDLDIR
+
+OK:=echo -n
 
 default all: prereq import buildtree buildkern buildlicense buildw32
 
@@ -84,9 +81,6 @@ prereq: Makefile
 		echo "directory \"$(SDLDIR)\" does not exist."; \
 		exit 1; \
 	fi;
-	@chown $(BUSER):$(BGROUP) $(DLDIR)
-	@chown $(BUSER):$(BGROUP) $(WDLDIR)
-	@chown $(BUSER):$(BGROUP) $(SDLDIR)
 	@if [ ! -f .build_prereqs_verified ]; then \
 		echo "Verifying build prerequisites ..." >&2; \
 		NOFOUND=""; \
@@ -115,6 +109,9 @@ prereq: Makefile
 		rm -f .test >/dev/null 2>&1; \
 		touch .build_prereqs_verified; \
 	fi
+	@chown $(BUSER):$(BGROUP) $(DLDIR) || $(OK)
+	@chown $(BUSER):$(BGROUP) $(WDLDIR) || $(OK)
+	@chown $(BUSER):$(BGROUP) $(SDLDIR) || $(OK)
 
 precache: prereq
 	@echo "Attempting pre-cache of kamikaze packages ..."
