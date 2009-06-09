@@ -254,64 +254,32 @@ THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
 # buildscripts need some dire clean up...
 OK:=echo -n
 
-ALLFILES=$(ZLIB_F) $(GZIP_F) $(BZIP2_F) $(LIBARCH_F) $(BINUTILS_F) $(GCCORE_F) $(GPP_F) $(MINGWRUN_F) $(MINGWUTIL_F) $(MAKE_F) $(W32API_F) $(MSYSCORE_F) $(LIBTOOL_F) $(MINIRES_F) $(MSYSZLIB_F) $(MSYSCRYPT_F) $(MSYSSSL_F) $(MSYSSSH_F) $(ZLIBSRC_F) $(PTHREADS_F) $(LIBEVENT_F) $(AMAKE_F) $(ACONF_F) $(PERL_F) $(GROFF_F) $(CMAKE_F) $(QT_F) $(NSIS_F) $(SSLSRC_F) $(PYTHON_F) $(PY2EXE_F) $(WIX_F) $(WIXSRC_F) $(GNURX_F) $(POLIPO_F) $(SDL_F) $(WPCAPSRC_F) $(QEMU_F) $(TORBUTTON_XPI_F) $(OVPN_F)
+CACHE_URL_BASE=http://data.peertech.org/pkgcache
+
+ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
 SEVNZIP_OPT_PKG=
 ifeq (true,$(SEVNZIP_DL))
-  ALLFILES+=$(SEVNZIP_F)
-  SEVNZIP_OPT_DL=if [ ! -e $(WDLDIR)/$(SEVNZIP_F) ]; then $(DLCMD) "$(SEVNZIP_URL)" $(SEVNZIP_SUM) "$(WDLDIR)/$(SEVNZIP_F)"; fi
+  ALLPKGNAMES+=SEVNZIP
   ifeq (true,$(SEVNZIP_INST))
     SEVNZIP_OPT_PKG=$(SEVNZIP_F)
   endif
 endif
 
-default all: downloads extract buildiso runinstall
+define DOWNLOAD_exp
+$(1):   
+	@if [ ! -e $(WDLDIR)/$$($(1)_F) ]; then $(DLCMD) "$$($(1)_URL)" $$($(1)_SUM) "$(WDLDIR)/$$($(1)_F)" || $(DLCMD) "$(CACHE_URL_BASE)/$$($(1)_F)" $$($(1)_SUM) "$(WDLDIR)/$$($(1)_F)"; fi
+endef
 
-downloads: Makefile
-	@if [ ! -d $(WDLDIR) ]; then mkdir -p $(WDLDIR); fi
-	@if [ ! -e $(WDLDIR)/$(ZLIB_F) ]; then $(DLCMD) "$(ZLIB_URL)" $(ZLIB_SUM) "$(WDLDIR)/$(ZLIB_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(GZIP_F) ]; then $(DLCMD) "$(GZIP_URL)" $(GZIP_SUM) "$(WDLDIR)/$(GZIP_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(BZIP2_F) ]; then $(DLCMD) "$(BZIP2_URL)" $(BZIP2_SUM) "$(WDLDIR)/$(BZIP2_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(LIBARCH_F) ]; then $(DLCMD) "$(LIBARCH_URL)" $(LIBARCH_SUM) "$(WDLDIR)/$(LIBARCH_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(BINUTILS_F) ]; then $(DLCMD) "$(BINUTILS_URL)" $(BINUTILS_SUM) "$(WDLDIR)/$(BINUTILS_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(GCCORE_F) ]; then $(DLCMD) "$(GCCORE_URL)" $(GCCORE_SUM) "$(WDLDIR)/$(GCCORE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(GPP_F) ]; then $(DLCMD) "$(GPP_URL)" $(GPP_SUM) "$(WDLDIR)/$(GPP_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MINGWRUN_F) ]; then $(DLCMD) "$(MINGWRUN_URL)" $(MINGWRUN_SUM) "$(WDLDIR)/$(MINGWRUN_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MINGWUTIL_F) ]; then $(DLCMD) "$(MINGWUTIL_URL)" $(MINGWUTIL_SUM) "$(WDLDIR)/$(MINGWUTIL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MAKE_F) ]; then $(DLCMD) "$(MAKE_URL)" $(MAKE_SUM) "$(WDLDIR)/$(MAKE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(W32API_F) ]; then $(DLCMD) "$(W32API_URL)" $(W32API_SUM) "$(WDLDIR)/$(W32API_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MSYSCORE_F) ]; then $(DLCMD) "$(MSYSCORE_URL)" $(MSYSCORE_SUM) "$(WDLDIR)/$(MSYSCORE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(LIBTOOL_F) ]; then $(DLCMD) "$(LIBTOOL_URL)" $(LIBTOOL_SUM) "$(WDLDIR)/$(LIBTOOL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MINIRES_F) ]; then $(DLCMD) "$(MINIRES_URL)" $(MINIRES_SUM) "$(WDLDIR)/$(MINIRES_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MSYSZLIB_F) ]; then $(DLCMD) "$(MSYSZLIB_URL)" $(MSYSZLIB_SUM) "$(WDLDIR)/$(MSYSZLIB_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MSYSCRYPT_F) ]; then $(DLCMD) "$(MSYSCRYPT_URL)" $(MSYSCRYPT_SUM) "$(WDLDIR)/$(MSYSCRYPT_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MSYSSSL_F) ]; then $(DLCMD) "$(MSYSSSL_URL)" $(MSYSSSL_SUM) "$(WDLDIR)/$(MSYSSSL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(MSYSSSH_F) ]; then $(DLCMD) "$(MSYSSSH_URL)" $(MSYSSSH_SUM) "$(WDLDIR)/$(MSYSSSH_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(ZLIBSRC_F) ]; then $(DLCMD) "$(ZLIBSRC_URL)" $(ZLIBSRC_SUM) "$(WDLDIR)/$(ZLIBSRC_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(PTHREADS_F) ]; then $(DLCMD) "$(PTHREADS_URL)" $(PTHREADS_SUM) "$(WDLDIR)/$(PTHREADS_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(LIBEVENT_F) ]; then $(DLCMD) "$(LIBEVENT_URL)" $(LIBEVENT_SUM) "$(WDLDIR)/$(LIBEVENT_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(ACONF_F) ]; then $(DLCMD) "$(ACONF_URL)" $(ACONF_SUM) "$(WDLDIR)/$(ACONF_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(AMAKE_F) ]; then $(DLCMD) "$(AMAKE_URL)" $(AMAKE_SUM) "$(WDLDIR)/$(AMAKE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(PERL_F) ]; then $(DLCMD) "$(PERL_URL)" $(PERL_SUM) "$(WDLDIR)/$(PERL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(GROFF_F) ]; then $(DLCMD) "$(GROFF_URL)" $(GROFF_SUM) "$(WDLDIR)/$(GROFF_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(CMAKE_F) ]; then $(DLCMD) "$(CMAKE_URL)" $(CMAKE_SUM) "$(WDLDIR)/$(CMAKE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(QT_F) ]; then $(DLCMD) "$(QT_URL)" $(QT_SUM) "$(WDLDIR)/$(QT_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(NSIS_F) ]; then $(DLCMD) "$(NSIS_URL)" $(NSIS_SUM) "$(WDLDIR)/$(NSIS_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(SSLSRC_F) ]; then $(DLCMD) "$(SSLSRC_URL)" $(SSLSRC_SUM) "$(WDLDIR)/$(SSLSRC_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(PYTHON_F) ]; then $(DLCMD) "$(PYTHON_URL)" $(PYTHON_SUM) "$(WDLDIR)/$(PYTHON_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(PY2EXE_F) ]; then $(DLCMD) "$(PY2EXE_URL)" $(PY2EXE_SUM) "$(WDLDIR)/$(PY2EXE_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WIX_F) ]; then $(DLCMD) "$(WIX_URL)" $(WIX_SUM) "$(WDLDIR)/$(WIX_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WIXSRC_F) ]; then $(DLCMD) "$(WIXSRC_URL)" $(WIXSRC_SUM) "$(WDLDIR)/$(WIXSRC_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(GNURX_F) ]; then $(DLCMD) "$(GNURX_URL)" $(GNURX_SUM) "$(WDLDIR)/$(GNURX_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(POLIPO_F) ]; then $(DLCMD) "$(POLIPO_URL)" $(POLIPO_SUM) "$(WDLDIR)/$(POLIPO_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(SDL_F) ]; then $(DLCMD) "$(SDL_URL)" $(SDL_SUM) "$(WDLDIR)/$(SDL_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(WPCAPSRC_F) ]; then $(DLCMD) "$(WPCAPSRC_URL)" $(WPCAPSRC_SUM) "$(WDLDIR)/$(WPCAPSRC_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(OVPN_F) ]; then $(DLCMD) "$(OVPN_URL)" $(OVPN_SUM) "$(WDLDIR)/$(OVPN_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(QEMU_F) ]; then $(DLCMD) "$(QEMU_URL)" $(QEMU_SUM) "$(WDLDIR)/$(QEMU_F)"; fi
-	@if [ ! -e $(WDLDIR)/$(TORBUTTON_XPI_F) ]; then $(DLCMD) "$(TORBUTTON_XPI_URL)" $(TORBUTTON_XPI_SUM) "$(WDLDIR)/$(TORBUTTON_XPI_F)"; fi
-	@$(SEVNZIP_OPT_DL); $(OK)
+$(foreach pkgname,$(ALLPKGNAMES),$(eval $(call DOWNLOAD_exp,$(pkgname))))
+
+downloads: $(ALLPKGNAMES)
+
+default all: downloads coderepodls extract buildiso runinstall
+
+coderepodls:
 	@( cd $(SDLDIR); if [ -d $(TORSRC_NAME) ]; then if [ ! -d $(TORSRC_NAME)/.git ]; then rm -rf $(TORSRC_NAME); fi; $(OK); fi )
 	@( cd $(SDLDIR); if [ -d $(TORSRC_NAME) ]; then cd $(TORSRC_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(TORSRC_GIT) $(TORSRC_NAME); fi )
 	@( cd $(SDLDIR); if [ -d $(TORBUTTON_NAME) ]; then cd $(TORBUTTON_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(TORBUTTON_SVN)$(TORBUTTON_BR)" $(TORBUTTON_NAME) ; fi )
@@ -320,7 +288,7 @@ downloads: Makefile
 	@( cd $(SDLDIR); if [ -d $(THANDY_NAME) ]; then cd $(THANDY_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(THANDY_GIT) $(THANDY_NAME); fi ) 
 	@( cd $(SDLDIR); if [ -d $(PYCRYPTO_NAME) ]; then cd $(PYCRYPTO_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME); fi ) 
 
-extract: downloads $(addprefix $(WDLDIR)/, $(ALLFILES))
+extract: downloads coderepodls $(addprefix $(WDLDIR)/, $(ALLFILES))
 	@if [ -d $(ISODIR) ]; then \
 		echo "Removing previous ISO build directory."; \
 		rm -rf $(ISODIR) >/dev/null 2>&1; \
@@ -441,4 +409,4 @@ endif
 runinstall: buildiso
 	@$(W32BLD)
 
-.PHONY: downloads extract buildiso runinstall
+.PHONY: downloads extract buildiso runinstall $(ALLPKGNAMES)

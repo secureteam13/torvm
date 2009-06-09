@@ -4,6 +4,15 @@
 SHELL=/bin/bash
 export SHELL
 
+ifeq (1,$(IN_KAMIKAZE_PRECACHE))
+include build/kamikaze/common/pkg-cache.mk
+default all: downloads
+else
+ifeq (1,$(IN_WIN32_PRECACHE))
+include build/win32/Makefile
+default all: downloads
+else
+
 # setup your own local defaults outside svn or dist files here
 # include local.mk
 
@@ -38,6 +47,10 @@ override WDLDIR:=$(realpath $(WDLDIR))
 override SDLDIR:=$(realpath $(SDLDIR))
 override SRCDLDIR:=$(realpath $(SRCDLDIR))
 
+ifeq (,$(NO_PRECACHE))
+PRECACHE_OPT=precache
+endif
+
 # OpenWRT version for build
 override CWRTVER:=16018
 
@@ -71,10 +84,13 @@ prereq: Makefile
 		echo "directory \"$(SDLDIR)\" does not exist."; \
 		exit 1; \
 	fi;
+	@chown $(BUSER):$(BGROUP) $(DLDIR)
+	@chown $(BUSER):$(BGROUP) $(WDLDIR)
+	@chown $(BUSER):$(BGROUP) $(SDLDIR)
 	@if [ ! -f .build_prereqs_verified ]; then \
 		echo "Verifying build prerequisites ..." >&2; \
 		NOFOUND=""; \
-		REQS="make gcc g++ gawk bison flex unzip bzip2 patch perl wget tar svn git autoconf mkisofs sha1sum"; \
+		REQS="make gcc g++ gawk bison flex unzip bzip2 patch perl wget tar svn git autoconf mkisofs md5sum"; \
 		for REQ in $$REQS; do \
 			which $$REQ >/dev/null 2>&1; \
 			if (( $$? != 0 )); then \
@@ -100,7 +116,13 @@ prereq: Makefile
 		touch .build_prereqs_verified; \
 	fi
 
-import: prereq
+precache: prereq
+	@echo "Attempting pre-cache of kamikaze packages ..."
+	@su $(BUSER) -c "$(MAKE) IN_KAMIKAZE_PRECACHE=1 downloads"
+	@echo "Attempting pre-cache of win32 build packages ..."
+	@su $(BUSER) -c "$(MAKE) IN_WIN32_PRECACHE=1 downloads"
+
+import: prereq $(PRECACHE_OPT)
 	@if [ ! -d $(SDLDIR)/kamikaze ]; then \
 		echo "Mirroring local OpenWRT tree in $(SDLDIR) ..." >&2; \
 		cd $(SDLDIR); \
@@ -181,5 +203,9 @@ buildw32:
 		exit 1; \
 	fi
 
-.PHONY: clean prereq import buildkern buildlicense buildw32
+.PHONY: clean prereq import buildkern buildlicense buildw32 precache
 
+
+# end of our pre-caching package loop
+endif
+endif
