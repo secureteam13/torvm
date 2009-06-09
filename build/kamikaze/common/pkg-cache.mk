@@ -81,7 +81,7 @@ BINUTILS_URL=ftp://ftp.gnu.org/gnu/binutils/$(BINUTILS_F)
 BINUTILS_SUM=3e8225b4d7ace0a2039de752e11fd6922d3b89a7259a292c347391c4788739f6
 
 GCC_F=gcc-4.4.0.tar.bz2
-GCC_URL=ftp://ftp.gnu.org/gnu/gcc/$(GCC_F)
+GCC_URL=ftp://ftp.gnu.org/gnu/gcc/gcc-4.4.0/$(GCC_F)
 GCC_SUM=c5fe6f4c62ee7288765c3800ec9d21ad936bdcb5a04374cc09bd5a4232b836c9
 
 LINUX26_F=linux-2.6.28.10.tar.bz2
@@ -121,7 +121,7 @@ LIBUPNP_URL=http://downloads.sourceforge.net/pupnp/$(LIBUPNP_F)?big_mirror=1
 LIBUPNP_SUM=58d7cabec2b21c80e28a4e5090bba94a849a8f02450e26c1b985318a36b0bbb3
 
 ZLIB_F=zlib-1.2.3.tar.bz2
-ZLIB_URL=http://downloads.sourceforge.net/zlib/$(ZLIB_F)?big_mirror=1
+ZLIB_URL=http://www.zlib.net/$(ZLIB_F)
 ZLIB_SUM=e3b9950851a19904d642c4dec518623382cf4d2ac24f70a76510c944330d28ca
 
 OPENSSL_F=openssl-0.9.8k.tar.gz

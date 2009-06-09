@@ -117,7 +117,7 @@ precache: prereq
 	@echo "Attempting pre-cache of kamikaze packages ..."
 	@su $(BUSER) -c "$(MAKE) IN_KAMIKAZE_PRECACHE=1 downloads"
 	@echo "Attempting pre-cache of win32 build packages ..."
-	@su $(BUSER) -c "$(MAKE) IN_WIN32_PRECACHE=1 downloads"
+	@su $(BUSER) -c "$(MAKE) IN_WIN32_PRECACHE=1 DLCMD=build/win32/scripts/download.sh downloads"
 
 import: prereq $(PRECACHE_OPT)
 	@if [ ! -d $(SDLDIR)/kamikaze ]; then \

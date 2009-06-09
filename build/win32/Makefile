@@ -3,7 +3,10 @@
 
 SHELL=/bin/bash
 export SHELL
+
+ifeq (,$(DLCMD))
 DLCMD=scripts/download.sh
+endif
 
 ifeq (,$(ISODIR))
 	ISODIR=iso
