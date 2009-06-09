@@ -17,18 +17,10 @@ _______________________________________________________________________
    . Add in pending changes, chapters to design document.
 
    Update upstream package support in build infrastructure
-   - Bypass OpenWRT MD5 package verification entirely with our own
-     download process like the win32 build stage.
-   ? OR(and?) Use Emdebian Crush and signature based verification
-     initial testing indicates this should work without much hassle.
-   ? OR(and?) Track upstream commits in a git repo and move to signed
-     changesets of current and tested versions.
    . Integrate autotools / autoconf support so build scripts are less
      completely kludged together.
 
    Update build automation docs and hooks
-   ? Add buildbot support into win32 ISO image so non-full builds are
-     possible easily and requisite perl parts are present.
    ? Replace build all script with component based Makefiles with
      proper dependency checking and conditional build support.
 

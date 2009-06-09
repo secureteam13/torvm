@@ -36,17 +36,6 @@ compilation.  You can download the DDK installer ISO at:
 
 
 
-If you have trouble with the build process downloading the various sources
-from mirrors and upstream repositories a current copy of all the kamikaze and
-win32 archives is available as: http://peertech.org/files/torvmdlcache.tar
-
-The extracted dl and wdl directories can be used in the build by passing their
-location to the make command:
-
-    make DLDIR=./dl WDLDIR=./wdl all
-
-
-
 Some files and paths of interest:
 
 ./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
@@ -55,6 +44,7 @@ Some files and paths of interest:
 ./build/win32/w32build.iso
 > this is the automated win32 build ISO for Qemu.  Once everything is built
 > the Qemu program and libraries will be placed in C:\Tor_VM
+> Packaged bundles and installers are saved in C:\Tor_Win32
 
 ./build/kamikaze/patches/
 > this directory contains the patch set applied to the kamikaze distribution
@@ -68,6 +58,12 @@ Some files and paths of interest:
 > this directory contains the patches applied to Qemu for bridged ethernet
 > support via WinPcap and modifications for the WinPcap and TAP-Win32 drivers
 > to prevent collision with any existing installed packages.
+
+./build/kamikaze/ipv6-advnet-patches/
+> copy these files over the default patches/ to build a Tor VM kernel with
+> IPv6, advanced filtering and shaping capabilities, kernel crypto support
+> for IPsec and a number of different TCP/SCTP/misc protocols. for testing
+> experimentation only!
 
 
 
@@ -88,14 +84,12 @@ Last, pass the requisite information to the build script so that the necessary
 commands are invoked during build to launch the win32 build VM and have the
 completed build files copied back out to the host.  For example:
 
-    make DLDIR=/var/build/dl WDLDIR=/var/build/wdl  \
-         W32AUTO_BUILD_CMD=/var/build/runbldvm.sh   \
+    make W32AUTO_BUILD_CMD=/var/build/runbldvm.sh   \
          AUTO_SHUTDOWN=TRUE                         \
          BUILD_SCP_IDF=/var/build/build_id_rsa      \
          BUILD_SCP_USER=build                       \
          BUILD_SCP_HOST=192.168.1.2                 \
-         BUILD_SCP_DIR=/home/build                  \
-         all
+         BUILD_SCP_DIR=/home/build
 
 When the build completes a Tor_VM_<timestamp> directory will be created in the
 requested location.  The timestamp is an integer value representing the UNIX
