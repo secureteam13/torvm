@@ -291,7 +291,7 @@ coderepodls:
 	@( cd $(SDLDIR); if [ -d $(THANDY_NAME) ]; then cd $(THANDY_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(THANDY_GIT) $(THANDY_NAME); fi ) 
 	@( cd $(SDLDIR); if [ -d $(PYCRYPTO_NAME) ]; then cd $(PYCRYPTO_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME); fi ) 
 
-extract: downloads coderepodls $(addprefix $(WDLDIR)/, $(ALLFILES))
+extract: downloads coderepodls
 	@if [ -d $(ISODIR) ]; then \
 		echo "Removing previous ISO build directory."; \
 		rm -rf $(ISODIR) >/dev/null 2>&1; \
