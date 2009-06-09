@@ -49,7 +49,7 @@ GENEXT2_URL=http://downloads.sourceforge.net/genext2fs/$(GENEXT2_F)?big_mirror=1
 GENEXT2_SUM=404dbbfa7a86a6c3de8225c8da254d026b17fd288e05cec4df2cc7e1f4feecfc
 
 LZMAOLD_F=lzma-4.32.tar.bz2
-LZMAOLD_URL=http://downloads.openwrt.org/sources/$(LZMAOLD_F)
+LZMAOLD_URL=http://mirror2.openwrt.org/sources/$(LZMAOLD_F)
 LZMAOLD_SUM=49053e4bb5e0646a841d250d9cb81f7714f5fff04a133216c4748163567acc3d
 
 SQUASHFSOLD_F=squashfs3.0.tar.gz
@@ -57,7 +57,7 @@ SQUASHFSOLD_URL=http://downloads.sourceforge.net/squashfs/$(SQUASHFSOLD_F)?big_m
 SQUASHFSOLD_SUM=39dbda43cf118536deb746c7730b468702d514a19f4cfab73b710e32908ddf20
 
 LZMA_F=lzma-4.65.tar.bz2 
-LZMA_URL=http://downloads.openwrt.org/sources/$(LZMA_F)
+LZMA_URL=http://mirror2.openwrt.org/sources/$(LZMA_F)
 LZMA_SUM=dcbdb5f4843eff638e4a5e8be0e2486a3c5483df73c70823618db8e66f609ec2
 
 SQUASHFS_F=squashfs4.0.tar.gz
