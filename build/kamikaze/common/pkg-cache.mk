@@ -128,9 +128,9 @@ OPENSSL_F=openssl-0.9.8k.tar.gz
 OPENSSL_URL=http://www.openssl.org/source/$(OPENSSL_F)
 OPENSSL_SUM=7e7cd4f3974199b729e6e3a0af08bd4279fde0370a1120c1a3b351ab090c6101
 
-TOR_F=tor-0.2.1.13-alpha.tar.gz
+TOR_F=tor-0.2.1.16-rc.tar.gz
 TOR_URL=http://www.torproject.org/dist/$(TOR_F)
-TOR_SUM=4085fd13c92bd2fbdb0288b0fa6fd2a5eda91aeca70e35091c345932814210d9
+TOR_SUM=6d6b57e2b49e38e046bce1e3d282506bea1347794815ecd73c617cbc7ef6370c
 
 
 

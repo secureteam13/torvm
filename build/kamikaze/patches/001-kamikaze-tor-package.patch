@@ -1,7 +1,7 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-03-15 09:11:17.875237000 +0000
-@@ -0,0 +1,113 @@
++++ b/package/tor/Makefile	2009-06-24 00:52:55.103540226 +0000
+@@ -0,0 +1,114 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
 +#
@@ -14,14 +14,13 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.13-alpha
++PKG_VERSION:=0.2.1.16-rc
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=eb229b45b23bdf24a7a150332b3c526e
-+# XXX MD5 must die ... maybe time for debian embedded
++PKG_MD5SUM:=9000ffdfda2835b7acefeeef8e6b6280
 +
 +include $(INCLUDE_DIR)/package.mk
 +
@@ -107,8 +106,10 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/or/tor $(1)/usr/sbin/
 +	$(INSTALL_DIR) $(1)/etc/init.d
 +	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
++	$(INSTALL_DIR) $(1)/sbin
++	$(INSTALL_BIN) ./files/vmrouter.sh $(1)/sbin/
++	$(INSTALL_BIN) ./files/torvminit $(1)/etc/
 +	$(INSTALL_DIR) $(1)/etc/tor
-+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/config/geoip $(1)/etc/tor/geoip
 +	$(INSTALL_DATA) ./files/torrc $(1)/etc/tor/torrc
 +	$(INSTALL_DIR) $(1)/var/log/tor
 +	$(INSTALL_DIR) $(1)/var/run/tor
@@ -313,8 +314,8 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-05-03 22:36:11.026346000 +0000
-@@ -0,0 +1,159 @@
++++ b/package/tor/files/tor.init	2009-06-24 00:46:43.926515985 +0000
+@@ -0,0 +1,148 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
 +export PATH=/usr/sbin:/sbin:$PATH
@@ -332,6 +333,8 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +RUN_USER=$BIN
 +RUN_GROUP=$BIN
 +TOR_INTF=eth0
++
++source /sbin/vmrouter.sh
 +
 +grep eth1: /proc/net/dev >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
@@ -388,37 +391,24 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  mv -f $TMP_F $CONF_F; \
 +	fi; \
 +	chown $RUN_USER:$RUN_GROUP $CONF_F ; \
++        vmr_fwdadd $TOR_INT
++        vmr_opentcp $TOR_INTF $MYIP $CTLPORT
++        vmr_opentcp $TOR_INTF $MYIP 9050
++        vmr_opentcp $TOR_INTF $MYIP $TOR_TRANSPORT
++        vmr_openudp $TOR_INTF $MYIP $TOR_DNSPORT
 +	if [ "$FOLLOWTOR" = "1" ]; then \
 +	  nohup /etc/init.d/tor dofollow >/dev/null 2>&1 & \
 +        else \
 +	  $BIN --runasdaemon 1 -f $CONF_F > $SLOG_F 2>&1 ; \
 +	fi; 
-+	iptables --flush INPUT >/dev/null 2>&1
-+	iptables --flush FORWARD >/dev/null 2>&1
-+	# TODO for now used fixed control port and socks port accept rule
-+	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9051 -j ACCEPT
-+	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport 9050 -j ACCEPT
-+	# forcibly filter some traffic which should never go over Tor:
-+	# no SMTP
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 25 -j DROP
-+	# no TCP DNS
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 53 -j DROP
-+	# no NetBIOS
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 137 -j DROP
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 138 -j DROP
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp --dport 139 -j DROP
-+	# trans proxy TCP and DNS
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p tcp -j REDIRECT --to 9095
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -p udp --dport 53 -j REDIRECT --to 9093
-+	# drop everything else ...
-+	iptables -t nat -A PREROUTING -i $TOR_INTF -s ! $MYIP -j DROP
-+	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 +
 +elif [ "$1" = "stop" ]; then
-+	# XXX TODO: replace this with a fail-safe shutdown
-+	iptables -F
-+	iptables -t nat -F
-+	#[ -f $PID_F ] && kill $(cat $PID_F)
++	vmr_undirtcp $TOR_INTF $MYIP $CTLREADY $CTLPORT
++	vmr_closeudp $TOR_INTF $MYIP $TOR_DNSPORT
++	vmr_closetcp $TOR_INTF $MYIP $TOR_TRANSPORT
++	vmr_closetcp $TOR_INTF $MYIP 9050
++	vmr_closetcp $TOR_INTF $MYIP $CTLPORT
++        vmr_fwddel $TOR_INT
 +	killall tor
 +
 +elif [ "$1" = "restart" ]; then
@@ -430,18 +420,18 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	$BIN --runasdaemon 0 -f $CONF_F > $SLOG_F 2>&1
 +	if [ -f $LOG_F ]; then
 +	  # no log means we didn't really start; don't abort by default.
++          vmr_trapon
 +	  reboot >/dev/null 2>&1 &
 +	  sleep 1
 +	  halt >/dev/null 2>&1
 +	fi
 +
 +elif [ "$1" = "doready" ]; then
-+	iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport $CTLREADY -j DROP
 +	waiting=1
 +	while [ "$waiting" -eq "1" ]; do
 +	  grep 'Bootstrapped 100' $LOG_F >/dev/null 2>&1
 +	  if [ "$?" -eq "0" ]; then
-+	    iptables -t nat -I PREROUTING -i $TOR_INTF -d $MYIP -p tcp --dport $CTLREADY -j REDIRECT --to $CTLPORT
++	    vmr_redirtcp $TOR_INTF $MYIP $CTLREADY $CTLPORT
 +	    waiting=0
 +          fi
 +	done
@@ -464,9 +454,9 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  else
 +	  	echo "Tor is fully connected into the Tor network."
 +	  	echo "Transparent proxy traffic:"
-+	  	iptables -n --verbose -t nat --list PREROUTING | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v PREROUTING|grep -v $CTLREADY|grep -v $CTLPORT
++	  	iptables -n --verbose -t nat --list $cli_prenat_tb | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v $cli_prenat_tb|grep -v $CTLREADY|grep -v $CTLPORT
 +	  fi
-+	  sleep 2
++	  sleep 4
 +	done  
 +
 +else
@@ -500,3 +490,379 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +DNSListenAddress 0.0.0.0
 +TransPort 9095
 +TransListenAddress 0.0.0.0
+diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
+--- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
++++ b/package/tor/files/torvminit	2009-06-24 00:22:59.916178341 +0000
+@@ -0,0 +1,240 @@
++#!/bin/sh
++# Copyright (C) 2008-2009  The Tor Project, Inc.
++# See LICENSE file for rights and terms.
++#
++d () {
++echo "    ${1}"
++}
++dn () {
++echo -n "    ${1}"
++}
++
++source /sbin/vmrouter.sh
++
++mount proc /proc -t proc
++mount sysfs /sys -t sysfs
++
++# if we don't have /proc something is very wrong.
++# abort to shell as this is likely a test kernel image.
++if [ ! -d /proc/self ]; then
++  d "ERROR: unable to access /proc , aborting init."
++  exec /bin/sh
++fi
++
++# setup various runtime options using kernel parameters
++ARGS=`cat /proc/cmdline`
++ARGS="_ $ARGS _"
++
++syslogd >/dev/null 2>&1
++# do we need it? klogd -c 1 >/dev/null 2>&1
++
++clear;echo
++d "Initializing ..."
++
++HOSTNAME="Tor_VM"
++echo $ARGS | grep ' USEHOSTNAME=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  HOSTNAME=`echo $ARGS | sed 's/.* USEHOSTNAME=//' | sed 's/ .*//' | sed 's/[^0-9a-zA-Z_-]//g'`
++fi
++export HOSTNAME
++hostname "$HOSTNAME" >/dev/null 2>&1
++
++if grep devfs /proc/filesystems > /dev/null; then
++	mount devfs /dev -t devfs
++elif [ -x /sbin/udevd ]; then
++	mount -n -t tmpfs -o mode=0755 udev /dev
++	/sbin/udevd --daemon
++	/sbin/udevtrigger
++	/sbin/udevsettle
++fi
++
++mkdir -p /dev/pts /dev/shm
++mount devpts /dev/pts -t devpts
++
++# attempt mount of persistent virtual disk
++mdbin=`which makedevs`
++devtable=/etc/device_table.txt
++if [ -x $mdbin ]; then 
++  makedevs -d $devtable / >/dev/null 2>&1
++else
++  mdbin=`which MAKEDEVS`
++  if [ -x $mdbin ]; then
++    MAKEDEVS >/dev/null 2>&1
++  fi
++fi
++# last attempt: if no disk exists, assume hda1 and create manually with mknod.
++hddev=/dev/hda1
++hdopt="b 3 1"
++hdmntopt="-onoatime,nodiratime"
++if [ ! -e $hddev ]; then
++  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    mknod $hddev $hdopt
++  fi
++fi
++mkdir /home
++if [ -e $hddev ]  && mount $hdmntopt $hddev /home; then
++  # if the mount fails it may require a fs check / repair, or
++  # the virtual disk could be corrupt.  XXX: handle both cases correctly.
++
++  # check for saved entropy state and launch update daemon if exists
++  syshome=/home/system
++  if [ ! -d $syshome ]; then
++    mkdir -p $syshome
++  fi
++  chown root:root $syshome
++  chmod 700 $syshome
++  rndstate=$syshome/.rnd
++  if [ -f $rndstate ]; then
++    cat $rndstate > /dev/urandom 2>/dev/null
++  fi
++  # incorporate digest of kernel command line into entropy pool, as this should contain some local information
++  sha1sum /proc/cmdline > /dev/urandom 2>/dev/null
++  # launch process to periodically save entropy from pool for next boot (cannot assume clean shutdown)
++  nohup /bin/sh /bin/entropy-update.sh "$rndstate" >/dev/null 2>&1 &
++else
++  # XXX should we force reboot or halt instead?
++  echo 'ERROR: unable to mount persistent storage virtual disk!'
++  echo '       Do not run Tor in this configuration.'
++  sleep 3
++fi
++
++mkdir -p /var/run
++mkdir -p /var/log
++mkdir -p /var/lock
++mkdir -p /var/state
++touch /var/log/wtmp
++touch /var/log/lastlog
++ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
++
++/etc/init.d/sysctl
++
++vmr_init
++ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
++
++# XXX need a good way to set this flexibly...
++TZ='PST8PDT,M3.2.0/2,M11.1.0/2'
++echo $ARGS | grep ' TZ=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  TZ=`echo $ARGS | sed 's/.* TZ=//' | sed 's/ .*//'`
++fi
++export TZ
++echo "$TZ" > /etc/TZ
++
++echo $ARGS | grep ' NOINIT ' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++else
++
++PRIVIP=10.99.11.1
++PRIVINTF=eth1
++echo $ARGS | grep ' PRIVIP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  PRIVIP=`echo $ARGS | sed 's/.* PRIVIP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++fi
++grep $PRIVINTF: /proc/net/dev >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  ifconfig $PRIVINTF $PRIVIP netmask 255.255.255.252 up
++fi
++
++echo $ARGS | grep ' DEBUGINIT ' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty3::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty4::askfirst:/bin/ash --login' >> /etc/inittab
++  echo 'tty5::askfirst:/bin/ash --login' >> /etc/inittab
++else
++  echo 'tty1::respawn:/etc/init.d/tor status' >> /etc/inittab
++fi
++
++# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
++netup=0
++echo $ARGS | grep ' IP=' >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  LEASE=""
++  DHCPSVR=""
++  DHCPNAME=""
++  # XXX we should be able to use character classes in busybox matching for repl.
++  # or possibly bash style string manipulation if ash is sufficiently capable...
++  export IP=`echo $ARGS | sed 's/.* IP=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MASK=`echo $ARGS | sed 's/.* MASK=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export GW=`echo $ARGS | sed 's/.* GW=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++  export MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.]//g'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9]//g'`
++  export ISDHCP=0
++  dn "Setting IP $IP / $MASK via $GW ..."
++  ifconfig eth0 hw ether $MAC
++  ifconfig eth0 $IP netmask $MASK up
++  ifconfig eth0 mtu $MTU
++  route add default gw $GW
++  vmr_fwdsetup eth0
++  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    vmr_opendhcp eth0
++    export ISDHCP=1
++    export DHCPSVR=`echo $ARGS | sed 's/.* DHCPSVR=//' | sed 's/ .*//' | sed 's/[^0-9.]//g'`
++    export DHCPNAME=`echo $ARGS | sed 's/.* DHCPNAME=//' | sed 's/ .*//'`
++    # fire up udhcpc to keep the lease active for however long is needed
++    udhcpc -b -h $DHCPNAME -r $IP -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  fi
++  netup=1
++else
++  # dhcp for address
++  MAC=`echo $ARGS | sed 's/.* MAC=//' | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.]//g'`
++  MTU=`echo $ARGS | sed 's/.* MTU=//' | sed 's/ .*//' | sed 's/[^0-9]//g'`
++  ifconfig eth0 hw ether $MAC
++  ifconfig eth0 mtu $MTU
++  vmr_fwdsetup eth0
++  vmr_opendhcp eth0
++
++  dn "Trying to get DHCP lease ..."
++  udhcpc -b -i eth0 -p /var/run/dhcp.eth0.pid >/dev/null 2>&1 &
++  maxrt=20
++  while [ $maxrt -gt 0 ]; do
++    sleep 1
++    ifconfig eth0 | grep 'inet addr:' >/dev/null 2>&1
++    if [ $? -eq 0 ]; then
++      netup=1
++      maxrt=0
++    else
++      echo -n "."
++      maxrt=$(expr $maxrt - 1)
++    fi
++  done
++fi
++
++if [ $netup -eq 0 ]; then
++  echo " FAILED.";echo
++  d "ERROR: Unable to get an IP address."
++  d "Check your DHCP server or configure one manually with ifconfig."
++  d "Remember to start Tor via /etc/init.d/tor start when ready."
++else
++  echo $ARGS | grep ' CALLHDDINIT=' >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    HDDINITF=`echo $ARGS | sed 's/.* CALLHDDINIT=//' | sed 's/ .*//'`
++    if [ -f "/home/tor/${HDDINITF}" ]; then
++      HDDINITF="/home/tor/${HDDINITF}"
++    else
++      if [ ! -f "${HDDINITF}" ]; then
++        HDDINITF="/proc/self/exists_not"
++      fi
++    fi
++    if [ -f "${HDDINITF}" ]; then
++      echo "done.";echo
++      d "Replacing init(self) with user requested HDD post-init script:"
++      d "   ${HDDINITF}"
++      exec "${HDDINITF}"
++    fi
++  fi
++  echo " done.";echo
++  dn "Starting Tor ... "
++  /etc/init.d/tor start
++  echo "done."
++  echo
++  d "Run /etc/init.d/tor status"
++  d " for bootstrap status."
++fi
++
++# end if !NOINIT
++fi
+diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
+--- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
++++ b/package/tor/files/vmrouter.sh	2009-06-24 06:10:53.134519882 +0000
+@@ -0,0 +1,128 @@
++#!/bin/bash
++# Utility script for Tor VM routing
++# Source or run directly.
++
++export FAIL=99
++# XXX: right now we don't track error output.
++
++CLIENT_BLOCK_TCP_PORTS="445 139 138 137 53 25"
++TOR_TRANSPORT=9095
++TOR_DNSPORT=9093
++
++trap_tbl="TRAP"
++host_filt_tbl="HOSTIN"
++cli_filt_tbl="CLIIN"
++cli_prenat_tbl="CLIPRE"
++cli_postnat_tbl="CLIPOST"
++
++vmr_trapon() {
++  iptables -t filter -I $trap_tbl -j DROP
++  iptables -t filter -I $trap_tbl -p tcp -j TARPIT
++}
++
++vmr_trapoff() {
++  iptables -t filter --flush $trap_tbl
++}
++
++vmr_init() {
++  iptables -t filter --flush INPUT
++  iptables -t filter --flush FORWARD
++  iptables -t filter --flush OUTPUT
++  iptables -t nat --flush PREROUTING
++  iptables -t nat --flush POSTROUTING
++
++  # default policy drop
++  iptables -t filter -P INPUT DROP
++  iptables -t filter -P FORWARD DROP
++  iptables -t filter -P OUTPUT DROP
++
++  # trap table is the global on/off switch for traffic
++  # use a trap table so that tarpit or drop can be set
++  # as atomic op across input/forward/output.
++  iptables -t filter -N $trap_tbl
++  iptables -t filter -I INPUT -g $trap_tbl
++  iptables -t filter -I FORWARD -g $trap_tbl
++  iptables -t filter -I OUTPUT -g $trap_tbl
++
++  # host filter traffic things to/from the VM
++  iptables -t filter -N $host_filt_tbl
++  iptables -t filter -A INPUT -g $host_filt_tbl
++  iptables -t filter -A $host_filt_tbl -j RETURN
++
++  # client tables for routed traffic
++  iptables -t filter -N $cli_filt_tbl
++  iptables -t filter -A FORWARD -g $cli_filt_tbl
++  iptables -t nat -N $cli_prenat_tbl
++  iptables -t nat -A PREROUTING -g $cli_prenat_tbl
++  iptables -t nat -N $cli_postnat_tbl
++  iptables -t nat -A POSTROUTING -g $cli_postnat_tbl
++}
++
++vmr_addmac() {
++  iptables -t filter -m mac --mac-source "$1" -j RETURN
++}
++
++vmr_fwdsetup() {
++  # expects default route interface argument
++  if [ -z "$1" ]; then
++    return $FAIL
++  fi
++  iptables -t filter -I $cli_filt_tbl -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
++  iptables -t filter -I $cli_filt_tbl -m state --state RELATED,ESTABLISHED -j ACCEPT
++  iptables -t filter -I $cli_filt_tbl -m state --state INVALID -j DROP
++  for PORTNUM in $CLIENT_BLOCK_TCP_PORTS; do
++    iptables -t filter -I $cli_filt_tbl -p tcp --dport $PORTNUM -j DROP
++  done
++  iptables -t filter -A $cli_filt_tbl -j DROP
++  iptables -t nat -I $cli_postnat_tbl -o "$1" -j MASQUERADE
++}
++
++vmr_fwdadd() {
++  # expects interface to forward for as argument
++  if [ -z "$1" ]; then
++    return $FAIL
++  fi
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT
++}
++
++vmr_fwddel() {
++  # expects interface to forward for as argument
++  if [ -z "$1" ]; then
++    return $FAIL
++  fi
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT
++}
++
++vmr_opendhcp() {
++  # expects dhcp interface as argument
++  if [ -z "$1" ]; then
++    return $FAIL
++  fi
++  iptables -t filter -I $host_filt_tbl -i "$1" -p udp --dport 67:68 --sport 67:68 -j ACCEPT
++}
++
++vmr_opentcp() {
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
++}
++
++vmr_openudp() {
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
++}
++
++vmr_closetcp() {
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
++}
++
++vmr_closeudp() {
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
++}
++
++vmr_redirtcp() {
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4"
++}
++
++vmr_undirtcp() {
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4"
++}

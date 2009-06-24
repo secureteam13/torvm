@@ -271,13 +271,16 @@ ifeq (true,$(SEVNZIP_DL))
   endif
 endif
 
+ALLPKGFILES:=
 define DOWNLOAD_exp
+ALLPKGFILES:=$(ALLPKGFILES) $$($(1)_F)
 $(1):   
 	@if [ ! -e $(WDLDIR)/$$($(1)_F) ]; then $(DLCMD) "$$($(1)_URL)" $$($(1)_SUM) "$(WDLDIR)/$$($(1)_F)" || $(DLCMD) "$(CACHE_URL_BASE)/$$($(1)_F)" $$($(1)_SUM) "$(WDLDIR)/$$($(1)_F)"; fi
 endef
 
 $(foreach pkgname,$(ALLPKGNAMES),$(eval $(call DOWNLOAD_exp,$(pkgname))))
 
+# now for primary targets...
 downloads: $(ALLPKGNAMES)
 
 default all: downloads coderepodls extract buildiso runinstall
@@ -332,7 +335,7 @@ extract: downloads coderepodls
 	cp files/fstab $(ISODIR)/bin/; \
 	cp files/buildall.sh $(ISODIR)/dl/src; \
 	cp patches/* $(ISODIR)/dl/src; \
-	cp $(addprefix $(WDLDIR)/, $(ALLFILES)) $(ISODIR)/dl/; \
+	cp -a $(addprefix $(WDLDIR)/,$(ALLPKGFILES)) $(ISODIR)/dl/; \
 	tar zxf $(WDLDIR)/$(MINGWRUN_F) bin; mv bin/* $(ISODIR)/bin/;rmdir bin; \
 	$(UNZIP) $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
 	$(UNZIP) $(WDLDIR)/$(ZLIB_F) -d $(ISODIR)/; \
