@@ -1164,6 +1164,17 @@ diff -Naur a/package/base-files/files/etc/init.d/rcS b/package/base-files/files/
  run_scripts() {
  	for i in /etc/rc.d/$1*; do
  		[ -x $i ] && $i $2 2>&1
+diff -Naur a/package/base-files/files/etc/init.d/sysctl b/package/base-files/files/etc/init.d/sysctl
+--- a/package/base-files/files/etc/init.d/sysctl	2007-05-10 10:07:38.965405000 +0000
++++ b/package/base-files/files/etc/init.d/sysctl	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#!/bin/sh /etc/rc.common
+-# Copyright (C) 2006 OpenWrt.org 
+-
+-START=99
+-start() {
+-	[ -f /etc/sysctl.conf ] && sysctl -p >&-
+-}
 diff -Naur a/package/base-files/files/etc/init.d/umount b/package/base-files/files/etc/init.d/umount
 --- a/package/base-files/files/etc/init.d/umount	2007-05-10 10:45:04.317089000 +0000
 +++ b/package/base-files/files/etc/init.d/umount	1970-01-01 00:00:00.000000000 +0000

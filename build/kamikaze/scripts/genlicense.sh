@@ -3,12 +3,12 @@ lf="target:busybox:LICENSE $lf"
 lf="target:openssl:LICENSE $lf"
 lf="target:e2fsprogs:COPYING $lf"
 lf="target:iproute2:COPYING $lf"
-lf="target:ncurses:README $lf"
-lf="target:util-linux-ng:COPYING $lf"
+lf="target:libupnp:LICENSE $lf"
+lf="target:libtool:COPYING $lf"
+lf="target:zlib:README $lf"
 lf="linux:linux:COPYING $lf"
 lf="linux:iptables:COPYING $lf"
 lf="linux:tor:LICENSE $lf"
-lf="target:libupnp:LICENSE $lf"
 function usage () {
   if (( $# )); then
     echo "Error: $1" >&2

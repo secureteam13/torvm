@@ -30,7 +30,9 @@ struct s_rconnelem {
   LPTSTR  ipaddr;
   LPTSTR  netmask;
   LPTSTR  gateway;
+  LPTSTR  gwmacaddr;
   LPTSTR  dhcpsvr;
+  LPTSTR  svrmacaddr;
   LPTSTR  dhcpname;
   LPTSTR  driver;
   struct s_rconnelem * next;
@@ -970,12 +972,61 @@ int loadnetinfo(struct s_rconnelem **connlist)
   HKEY key;
   HKEY wkey;
   DWORD len;
-  int i = 0;
+  DWORD retval;
+  int i, j;
   int numconn = 0;
   struct s_rconnelem *  ce = NULL;
   struct s_rconnelem *  ne = NULL;
   const char name_string[] = "Name";
+  ULONG arpentsz = 128 * sizeof(MIB_IPNETROW);
+  PMIB_IPNETTABLE pmib = NULL;
+  IN_ADDR addr;
+  char *ipstr;
 
+  /* Load the ARP table before iterating through interfaces
+   */
+  pmib = malloc(sizeof(MIB_IPNETTABLE)+arpentsz);
+  
+  retval = GetIpNetTable(pmib,&arpentsz,FALSE);
+  if (retval == ERROR_INSUFFICIENT_BUFFER) {
+    /* XXX: re-alloc instead with returned hint */
+    lerror ("ARP table is huge, skipping static ARP assignments. Would need %d.", arpentsz);
+    free(pmib);
+    pmib = NULL;
+  }
+  else {
+    if (retval != NO_ERROR) {
+      lerror ("GetIpNetTable failed with error code %d in call to loadnetinfo.", retval);
+      free(pmib);
+      pmib = NULL;
+    }
+    else {
+      for (i=0; i<pmib->dwNumEntries; i++) {
+        addr.S_un.S_addr = pmib->table[i].dwAddr;
+        ipstr = inet_ntoa(addr);
+        if (!ipstr)
+          ipstr = "";
+        if (pmib->table[i].dwPhysAddrLen == 6) {
+          ldebug ("MIB enumerate found ARP entry HWADDR: %02X:%02X:%02X:%02X:%02X:%02X -> IP: %s [%s]",
+                  pmib->table[i].bPhysAddr[0],pmib->table[i].bPhysAddr[1],
+                  pmib->table[i].bPhysAddr[2],pmib->table[i].bPhysAddr[3],
+                  pmib->table[i].bPhysAddr[4],pmib->table[i].bPhysAddr[5],
+                  ipstr,
+                  /* 4-Static, 3-Dynamic, 2-Invalid, 1-Other */
+                  (pmib->table[i].dwType == 3) ? "Dynamic" : "Static"
+                 );
+        }
+        else {
+          ldebug ("MIB enumerate found ARP entry with non Ethernet sized physical address for IP: %s. Ignoring.",
+                  ipstr);
+        }
+      }
+    }
+  }
+
+
+  /* Now enumerate all interfaces and list details for caller.
+   */
   status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                         NETWORK_CONNECTIONS_KEY,
                         0,
@@ -986,6 +1037,7 @@ int loadnetinfo(struct s_rconnelem **connlist)
     return -1;
   }
 
+  i = 0;
   while (1) {
     char enum_name[REG_NAME_MAX];
     char connection_string[REG_NAME_MAX];
@@ -1113,6 +1165,23 @@ int loadnetinfo(struct s_rconnelem **connlist)
               ce->netmask = strdup(name_data);
               ldebug ("Connection %s netmask: %s.", ce->name, ce->netmask);
             }
+            /* Set ARP entries for this interface if needed. */
+            if (pmib && ce->isdefgw) {
+              for (j=0; j<pmib->dwNumEntries; j++) {
+                addr.S_un.S_addr = pmib->table[j].dwAddr;
+                ipstr = inet_ntoa(addr);
+                if ((pmib->table[j].dwPhysAddrLen == 6) && 
+                    (strcmp(ipstr, ce->gateway) == 0)   ) {
+                  ce->gwmacaddr = malloc(32);
+                  snprintf(ce->gwmacaddr, 32-1, "%02X:%02X:%02X:%02X:%02X:%02X",
+                           pmib->table[j].bPhysAddr[0],pmib->table[j].bPhysAddr[1],
+                           pmib->table[j].bPhysAddr[2],pmib->table[j].bPhysAddr[3],
+                           pmib->table[j].bPhysAddr[4],pmib->table[j].bPhysAddr[5]);
+                  ldebug ("Found ARP entry for gateway %s with hwaddr %s",
+                          ce->gateway, ce->gwmacaddr);
+                }
+              }
+            }
             if (ce->isdhcp) {
               len = sizeof (name_data);
               status = RegQueryValueEx(tkey,
@@ -1145,6 +1214,23 @@ int loadnetinfo(struct s_rconnelem **connlist)
                 }
                 RegCloseKey (tkey);
               }
+              /* Set ARP info for DHCP server if needed. */
+              if (pmib && ce->isdefgw) {
+                for (j=0; j<pmib->dwNumEntries; j++) {
+                  addr.S_un.S_addr = pmib->table[j].dwAddr;
+                  ipstr = inet_ntoa(addr);
+                  if ((pmib->table[j].dwPhysAddrLen == 6) &&
+                      (strcmp(ipstr, ce->dhcpsvr) == 0)   ) {
+                    ce->svrmacaddr = malloc(32);
+                    snprintf(ce->svrmacaddr, 32-1, "%02X:%02X:%02X:%02X:%02X:%02X",
+                             pmib->table[j].bPhysAddr[0],pmib->table[j].bPhysAddr[1],
+                             pmib->table[j].bPhysAddr[2],pmib->table[j].bPhysAddr[3],
+                             pmib->table[j].bPhysAddr[4],pmib->table[j].bPhysAddr[5]);
+                    ldebug ("Found ARP entry for DHCP server %s with hwaddr %s",
+                            ce->dhcpsvr, ce->svrmacaddr);
+                  } 
+                }
+              }
             }
             else {
               RegCloseKey (tkey);
@@ -1157,6 +1243,9 @@ int loadnetinfo(struct s_rconnelem **connlist)
   }
 
   RegCloseKey (key);
+
+  if (pmib)
+    free(pmib);
 
   if (numconn <= 0)
     return numconn;
@@ -1331,6 +1420,51 @@ int loadnetinfo(struct s_rconnelem **connlist)
     RegCloseKey (key);
   }
 
+  /* Before we return make sure to resolve any necessary ARP entries. */
+  ce = *connlist;
+  while (ce) {
+    IPAddr arpsrcip = 0;
+    IPAddr arpdestip = 0;
+    ULONG ulmacaddr[2];
+    ULONG paddrlen = 6;
+    BYTE *hwaddr;
+    if (ce->isdefgw) {
+      if (ce->gwmacaddr == NULL) {
+        arpdestip = inet_addr(ce->gateway);
+        memset(ulmacaddr, 255, sizeof(ulmacaddr));
+        retval = SendARP(arpdestip, arpsrcip, ulmacaddr, &paddrlen);
+        if ((retval != NO_ERROR) || (paddrlen != 6)) {
+          ldebug("Failed to resolve ARP for gateway address %s", ce->gateway);
+        }
+        else {
+          hwaddr = (BYTE *)ulmacaddr;
+          ce->gwmacaddr = malloc(32);
+          snprintf(ce->gwmacaddr, 32-1, "%02X:%02X:%02X:%02X:%02X:%02X",
+                   hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+          ldebug ("Received ARP reply for gateway %s with hwaddr %s",
+                  ce->gateway, ce->gwmacaddr);
+        }
+      }
+      if ( (ce->isdhcp) && (ce->svrmacaddr == NULL) ) {
+        arpdestip = inet_addr(ce->dhcpsvr);
+        memset(&ulmacaddr, 255, sizeof(ulmacaddr));
+        retval = SendARP(arpdestip, arpsrcip, ulmacaddr, &paddrlen);
+        if ((retval != NO_ERROR) || (paddrlen != 6)) {
+          ldebug("Failed to resolve ARP for DHCP server address %s", ce->dhcpsvr);
+        }
+        else {
+          hwaddr = (BYTE *)&ulmacaddr;
+          ce->gwmacaddr = malloc(32);
+          snprintf(ce->svrmacaddr, 32-1, "%02X:%02X:%02X:%02X:%02X:%02X",
+                   hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
+          ldebug ("Received ARP reply for DHCP server %s with hwaddr %s",
+                  ce->dhcpsvr, ce->svrmacaddr);
+        }
+      }
+    }
+    ce = ce->next;
+  }
+
   return numconn;
 }
 
@@ -1363,7 +1497,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s %s %s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1375,7 +1509,9 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 CAP_MTU,
                 TOR_TAP_VMIP,
                 TOR_TAP_VMIP,
-                ctlpass);
+                ctlpass,
+                brif->gwmacaddr ? "ARPENT=" : "",
+                brif->gwmacaddr ? brif->gwmacaddr : "");
     }
     else {
       /* fallback if we can't get HOSTNAME, use DHCP client name. */
@@ -1383,7 +1519,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s %s %s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s %s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1397,7 +1533,11 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 brif->dhcpsvr,
                 brif->dhcpname,
                 TOR_TAP_VMIP,
-                ctlpass);
+                ctlpass,
+                brif->gwmacaddr ? "ARPENT=" : "",
+                brif->gwmacaddr ? brif->gwmacaddr : "",
+                brif->svrmacaddr ? "ARPENT=" : "",
+                brif->svrmacaddr ? brif->svrmacaddr : "");
     }
   }
   return TRUE;
@@ -1719,16 +1859,7 @@ BOOL respawnasadmin (void)
                      NULL,   // keep same directory
                      &si,
                      &pi) ) {
-    linfo ("Failed to re-launch process automatically with Administrator rights. Prompting user with Runas.");
-    if (ShellExecute(NULL,
-                     "runas",
-                     cmd,
-                     NULL,
-                     NULL,
-                     SW_HIDE) != ERROR_SUCCESS) {
-      lerror ("Failed to re-launch via runas with Administrator rights. Unable to continue.");
-      return FALSE;
-    }
+    lerror ("Failed to re-launch with Administrator rights. Unable to continue.");
   }
   return TRUE;
 }
@@ -2143,6 +2274,7 @@ int main(int argc, char **argv)
         ce = ce->next;
       }
     }
+
     /* disable removing the tap automatically until reload issues resolved.
      * uninstalltap(); */
     if (ce == NULL) {

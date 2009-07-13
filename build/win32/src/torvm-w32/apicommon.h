@@ -13,7 +13,15 @@
  */
 #define _WIN32_WINNT 0x0500
 
+/* Prevent inclusion of the old Winsock.h 1.1 headers
+ */
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
+
 #include <security.h>
 #include <tchar.h>
 #include <winreg.h>
@@ -21,6 +29,7 @@
 #include <winerror.h>
 #include <wincrypt.h>
 #include <winsock2.h>
+#include <iphlpapi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-06-24 00:52:55.103540226 +0000
++++ b/package/tor/Makefile	2009-07-13 04:47:11.648406177 +0000
 @@ -0,0 +1,114 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -14,13 +14,13 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.1.16-rc
++PKG_VERSION:=0.2.1.17-rc
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=9000ffdfda2835b7acefeeef8e6b6280
++PKG_MD5SUM:=5328e9ac9fa23d42e01aed80291cedb2
 +
 +include $(INCLUDE_DIR)/package.mk
 +
@@ -314,8 +314,8 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-06-24 00:46:43.926515985 +0000
-@@ -0,0 +1,148 @@
++++ b/package/tor/files/tor.init	2009-06-24 23:46:11.702526906 +0000
+@@ -0,0 +1,147 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
 +export PATH=/usr/sbin:/sbin:$PATH
@@ -358,7 +358,6 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	[ -f $DEFAULT ] && . $DEFAULT
 +	[ -d $HOME_D ] || mkdir -p $HOME_D
 +	[ -f $CONF_F ] || cp -f /etc/tor/torrc $CONF_F
-+	[ -f $GEOIP_F ] || cp -f /etc/tor/geoip $GEOIP_F
 +	[ -d $LOG_D ] || mkdir -p $LOG_D
 +	rm -f $LOG_F >/dev/null 2>&1
 +	chown $RUN_USER:$RUN_GROUP $LOG_D
@@ -492,7 +491,7 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +TransListenAddress 0.0.0.0
 diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 --- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torvminit	2009-06-24 00:22:59.916178341 +0000
++++ b/package/tor/files/torvminit	2009-06-29 15:45:27.142518017 +0000
 @@ -0,0 +1,240 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
@@ -603,7 +602,7 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +touch /var/log/lastlog
 +ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
 +
-+/etc/init.d/sysctl
++[ -f /etc/sysctl.conf ] && sysctl -p >&-
 +
 +vmr_init
 +ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
@@ -736,8 +735,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-06-24 06:10:53.134519882 +0000
-@@ -0,0 +1,128 @@
++++ b/package/tor/files/vmrouter.sh	2009-07-06 11:38:36.499455187 +0000
+@@ -0,0 +1,138 @@
 +#!/bin/bash
 +# Utility script for Tor VM routing
 +# Source or run directly.
@@ -772,9 +771,12 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  iptables -t nat --flush POSTROUTING
 +
 +  # default policy drop
-+  iptables -t filter -P INPUT DROP
-+  iptables -t filter -P FORWARD DROP
-+  iptables -t filter -P OUTPUT DROP
++  #iptables -t filter -P INPUT DROP
++  #iptables -t filter -P FORWARD DROP
++  #iptables -t filter -P OUTPUT DROP
++  iptables -t filter -P INPUT ACCEPT
++  iptables -t filter -P FORWARD ACCEPT
++  iptables -t filter -P OUTPUT ACCEPT
 +
 +  # trap table is the global on/off switch for traffic
 +  # use a trap table so that tarpit or drop can be set
@@ -796,6 +798,11 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  iptables -t nat -A PREROUTING -g $cli_prenat_tbl
 +  iptables -t nat -N $cli_postnat_tbl
 +  iptables -t nat -A POSTROUTING -g $cli_postnat_tbl
++
++  # log default drop targets
++  iptables -t filter -A INPUT -j LOG
++  iptables -t filter -A FORWARD -j LOG
++  iptables -t filter -A OUTPUT -j LOG
 +}
 +
 +vmr_addmac() {
@@ -813,8 +820,10 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  for PORTNUM in $CLIENT_BLOCK_TCP_PORTS; do
 +    iptables -t filter -I $cli_filt_tbl -p tcp --dport $PORTNUM -j DROP
 +  done
-+  iptables -t filter -A $cli_filt_tbl -j DROP
++  iptables -t filter -A $cli_filt_tbl -j RETURN
 +  iptables -t nat -I $cli_postnat_tbl -o "$1" -j MASQUERADE
++  iptables -t filter -A OUTPUT -o "$1" -j ACCEPT
++  iptables -t filter -I $host_filt_tbl -i "$1" -m state --state ESTABLISHED,RELATED -j ACCEPT
 +}
 +
 +vmr_fwdadd() {
