@@ -1844,11 +1844,11 @@ BOOL isrunning (PROCESS_INFORMATION * pi) {
 
 BOOL waitforit (PROCESS_INFORMATION * pi) {
   DWORD exitcode;
+  ldebug ("Waiting for process to exit ...");
   while ( GetExitCodeProcess(pi->hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
-    ldebug ("waiting for process to exit ...");
     Sleep (1000);
   }
-  ldebug ("Done.");
+  ldebug ("Done waiting.");
   CloseHandle(pi->hThread);
   CloseHandle(pi->hProcess);
 
