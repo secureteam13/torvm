@@ -44,12 +44,21 @@ struct s_rconnelem {
  *   ldebug to debug file
  *   fatal logs error and then exits process
  */
+static LPCRITICAL_SECTION  s_logcs = NULL;
 static HANDLE  s_logh = INVALID_HANDLE_VALUE;
 static HANDLE  s_dbgh = INVALID_HANDLE_VALUE;
 
+void loginit (void) {
+  if (!s_logcs) {
+    s_logcs = malloc(sizeof(CRITICAL_SECTION));
+    createcs(s_logcs);
+  }
+}
 
 void logto (LPTSTR  path)
 {
+  loginit();
+  entercs(s_logcs);
   if (s_logh != INVALID_HANDLE_VALUE) {
     CloseHandle (s_logh);
   }
@@ -79,14 +88,24 @@ static void _flog (HANDLE        fda,
   SYSTEMTIME        now;
   va_list           ap;
 
+  /* XXX: This will block all other threads trying to log while waiting for
+   * file I/O. To prevent badness when writes block a log writer thread
+   * dedicated to disk I/O should be used and all other logging appends to
+   * queue and unblocks.
+   *   (For example, write to stalled SMB/USB/etc file system.)
+   */
+  loginit();
+  entercs(s_logcs);
+
   if ( (fda == INVALID_HANDLE_VALUE) &&
        (fdb == INVALID_HANDLE_VALUE) &&
        (fdc == INVALID_HANDLE_VALUE)   )
-    return;
+    goto finished;
 
   if (msgbuf == NULL) {
     msgbuf = malloc (msgmax);
-    if (!msgbuf) return;
+    if (!msgbuf) 
+      goto finished;
   }
   GetSystemTime (&now);
   coff = msgbuf;
@@ -135,6 +154,9 @@ static void _flog (HANDLE        fda,
     WriteFile (fdc, newline, strlen(newline), &written, NULL);
     FlushFileBuffers (fdc);
   }
+
+ finished:
+  leavecs(s_logcs);
   return;
 }
 
@@ -185,6 +207,9 @@ void linfo (const char* format, ...)
 
 void debugto (LPTSTR  path)
 { 
+  loginit();
+  entercs(s_logcs);
+
   if (s_dbgh != INVALID_HANDLE_VALUE) {
     CloseHandle (s_dbgh);
   }
@@ -195,6 +220,7 @@ void debugto (LPTSTR  path)
                        CREATE_ALWAYS,   
                        FILE_ATTRIBUTE_NORMAL,
                        NULL);
+  leavecs(s_logcs);
 }
 
 

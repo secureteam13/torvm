@@ -5,10 +5,9 @@
 #define __thr_h__
 
 #include "torvm.h"
-/*XXX ignore threading until bundle merge completed so buildbot is happy now.*/
-#if 0
+
 /* XXX: these should probably be macros or inline but for now the
- * strack frames are useful for debugging.
+ * stack frames are useful for debugging.
  */
 /* Critical section primitives. */
 BOOL  createcs (LPCRITICAL_SECTION cs);
@@ -25,6 +24,9 @@ BOOL  waitlock (HANDLE lock,
 BOOL  unlock (HANDLE lock);
 
 /* Semaphore signalling primitives. */
+#ifndef MAXSEMCOUNT
+#define MAXSEMCOUNT 32
+#endif
 BOOL  createsem (LPHANDLE semptr,
                  LONG     limit,
                  BOOL     startsignaled);
@@ -37,6 +39,7 @@ BOOL  signalsem (HANDLE semptr);
 /* Thread primitives. */
 typedef DWORD (__stdcall *PFnThreadMain)(LPVOID param);
 BOOL  createthr (PFnThreadMain  thrmain,
+                 LPVOID         arg,
                  LPDWORD        thrid,
                  BOOL           suspended);
 BOOL  destroythr (HANDLE thr);
@@ -90,5 +93,4 @@ LONG  numthreads (VOID);
  */
 BOOL  enumthrhnds (LPHANDLE *hndlist);
 VOID  destroythrhnds (LPHANDLE hndlist);
-#endif /* XXX end if 0 */
 #endif /* thr_h */

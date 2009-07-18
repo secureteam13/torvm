@@ -5,7 +5,6 @@
 BINDIR=C:\Tor_VM
 CPPFLAGS += -I. -I/usr/include -I/usr/local/include -MMD -MP
 CPPFLAGS += -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
-#LDFLAGS += -L/usr/lib -L/usr/local/lib
 LIBS += -lws2_32 -liphlpapi
 
 all: torvm$(EXESUF)

@@ -1,6 +1,5 @@
 #include "torvm.h"
-/*XXX ignore threading until bundle merge completed so buildbot is happy now.*/
-#if 0
+
 /* Some statics to keep track of things...
  * XXX: note that this is inherently unaware of a thread handle
  * allocated by an external process with privs in the Tor VM process.
@@ -12,26 +11,39 @@ struct s_thrinfo *  s_thrlist = NULL;
 
 BOOL  createcs (LPCRITICAL_SECTION cs)
 {
-   /* The high bit is set to pre-allocate any necessary resources so that
-    * a low memory condition does introduce an exception leading to ugly
-    * failure recovery...
-    */
-   if (!InitializeCriticalSectionAndSpinCount(&CriticalSection, 0x80000400) ) return FALSE;
-   return TRUE;
+  /* The high bit is set to pre-allocate any necessary resources so that
+   * a low memory condition does introduce an exception leading to ugly
+   * failure recovery...
+   */
+  if (!InitializeCriticalSectionAndSpinCount(cs, 0x80000400))
+    return FALSE;
+  return TRUE;
 }
 
 BOOL  destroycs (LPCRITICAL_SECTION cs)
 {
+  if (!cs) {
+    return FALSE;
+  }
+  DeleteCriticalSection(cs);
   return TRUE;
 }
 
 BOOL  entercs (LPCRITICAL_SECTION cs)
 {
+  if (!cs) {
+    return FALSE;
+  }
+  EnterCriticalSection(cs);
   return TRUE;
 }
 
 BOOL  leavecs (LPCRITICAL_SECTION cs)
 {
+  if (!cs) {
+    return FALSE;
+  }
+  LeaveCriticalSection(cs);
   return TRUE;
 }
 
@@ -69,14 +81,12 @@ BOOL  createsem (LPHANDLE semptr,
                  BOOL     startsignaled)
 {
   DWORD icount = 0;
-  if (limit > MAX_SEM_COUNT) limit = MAX_SEM_COUNT;
+  if (limit > MAXSEMCOUNT) limit = MAXSEMCOUNT;
   if (startsignaled == TRUE) icount = limit;
-  *semptr = CreateSemaphore( 
-              0,              // default security attributes
-              icount,         // initial count
-              limit,          // maximum count
-              0               // unnamed semaphore
-            );
+  *semptr = CreateSemaphore(0,
+                            icount,
+                            limit,
+                            0);
   return TRUE;
 }
 
@@ -102,6 +112,7 @@ BOOL  signalsem (HANDLE semptr)
 }
 
 BOOL  createthr (PFnThreadMain  thrmain,
+                 LPVOID         arg,
                  LPDWORD        thrid,
                  BOOL           suspended)
 {
@@ -110,13 +121,12 @@ BOOL  createthr (PFnThreadMain  thrmain,
   DWORD cflags = 0;
   HANDLE newthr;
   if (suspended) cflags |= CREATE_SUSPENDED;
-  newthr = CreateThread(
-             NULL,    // default security attributes
-             0,       // use default stack size
-             f,
-             arg,
-             cflags,
-             &tid);
+  newthr = CreateThread(NULL,
+                        0,
+                        f,
+                        arg,
+                        cflags,
+                        &tid);
   return TRUE;
 }
 
@@ -137,7 +147,7 @@ BOOL  resumethr (HANDLE thr)
 
 VOID  exitthr (DWORD exitcode)
 {
-  return TRUE;
+  return;
 }
  
 BOOL  checkthr (HANDLE thr,
@@ -188,4 +198,3 @@ VOID  destroythrhnds (LPHANDLE hndlist)
 {
   return;
 }
-#endif /* XXX end if 0 */
