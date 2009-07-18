@@ -5,9 +5,10 @@
  * allocated by an external process with privs in the Tor VM process.
  * Inter-process threading and locking is explicitly not provided.
  */
-LPCRITICAL_SECTION  s_thridx_cs = NULL;
-DWORD s_thrcount = 0;
-struct s_thrinfo *  s_thrlist = NULL;
+static LPCRITICAL_SECTION  s_thridx_cs = NULL;
+static DWORD s_thrcount = 0;
+static DWORD s_currthrnum = 0;
+static struct s_thrinfo *  s_thrlist = NULL;
 
 BOOL  createcs (LPCRITICAL_SECTION cs)
 {
@@ -22,27 +23,24 @@ BOOL  createcs (LPCRITICAL_SECTION cs)
 
 BOOL  destroycs (LPCRITICAL_SECTION cs)
 {
-  if (!cs) {
+  if (!cs)
     return FALSE;
-  }
   DeleteCriticalSection(cs);
   return TRUE;
 }
 
 BOOL  entercs (LPCRITICAL_SECTION cs)
 {
-  if (!cs) {
+  if (!cs)
     return FALSE;
-  }
   EnterCriticalSection(cs);
   return TRUE;
 }
 
 BOOL  leavecs (LPCRITICAL_SECTION cs)
 {
-  if (!cs) {
+  if (!cs)
     return FALSE;
-  }
   LeaveCriticalSection(cs);
   return TRUE;
 }
@@ -113,26 +111,53 @@ BOOL  signalsem (HANDLE semptr)
 
 BOOL  createthr (PFnThreadMain  thrmain,
                  LPVOID         arg,
-                 LPDWORD        thrid,
                  BOOL           suspended)
 {
+  BOOL retval = FALSE;
   LPTHREAD_START_ROUTINE f = (LPTHREAD_START_ROUTINE) thrmain;
   DWORD tid;
-  DWORD cflags = 0;
+  DWORD cflags = CREATE_SUSPENDED;
   HANDLE newthr;
-  if (suspended) cflags |= CREATE_SUSPENDED;
+  struct s_thrinfo * thrinfo = NULL;
+
+  entercs(s_thridx_cs);
   newthr = CreateThread(NULL,
                         0,
                         f,
                         arg,
                         cflags,
                         &tid);
-  return TRUE;
+  if (!newthr)
+    goto finish;
+
+  thrinfo = malloc(sizeof(struct s_thrinfo));
+  thrinfo->next = s_thrlist;
+  thrinfo->hnd = newthr;
+  thrinfo->id = tid;
+  thrinfo->num = s_currthrnum++;
+  s_thrcount++;
+  s_thrlist = thrinfo;
+  retval = TRUE;
+
+ finish:
+  leavecs(s_thridx_cs);
+  if (retval && !suspended)
+    ResumeThread(newthr);
+
+  return(retval);
 }
 
 BOOL  destroythr (HANDLE thr)
 {
-  return TRUE;
+  BOOL retval = FALSE;
+  struct s_thrinfo * cinfo = NULL;
+  struct s_thrinfo * delthrinfo = NULL;
+
+  entercs(s_thridx_cs);
+    
+  leavecs(s_thridx_cs);
+
+  return(retval);
 }
 
 BOOL  pausethr (HANDLE thr)
@@ -180,7 +205,18 @@ BOOL  waitforanythr (const HANDLE *thrlist,
 
 BOOL  setupthrctx (VOID)
 {
-  s_thridx_cs = 0;
+  s_thridx_cs = malloc(sizeof(CRITICAL_SECTION));
+  if (!s_thridx_cs)
+    return FALSE;
+  createcs(s_thridx_cs);
+  entercs(s_thridx_cs);
+  s_thrlist = malloc(sizeof(struct s_thrinfo));
+  s_thrlist->next = NULL;
+  s_thrlist->hnd = GetCurrentThread();
+  s_thrlist->id = GetCurrentThreadId();
+  s_thrlist->num = s_currthrnum++;
+  s_thrcount++;
+  leavecs(s_thridx_cs);
   return TRUE;
 }
 
@@ -189,12 +225,45 @@ VOID  cleanupthrctx (VOID)
   return;
 }
 
-BOOL  enumthrhnds (LPHANDLE *hndlist)
+int thrnum (VOID)
 {
+  int retval = -1;
+  struct s_thrinfo * thrinfo = NULL;
+  entercs(s_thridx_cs);
+  thrinfo = s_thrlist;
+  while (thrinfo && (retval < 0)) {
+    if (thrinfo->id == GetCurrentThreadId())
+      retval = thrinfo->num;
+    thrinfo = thrinfo->next;
+  }
+  leavecs(s_thridx_cs);
+  return (retval);
+}
+
+BOOL getthrnum (HANDLE thrhnd,
+                int*   num)
+{
+  *num = -1;
+  struct s_thrinfo * thrinfo = NULL;
+  entercs(s_thridx_cs);
+  thrinfo = s_thrlist;
+  while (thrinfo && (*num < 0)) {
+    if (thrinfo->hnd == thrhnd)
+      *num = thrinfo->num;
+    thrinfo = thrinfo->next;
+  }
+  leavecs(s_thridx_cs);
+  if (*num < 0)
+    return FALSE;
   return TRUE;
 }
 
-VOID  destroythrhnds (LPHANDLE hndlist)
+int numthreads (VOID)
 {
-  return;
+  int retval = 0;
+  entercs(s_thridx_cs);
+  retval = s_thrcount;
+  leavecs(s_thridx_cs);
+  return (retval);
 }
+

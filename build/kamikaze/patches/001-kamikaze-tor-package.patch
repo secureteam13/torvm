@@ -491,8 +491,8 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +TransListenAddress 0.0.0.0
 diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 --- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torvminit	2009-06-29 15:45:27.142518017 +0000
-@@ -0,0 +1,240 @@
++++ b/package/tor/files/torvminit	2009-07-18 09:37:22.267830591 +0000
+@@ -0,0 +1,256 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
 +# See LICENSE file for rights and terms.
@@ -643,6 +643,22 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +  echo 'tty1::respawn:/etc/init.d/tor status' >> /etc/inittab
 +fi
 +
++# set any static ARP entries before DHCP / interface up
++done=0
++cidx=1
++while [ $done -eq 0 ]; do
++  echo $ARGS | grep " ARPENT${cidx}" >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    CENT=`echo $ARGS | sed "s/.* ARPENT${cidx}=//" | sed 's/ .*//' | sed 's/[^0-9a-fA-F:.-]//g'`
++    CMAC=`echo $CENT | sed 's/-.*//'`
++    CIP=`echo $CENT | sed 's/.*-//'`
++    vmr_setarp eth0 $CIP $CMAC
++  else
++    done=1
++  fi
++  cidx=`expr $cidx + 1`
++done
++
 +# if we're passed IP/routing info then do network pivot, otherwise just use dhcp
 +netup=0
 +echo $ARGS | grep ' IP=' >/dev/null 2>&1
@@ -735,8 +751,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-07-06 11:38:36.499455187 +0000
-@@ -0,0 +1,138 @@
++++ b/package/tor/files/vmrouter.sh	2009-07-18 11:24:47.211822577 +0000
+@@ -0,0 +1,149 @@
 +#!/bin/bash
 +# Utility script for Tor VM routing
 +# Source or run directly.
@@ -805,10 +821,6 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  iptables -t filter -A OUTPUT -j LOG
 +}
 +
-+vmr_addmac() {
-+  iptables -t filter -m mac --mac-source "$1" -j RETURN
-+}
-+
 +vmr_fwdsetup() {
 +  # expects default route interface argument
 +  if [ -z "$1" ]; then
@@ -875,3 +887,18 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +vmr_undirtcp() {
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4"
 +}
++
++vmr_setarp() {
++  # expects interface, ip, mac arguments
++  if [ -z "$1" ]; then
++    return $FAIL
++  fi
++  if [ -z "$2" ]; then
++    return $FAIL
++  fi
++  if [ -z "$3" ]; then
++    return $FAIL
++  fi
++  arp -i "$1" -s "$2" "$3"
++}
++

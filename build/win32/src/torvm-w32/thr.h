@@ -40,7 +40,6 @@ BOOL  signalsem (HANDLE semptr);
 typedef DWORD (__stdcall *PFnThreadMain)(LPVOID param);
 BOOL  createthr (PFnThreadMain  thrmain,
                  LPVOID         arg,
-                 LPDWORD        thrid,
                  BOOL           suspended);
 BOOL  destroythr (HANDLE thr);
 BOOL  pausethr (HANDLE thr);
@@ -79,18 +78,13 @@ VOID  cleanupthrctx (VOID);
 struct s_thrinfo {
   HANDLE  hnd;
   DWORD   id;
-  LONG    num;
+  int     num;
   struct s_thrinfo *next;
 };
 
-LONG  mythrnum (VOID);
-BOOL  getthrnum (HANDLE  thr,
-                 LONG *  num);
-LONG  numthreads (VOID);
+int thrnum (VOID);
+BOOL getthrnum (HANDLE thrhnd,
+                int*   num);
+int numthreads (VOID);
 
-/* Enumerate all known thread handles. Caller must destory hndlist after
- * successful invocation.  XXX: handle inheritance only part solved here.
- */
-BOOL  enumthrhnds (LPHANDLE *hndlist);
-VOID  destroythrhnds (LPHANDLE hndlist);
 #endif /* thr_h */

@@ -84,15 +84,20 @@ static void _flog (HANDLE        fda,
   static char *     coff = NULL;
   const char *      newline = "\r\n";
   int               len;
+  int               thrno;
   DWORD             written;
   SYSTEMTIME        now;
   va_list           ap;
+
+  GetSystemTime (&now);
+  thrno = thrnum();
 
   /* XXX: This will block all other threads trying to log while waiting for
    * file I/O. To prevent badness when writes block a log writer thread
    * dedicated to disk I/O should be used and all other logging appends to
    * queue and unblocks.
    *   (For example, write to stalled SMB/USB/etc file system.)
+   * XXX: Fix potential race if we're moving log files around.
    */
   loginit();
   entercs(s_logcs);
@@ -107,12 +112,11 @@ static void _flog (HANDLE        fda,
     if (!msgbuf) 
       goto finished;
   }
-  GetSystemTime (&now);
   coff = msgbuf;
   coff[msgmax -1] = 0;
   len = snprintf (coff,
                   msgmax -1,
-                  "[%4.4d/%-2.2d/%-2.2d %-2.2d:%-2.2d:%-2.2d.%-3.3d UTC] %s: ",
+                  "[%4.4d/%-2.2d/%-2.2d %-2.2d:%-2.2d:%-2.2d.%-3.3d UTC][Thr %d] %s: ",
                   now.wYear,
                   now.wMonth,
                   now.wDay,
@@ -120,6 +124,7 @@ static void _flog (HANDLE        fda,
                   now.wMinute,
                   now.wSecond,
                   now.wMilliseconds,
+                  thrno,
                   msgtype);
   if (len > 0) {
     coff += len;
@@ -279,8 +284,7 @@ static BOOL escquote(LPTSTR  path,
 
 BOOL copyvidaliacfg (LPTSTR srcpath,
                      LPTSTR destpath,
-                     LPTSTR datadir,
-                     LPTSTR polipocfg)
+                     LPTSTR datadir)
 {
   HANDLE src, dest;
   DWORD buffsz = CMDMAX;
@@ -315,6 +319,8 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
   snprintf(buff, buffsz -1, "RunTorAtStart=true\r\n\r\n");
   WriteFile(dest, buff, strlen(buff), &written, NULL);
 
+  /* XXX: Let Tor VM launch Polipo directly now. */
+#if 0
   if (escquote(polipocfg, &epath)) {
     snprintf(buff, buffsz -1,
              "[General]\r\nProxyExecutableArguments=-c, %s\r\n",
@@ -324,6 +330,7 @@ BOOL copyvidaliacfg (LPTSTR srcpath,
   }
   while (ReadFile(src, buff, buffsz, &len, NULL) && (len > 0)) 
     WriteFile(dest, buff, len, &written, NULL);
+#endif
 
   snprintf(buff, buffsz -1, "[Tor]\r\nChanged=true\r\nTorExecutable=\r\n");
   WriteFile(dest, buff, strlen(buff), &written, NULL);
@@ -1523,7 +1530,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1536,8 +1543,10 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 TOR_TAP_VMIP,
                 TOR_TAP_VMIP,
                 ctlpass,
-                brif->gwmacaddr ? "ARPENT=" : "",
-                brif->gwmacaddr ? brif->gwmacaddr : "");
+                brif->gwmacaddr ? "ARPENT1=" : "",
+                brif->gwmacaddr ? brif->gwmacaddr : "",
+                brif->gwmacaddr ? "-" : "",
+                brif->gwmacaddr ? brif->gateway : "");
     }
     else {
       /* fallback if we can't get HOSTNAME, use DHCP client name. */
@@ -1545,7 +1554,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s %s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s%s%s %s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1560,10 +1569,14 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 brif->dhcpname,
                 TOR_TAP_VMIP,
                 ctlpass,
-                brif->gwmacaddr ? "ARPENT=" : "",
+                brif->gwmacaddr ? "ARPENT1=" : "",
                 brif->gwmacaddr ? brif->gwmacaddr : "",
-                brif->svrmacaddr ? "ARPENT=" : "",
-                brif->svrmacaddr ? brif->svrmacaddr : "");
+                brif->gwmacaddr ? "-" : "",
+                brif->gwmacaddr ? brif->gateway : "",
+                brif->svrmacaddr ? "ARPENT2=" : "",
+                brif->svrmacaddr ? brif->svrmacaddr : "",
+                brif->svrmacaddr ? "-" : "",
+                brif->svrmacaddr ? brif->dhcpsvr : "");
     }
   }
   return TRUE;
@@ -1672,7 +1685,7 @@ BOOL runvidalia (BOOL  indebug)
    * flyspray 945
    */
   ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
-  copyvidaliacfg(vcfgtmp, vcfgdest, dir, pcfgdest);
+  copyvidaliacfg(vcfgtmp, vcfgdest, dir);
 
   /* same for polipo and its backup file; see flyspray 946.
    */
@@ -2135,6 +2148,8 @@ int main(int argc, char **argv)
   LPTSTR polipodir;
   DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
   int c, optidx = 0;
+
+  setupthrctx();
 
   while (1) {
     c = getopt_long(argc, argv, "avubshrcXZ", torvm_options, &optidx);
