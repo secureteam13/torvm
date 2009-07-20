@@ -69,6 +69,7 @@ void logto (LPTSTR  path)
                        CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL,
                        NULL);
+  leavecs(s_logcs);
 }
 
 
@@ -1634,10 +1635,7 @@ BOOL runvidalia (BOOL  indebug)
   LPTSTR exe = NULL;
   LPTSTR dir = NULL;
   LPTSTR vcfgtmp = NULL;
-  LPTSTR pcfgtmp = NULL;
   LPTSTR vcfgdest = NULL;
-  LPTSTR pcfgdest = NULL;
-  LPTSTR pcfgdestsave = NULL;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
   HANDLE tmphnd;
   ZeroMemory( &si, sizeof(si) );
@@ -1648,10 +1646,6 @@ BOOL runvidalia (BOOL  indebug)
     lerror ("Unable to build path for default vidalia config file."); 
     goto cleanup;
   } 
-  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defpolipo.conf", &pcfgtmp)) {
-    lerror ("Unable to build path for default polipo config file.");
-    goto cleanup;
-  } 
   if (!buildsyspath(SYSDIR_LCLDATA, "Vidalia", &dir)) {
     lerror ("Unable to build path for Vidalia programs dir."); 
     goto cleanup;
@@ -1660,14 +1654,6 @@ BOOL runvidalia (BOOL  indebug)
     lerror ("Unable to build path for vidalia dest config file."); 
     goto cleanup;
   } 
-  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\config.txt", &pcfgdest)) {
-    lerror ("Unable to build path for polipo dest config."); 
-    goto cleanup;
-  } 
-  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\save-cfg.txt", &pcfgdestsave)) {
-    lerror ("Unable to build path for polipo saved dest config.");
-    goto cleanup;
-  }
   if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia\\vidalia-marble.exe", &exe)) {
     lerror ("Unable to build path for vidalia marble exe."); 
     goto cleanup;
@@ -1687,10 +1673,6 @@ BOOL runvidalia (BOOL  indebug)
   ldebug ("Copying default vidalia config from %s to %s", vcfgtmp, vcfgdest);
   copyvidaliacfg(vcfgtmp, vcfgdest, dir);
 
-  /* same for polipo and its backup file; see flyspray 946.
-   */
-  ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
-  copyfile(pcfgtmp, pcfgdest);
   cmd = malloc(CMDMAX);
   snprintf (cmd, CMDMAX -1,
             "\"%s\" -tor-address %s %s",
@@ -1725,15 +1707,93 @@ BOOL runvidalia (BOOL  indebug)
     free(dir);
   if(vcfgtmp)
     free(vcfgtmp);
-  if(pcfgtmp)
-    free(pcfgtmp);
   if(vcfgdest)
     free(vcfgdest);
+
+  return retval;
+}
+
+DWORD WINAPI runpolipo (LPVOID arg)
+{
+  DWORD  retval = 0;
+  PROCESS_INFORMATION pi;
+  STARTUPINFO si;
+  SECURITY_ATTRIBUTES sattr;
+  TCHAR * cmd = NULL;
+  LPTSTR exe = NULL;
+  LPTSTR dir = NULL;
+  LPTSTR pcfgtmp = NULL;
+  LPTSTR pcfgdest = NULL;
+  LPTSTR pcfgdestsave = NULL;
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  HANDLE tmphnd;
+  ZeroMemory( &si, sizeof(si) );
+  si.cb = sizeof(si);
+  ZeroMemory( &pi, sizeof(pi) );
+  
+  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Polipo", &dir)) {
+    lerror ("Unable to build path for Vidalia programs dir."); 
+    goto cleanup;
+  } 
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defpolipo.conf", &pcfgtmp)) {
+    lerror ("Unable to build path for default polipo config file.");
+    goto cleanup;
+  } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\config.txt", &pcfgdest)) {
+    lerror ("Unable to build path for polipo dest config."); 
+    goto cleanup;
+  } 
+  if (!buildsyspath(SYSDIR_LCLDATA, "Polipo\\save-cfg.txt", &pcfgdestsave)) {
+    lerror ("Unable to build path for polipo saved dest config.");
+    goto cleanup;
+  }
+  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Polipo\\polipo.exe", &exe)) {
+    lerror ("Unable to build path for Polipo exe."); 
+    goto cleanup;
+  } 
+  /* same for polipo and its backup file; see flyspray 946.
+   */
+  ldebug ("Copying default polipo config from %s to %s", pcfgtmp, pcfgdest);
+  copyfile(pcfgtmp, pcfgdest);
+  cmd = malloc(CMDMAX);
+  snprintf (cmd, CMDMAX -1,
+            "\"%s\" -c \"%s\"",
+            exe,
+            pcfgdest);
+  ldebug ("Launching Polipo in dir: %s , with cmd: %s", dir, cmd);
+  if( !CreateProcess(NULL,
+                     cmd,
+                     NULL,   // process handle no inherit
+                     NULL,   // thread handle no inherit
+                     TRUE,   
+                     opts,
+                     NULL,   // environment block
+                     dir,
+                     &si,
+                     &pi) ) {
+    lerror ("Failed to launch process.  Error code: %d", GetLastError());
+    goto cleanup;
+  }
+  else {
+    retval = 1;
+  }
+
+ cleanup:
+  if(cmd)
+    free(cmd);
+  if(exe)
+    free(exe);
+  if(dir)
+    free(dir);
+  if(pcfgtmp)
+    free(pcfgtmp);
   if(pcfgdest)
     free(pcfgdest);
   if(pcfgdestsave)
     free(pcfgdestsave);
 
+  exitthr(retval);
+  /* should never get here... */
   return retval;
 }
 
@@ -2466,10 +2526,6 @@ int main(int argc, char **argv)
       Sleep(2000);
       dispmsg(" - Launching Vidalia");
       runvidalia(indebug);
-      /* XXX: Next step to launch polipo and vidalia separately, then handle restart/kill as needed.
-       * buildsyspath(SYSDIR_LCLPROGRAMS, "Polipo", &polipdir);
-       * runcommand("polipo.exe -c polipo.conf", polipodir);
-       */
 
       /* XXX: Now we wait for the ALL READY socket to be listening before switching.
        * If we don't get bootstrapped within this period of time something is broken/blocked.
@@ -2486,7 +2542,13 @@ int main(int argc, char **argv)
           i--;
       }
       if (i > 0) {
-        /* Once/if bootstrapped allow the user to run applications with restricted privs. */
+        /* Polipo now has a working Tor for SOCKS outbound. */
+        dispmsg(" - Launching Polipo");
+        if (!createthr(&runpolipo, NULL, FALSE)) {
+          lerror("Failed to start Polipo thread.");
+        }
+
+        /* When bootstrapped allow the user to run applications with restricted privs. */
         userswitcher();
       }
     }
