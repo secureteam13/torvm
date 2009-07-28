@@ -305,8 +305,8 @@ extract: downloads coderepodls
 	if [ -e ../kamikaze/kernel-license-docs.tgz ]; then \
 		cp ../kamikaze/kernel-license-docs.tgz $(ISODIR)/add/; \
 	fi; \
-	if [ -e ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz ]; then \
-		cp ../kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
+	if [ -e ../kamikaze/x86-vm/bin/openwrt-x86-vmlinuz ]; then \
+		cp ../kamikaze/x86-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
 	fi; \
 	if [ -e $(BUILD_SCP_IDF) ]; then \
 		mkdir $(ISODIR)/ssh; \

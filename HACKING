@@ -38,7 +38,7 @@ compilation.  You can download the DDK installer ISO at:
 
 Some files and paths of interest:
 
-./build/kamikaze/x86-uclibc-vm/bin/openwrt-x86-vmlinuz
+./build/kamikaze/x86-vm/bin/openwrt-x86-vmlinuz
 > this is the Linux kernel and initramfs used in the VM.
 
 ./build/win32/w32build.iso

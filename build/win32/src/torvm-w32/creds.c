@@ -963,7 +963,7 @@ BOOL setupruserfollow(userinfo * info,
   cmd = "echo Waiting for Tor VM to exit...\r\n";
   WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
   cmd = malloc(CMDMAX);
-  snprintf(cmd, CMDMAX -1, "\"%s\" --follow --ctlip %s --ctlport %s\r\n", binpath, ctlip, ctlport);
+  snprintf(cmd, CMDMAX -1, "\"%s\" --followip %s --followport %s\r\n", binpath, ctlip, ctlport);
   WriteFile(fh, cmd, strlen(cmd),  &numwritten, NULL);
   CloseHandle(fh);
   free(relpath);

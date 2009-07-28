@@ -24,7 +24,7 @@ ifeq (,$(BGROUP))
 	BGROUP=users
 endif
 ifeq (,$(TGTNAME))
-	TGTNAME=x86-uclibc-vm
+	TGTNAME=x86-vm
 endif
 
 # default locations for download directories

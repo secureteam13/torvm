@@ -314,7 +314,7 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-06-24 23:46:11.702526906 +0000
++++ b/package/tor/files/tor.init	2009-07-24 12:19:57.898944904 +0000
 @@ -0,0 +1,147 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
@@ -333,6 +333,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +RUN_USER=$BIN
 +RUN_GROUP=$BIN
 +TOR_INTF=eth0
++TOR_SOCKSPORT=9050
 +
 +source /sbin/vmrouter.sh
 +
@@ -343,15 +344,15 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +MYIP=$(ifconfig $TOR_INTF | grep 'inet addr' | sed 's/.*inet addr://' | sed 's/ .*//')
 +ARGS=`cat /proc/cmdline`
 +ARGS="_ $ARGS _"
-+echo $ARGS | grep ' CTLREADY=' >/dev/null 2>&1 
-+if [ $? -eq 0 ]; then 
-+  CTLREADY=$(echo $ARGS | sed 's/.* CTLREADY=//' | sed 's/ .*//') 
-+fi 
 +echo $ARGS | grep ' CTLSOCK=' >/dev/null 2>&1  
 +if [ $? -eq 0 ]; then 
 +  CTLADDR=$(echo $ARGS | sed 's/.* CTLSOCK=//' | sed 's/ .*//')
 +  CTLIP=$(echo $CTLADDR | sed 's/:.*//')
 +  CTLPORT=$(echo $CTLADDR | sed 's/.*://')
++fi
++echo $ARGS | grep ' SOCKSPORT=' >/dev/null 2>&1  
++if [ $? -eq 0 ]; then 
++  TOR_SOCKSPORT=$(echo $ARGS | sed 's/.* SOCKSPORT=//' | sed 's/ .*//')
 +fi
 +
 +if [ "$1" = "start" ]; then
@@ -385,16 +386,16 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  cat $CONF_F | grep -v ControlListenAddress | grep -v ControlPort | grep -v SocksListenAddress | grep -v SocksPort > $TMP_F; \
 +	  echo "ControlListenAddress ${CTLADDR}" >> $TMP_F; \
 +	  echo "ControlPort ${CTLPORT}" >> $TMP_F; \
-+	  echo "SocksListenAddress ${CTLIP}:9050" >> $TMP_F; \
-+	  echo "SocksPort 9050" >> $TMP_F; \
++	  echo "SocksListenAddress ${CTLIP}:${TOR_SOCKSPORT}" >> $TMP_F; \
++	  echo "SocksPort $TOR_SOCKSPORT" >> $TMP_F; \
 +	  mv -f $TMP_F $CONF_F; \
 +	fi; \
 +	chown $RUN_USER:$RUN_GROUP $CONF_F ; \
 +        vmr_fwdadd $TOR_INT
 +        vmr_opentcp $TOR_INTF $MYIP $CTLPORT
-+        vmr_opentcp $TOR_INTF $MYIP 9050
 +        vmr_opentcp $TOR_INTF $MYIP $TOR_TRANSPORT
 +        vmr_openudp $TOR_INTF $MYIP $TOR_DNSPORT
++	vmr_closetcp $TOR_INTF $MYIP $TOR_SOCKSPORT
 +	if [ "$FOLLOWTOR" = "1" ]; then \
 +	  nohup /etc/init.d/tor dofollow >/dev/null 2>&1 & \
 +        else \
@@ -402,10 +403,9 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	fi; 
 +
 +elif [ "$1" = "stop" ]; then
-+	vmr_undirtcp $TOR_INTF $MYIP $CTLREADY $CTLPORT
 +	vmr_closeudp $TOR_INTF $MYIP $TOR_DNSPORT
 +	vmr_closetcp $TOR_INTF $MYIP $TOR_TRANSPORT
-+	vmr_closetcp $TOR_INTF $MYIP 9050
++	vmr_closetcp $TOR_INTF $MYIP $TOR_SOCKSPORT
 +	vmr_closetcp $TOR_INTF $MYIP $CTLPORT
 +        vmr_fwddel $TOR_INT
 +	killall tor
@@ -430,7 +430,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	while [ "$waiting" -eq "1" ]; do
 +	  grep 'Bootstrapped 100' $LOG_F >/dev/null 2>&1
 +	  if [ "$?" -eq "0" ]; then
-+	    vmr_redirtcp $TOR_INTF $MYIP $CTLREADY $CTLPORT
++            vmr_opentcp $TOR_INTF $MYIP $TOR_SOCKSPORT
 +	    waiting=0
 +          fi
 +	done
@@ -453,7 +453,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  else
 +	  	echo "Tor is fully connected into the Tor network."
 +	  	echo "Transparent proxy traffic:"
-+	  	iptables -n --verbose -t nat --list $cli_prenat_tb | sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v $cli_prenat_tb|grep -v $CTLREADY|grep -v $CTLPORT
++	  	iptables -n --verbose -t nat --list $cli_prenat_tbl| sed 's/opt .*destination.*/destination/'|sed 's/    0.0.0.0.0           //'|sed "s/\-\- .*${MYIP}   //"|grep -v $cli_prenat_tbl|grep -v $CTLPORT
 +	  fi
 +	  sleep 4
 +	done  
@@ -751,8 +751,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-07-18 11:24:47.211822577 +0000
-@@ -0,0 +1,149 @@
++++ b/package/tor/files/vmrouter.sh	2009-07-24 12:17:59.397042898 +0000
+@@ -0,0 +1,153 @@
 +#!/bin/bash
 +# Utility script for Tor VM routing
 +# Source or run directly.
@@ -865,19 +865,23 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +}
 +
 +vmr_opentcp() {
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
 +}
 +
 +vmr_openudp() {
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
 +}
 +
 +vmr_closetcp() {
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP
 +}
 +
 +vmr_closeudp() {
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP
 +}
 +
 +vmr_redirtcp() {

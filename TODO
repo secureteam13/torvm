@@ -48,10 +48,6 @@ _______________________________________________________________________
      and route metric must be used to distinguish properly.
    - Make addresses, devices, and other configuration dynamic for Tor
      VM kernel and Vidalia controller.
-   ? Keep a host or guid identifier with the saved network state files
-     to ensure that an unclean exit on one host does not accidentally
-     hose the settings of another installation. (expect to use hostname
-     and account name when considering saved state for load via netsh).
    - Implement command line parameter parsing for the configurable
      parameters implemented in the afore mentioned tasks.
    - Pass ARP parameters to VM kernel for faster IP setup.

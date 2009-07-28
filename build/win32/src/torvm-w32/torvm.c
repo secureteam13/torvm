@@ -19,25 +19,6 @@
 #define QEMU_DEF_MEM   32
 #define CAP_MTU        1480
 
-struct s_rconnelem {
-  BOOL    isactive;
-  BOOL    isdefgw;
-  BOOL    isdhcp;
-  BOOL    istortap;
-  LPTSTR  name;
-  LPTSTR  guid;
-  LPTSTR  macaddr;
-  LPTSTR  ipaddr;
-  LPTSTR  netmask;
-  LPTSTR  gateway;
-  LPTSTR  gwmacaddr;
-  LPTSTR  dhcpsvr;
-  LPTSTR  svrmacaddr;
-  LPTSTR  dhcpname;
-  LPTSTR  driver;
-  struct s_rconnelem * next;
-};
-
 /* logging:
  *   lerror to stderr and log file(s) if set
  *   linfo  to log and debug file
@@ -1531,7 +1512,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1555,7 +1536,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 CTLREADY=9052 HASHPW=%s %s%s%s%s %s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1625,15 +1606,16 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   return TRUE;
 }
 
-BOOL runvidalia (BOOL  indebug)
+DWORD WINAPI runvidalia (LPVOID arg)
 {
-  BOOL  retval = FALSE;
+  t_ctx *ctx = (t_ctx *)arg;
   PROCESS_INFORMATION pi;
   STARTUPINFO si;
   SECURITY_ATTRIBUTES sattr;
   TCHAR * cmd = NULL;
   LPTSTR exe = NULL;
   LPTSTR dir = NULL;
+  DWORD exitcode;
   LPTSTR vcfgtmp = NULL;
   LPTSTR vcfgdest = NULL;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
@@ -1678,24 +1660,43 @@ BOOL runvidalia (BOOL  indebug)
             "\"%s\" -tor-address %s %s",
             exe,
             TOR_TAP_VMIP,
-            indebug ? " -loglevel debug -logfile debuglog.txt" :
-                      " -loglevel info -logfile infolog.txt");
-  ldebug ("Launching Vidalia in dir: %s , with cmd: %s", dir, cmd);
-  if( !CreateProcess(NULL,
-                     cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-                     TRUE,   
-                     opts,
-                     NULL,   // environment block
-                     dir,
-                     &si,
-                     &pi) ) {
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
-    goto cleanup;
-  }
-  else {
-    retval = TRUE;
+            ctx->indebug ? " -loglevel debug -logfile debuglog.txt" :
+                           " -loglevel info -logfile infolog.txt");
+
+  while (ctx->running) {
+    ldebug ("Launching Vidalia in dir: %s , with cmd: %s", dir, cmd);
+    if( !CreateProcess(NULL,
+                       cmd,
+                       NULL,   // process handle no inherit
+                       NULL,   // thread handle no inherit
+                       TRUE,   
+                       opts,
+                       NULL,   // environment block
+                       dir,
+                       &si,
+                       &pi) ) {
+      lerror ("Failed to launch process.  Error code: %d", GetLastError());
+      goto cleanup;
+    }
+    while ( GetExitCodeProcess(pi.hProcess, &exitcode)
+          && (exitcode == STILL_ACTIVE)
+          && (ctx->running) ) {
+      Sleep (500);
+    }
+    if (exitcode == STILL_ACTIVE) {
+      ldebug ("Shutdown signaled, stopping Vidalia.");
+      TerminateProcess(pi.hProcess, 0);
+    }
+    else {
+      if (exitcode) {
+        ldebug ("Vidalia exited unexpectedly with code %d, respawning.", exitcode);
+      }
+      else {
+        /* Vidalia exited normally. The VM should be in shutdown so don't respawn. */
+        ldebug ("Vidalia exit requested. Exiting thread.");
+        goto cleanup;
+      }
+    }
   }
 
  cleanup:
@@ -1710,18 +1711,20 @@ BOOL runvidalia (BOOL  indebug)
   if(vcfgdest)
     free(vcfgdest);
 
-  return retval;
+  return 0;
 }
 
 DWORD WINAPI runpolipo (LPVOID arg)
 {
   DWORD  retval = 0;
+  t_ctx *ctx = (t_ctx *)arg;
   PROCESS_INFORMATION pi;
   STARTUPINFO si;
   SECURITY_ATTRIBUTES sattr;
   TCHAR * cmd = NULL;
   LPTSTR exe = NULL;
   LPTSTR dir = NULL;
+  DWORD exitcode;
   LPTSTR pcfgtmp = NULL;
   LPTSTR pcfgdest = NULL;
   LPTSTR pcfgdestsave = NULL;
@@ -1731,7 +1734,7 @@ DWORD WINAPI runpolipo (LPVOID arg)
   si.cb = sizeof(si);
   ZeroMemory( &pi, sizeof(pi) );
   
-  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Polipo", &dir)) {
+  if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia", &dir)) {
     lerror ("Unable to build path for Vidalia programs dir."); 
     goto cleanup;
   } 
@@ -1760,22 +1763,34 @@ DWORD WINAPI runpolipo (LPVOID arg)
             "\"%s\" -c \"%s\"",
             exe,
             pcfgdest);
-  ldebug ("Launching Polipo in dir: %s , with cmd: %s", dir, cmd);
-  if( !CreateProcess(NULL,
-                     cmd,
-                     NULL,   // process handle no inherit
-                     NULL,   // thread handle no inherit
-                     TRUE,   
-                     opts,
-                     NULL,   // environment block
-                     dir,
-                     &si,
-                     &pi) ) {
-    lerror ("Failed to launch process.  Error code: %d", GetLastError());
-    goto cleanup;
-  }
-  else {
-    retval = 1;
+
+  while (ctx->running) {
+    ldebug ("Launching Polipo in dir: %s , with cmd: %s", dir, cmd);
+    if( !CreateProcess(NULL,
+                       cmd,
+                       NULL,   // process handle no inherit
+                       NULL,   // thread handle no inherit
+                       TRUE,   
+                       opts,
+                       NULL,   // environment block
+                       dir,
+                       &si,
+                       &pi) ) {
+      lerror ("Failed to launch process.  Error code: %d", GetLastError());
+      goto cleanup;
+    }
+    while ( GetExitCodeProcess(pi.hProcess, &exitcode)
+          && (exitcode == STILL_ACTIVE)
+          && (ctx->running) ) {
+      Sleep (500);
+    }
+    if (exitcode == STILL_ACTIVE) {
+      ldebug ("Shutdown signaled, stopping Polipo.");
+      TerminateProcess(pi.hProcess, 0);
+    }
+    else {
+      ldebug ("Polipo exited unexpectedly with code %d, respawning.", exitcode);
+    }
   }
 
  cleanup:
@@ -2000,8 +2015,8 @@ BOOL detachself (void)
 }
 
 BOOL setupuser (LPTSTR username,
-                LPTSTR ctlip,
-                LPTSTR ctlport)
+                LPTSTR followip,
+                LPTSTR followport)
 {
   BOOL retval = FALSE;
   userinfo * ui;
@@ -2015,7 +2030,7 @@ BOOL setupuser (LPTSTR username,
       ldebug ("Failed to initialize user profile data in setupuser.");
     }
     else {
-      if (!setupruserfollow(ui, ctlip, ctlport)) {
+      if (!setupruserfollow(ui, followip, followport)) {
         ldebug ("Failed to setup Tor follow startup script for user %s.", username);
       }
       else {
@@ -2162,9 +2177,8 @@ static struct option torvm_options[] =
   { "vmnop" , no_argument , NULL, 'X' },
   { "noinit" , no_argument , NULL, 'Z' },
   { "help" , no_argument , NULL, 'h' },
-  { "follow" , no_argument , NULL, 'F' },
-  { "ctlip" , required_argument, NULL, 'I' },
-  { "ctlport" , required_argument, NULL, 'P' },
+  { "followip" , required_argument, NULL, 'I' },
+  { "followport" , required_argument, NULL, 'P' },
   {0}
 };
 
@@ -2188,28 +2202,27 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
+  t_ctx *ctx = NULL;
   const char *cmd;
   int numintf;
   struct s_rconnelem *connlist = NULL;
   struct s_rconnelem *ce = NULL;
   struct s_rconnelem *tapconn = NULL;
-  BOOL vmaccel = FALSE;
-  BOOL bundle = FALSE;
-  BOOL follow = FALSE;
   BOOL clean = FALSE;
-  BOOL indebug = FALSE;
-  BOOL vmnop = FALSE;
-  BOOL noinit = FALSE;
   BOOL foundit = FALSE;
   char *cmdline = NULL;
+  LPTSTR fname = NULL;
   LPTSTR logfile = NULL;
-  LPTSTR ctliparg = NULL;
-  LPTSTR ctlportarg = NULL;
+  LPTSTR followiparg = NULL;
+  LPTSTR followportarg = NULL;
   LPTSTR polipodir;
   DWORD taptimeout = 60; /* the tap device can't be configured until the VM connects it */
   int c, optidx = 0;
 
   setupthrctx();
+
+  ctx = malloc(sizeof(t_ctx));
+  memset(ctx, 0, sizeof(t_ctx));
 
   while (1) {
     c = getopt_long(argc, argv, "avubshrcXZ", torvm_options, &optidx);
@@ -2218,74 +2231,56 @@ int main(int argc, char **argv)
 
     switch (c) {
         case 'a':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          vmaccel = TRUE;
+          ctx->vmaccel = TRUE;
           break;
 
         case 'v':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          indebug = TRUE;
+          ctx->indebug = TRUE;
           break;
 
         case 'b':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          bundle = TRUE;
+          ctx->bundle = TRUE;
           break;
 
         case 's':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
           break;
 
         case 'r':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          LPTSTR fname = NULL;
           if (!buildfpath(PATH_RELATIVE, VMDIR_STATE, NULL, TOR_HDD_FILE, &fname)) {
             lerror ("Unable to build path for dest %s", TOR_HDD_FILE);
           }
           else {
             DeleteFile (fname);
 	    free(fname);
-            linfo ("Removed existing virtual disk image for replacement to original state.");
+            fname = NULL;
           }
           break;
 
         case 'c':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
           clean = TRUE;
           break;
 
         case 'X':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          indebug = TRUE;
-          vmnop = TRUE;
+          ctx->indebug = TRUE;
+          ctx->vmnop = TRUE;
           break;
 
         case 'Z':
-          ldebug ("Set option %s.", torvm_options[optidx].name);
-          indebug = TRUE;
-          noinit = TRUE;
-          break;
-
-        case 'F':
-          follow = TRUE;
+          ctx->indebug = TRUE;
+          ctx->noinit = TRUE;
           break;
 
         case 'I':
           if (optarg)
-            ctliparg = optarg;
-          else
-            ctliparg = TOR_TAP_VMIP;
+            followiparg = optarg;
           break;
 
         case 'P':
           if (optarg)
-            ctlportarg = optarg;
-          else
-            ctlportarg = "9051";
+            followportarg = optarg;
           break;
 
         case 'h':
-          linfo ("Help for command usage invoked.");
           usage();
           break;
 
@@ -2297,17 +2292,17 @@ int main(int argc, char **argv)
     }
   }
  
-  /* The Tor follow mode is a special case. All we do is loop until the control
+  /* The Tor follow mode is a special case. All we do is loop until the socks
    * port is no longer accepting connections and then we issue a logoff request.
    */ 
-  if (follow) {
-    while(follow) {
+  if (followiparg) {
+    while(followiparg) {
       Sleep(1000);
-      if (!tryconnect(ctliparg, atol(ctlportarg))) {
+      if (!tryconnect(followiparg, atol(followportarg))) {
         Sleep(1000);
         /* XXX: Increase prio if intermittent connect timeouts? */
-        if (!tryconnect(ctliparg, atol(ctlportarg))) {
-          follow = FALSE;
+        if (!tryconnect(followiparg, atol(followportarg))) {
+          followiparg = NULL;
         }
       }
     }
@@ -2315,7 +2310,7 @@ int main(int argc, char **argv)
      * This is our cue to force the restricted user to log off.
      */
     runcommand("shutdown -l -f", NULL);
-    return 0;
+    exit(0);
   }
 
   if (buildfpath(PATH_FQ, VMDIR_STATE, NULL, "vmlog.txt", &logfile)) {
@@ -2351,18 +2346,34 @@ int main(int argc, char **argv)
     fatal ("Unable to prepare process environment.");
   }
 
+  ctx->insthnd = CreateNamedPipe("\\\\.\\pipe\\" TORVM_INSTNAME,
+                                 PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                                 PIPE_TYPE_BYTE | PIPE_NOWAIT,
+                                 1,
+                                 32,
+                                 32,
+                                 0,
+                                 NULL);
+  if (ctx->insthnd == INVALID_HANDLE_VALUE) {
+    DWORD errorno = GetLastError();
+    ldebug ("CreateNamedPipe failed on Tor VM instance GUID. Error code: %d", errorno);
+    fatal ("Tor VM appears to be running. Exiting.");
+  }
+
   if (clean)
     goto shutdown;
 
   dispmsg("Tor VM is starting. Please be patient.");
-  if (!vmnop) {
+  ctx->running = TRUE;
+
+  if (!ctx->vmnop) {
     if (!savenetconfig()) {
       fatal ("Unable to save current network configuration.");
     }
 
-    if (bundle) {
+    if (ctx->bundle) {
       /* XXX: note we're using the "all ready" alias for the control port. */
-      if (!setupuser(TOR_RESTRICTED_USER, TOR_TAP_VMIP, "9052")) {
+      if (!setupuser(TOR_RESTRICTED_USER, TOR_TAP_VMIP, "9050")) {
         lerror ("Unable to setup restricted user.");
       }
     }
@@ -2427,7 +2438,7 @@ int main(int argc, char **argv)
     lerror ("Unable to confirm usable virtual disk is present.");
   }
 
-  if (!vmnop) {
+  if (!ctx->vmnop) {
     if (numintf <= 0) {
       lerror ("Unable to find any usable network interfaces.");
       goto shutdown;
@@ -2448,8 +2459,8 @@ int main(int argc, char **argv)
     }
   }
 
-  if (!vmnop) {
-    if (! buildcmdline(ce, bundle, indebug, noinit, &cmdline)) {
+  if (!ctx->vmnop) {
+    if (! buildcmdline(ce, ctx->bundle, ctx->indebug, ctx->noinit, &cmdline)) {
       lerror ("Unable to generate command line for kernel.");
       goto shutdown;
     }
@@ -2458,7 +2469,7 @@ int main(int argc, char **argv)
 
   dispmsg(" - Launching QEMU virtual machine");
   PROCESS_INFORMATION pi;
-  if (vmnop) {
+  if (ctx->vmnop) {
     if (! spawnprocess(&pi, "qemu.exe")) {
       lerror ("Unable to launch default Qemu instance.");
     }
@@ -2504,7 +2515,7 @@ int main(int argc, char **argv)
    * once Tor is stopped the no longer listening control port signals
    * restricted user log off and clean shutdown.
    */
-  if (bundle) {
+  if (ctx->bundle) {
     dispmsg(" - Waiting for Tor control port to open");
     /* try to confirm control port is up before launching vidalia... */
     int i = 10;
@@ -2525,7 +2536,9 @@ int main(int argc, char **argv)
        */
       Sleep(2000);
       dispmsg(" - Launching Vidalia");
-      runvidalia(indebug);
+      if (!createthr(&runvidalia, ctx, FALSE)) {
+        lerror("Failed to start Vidalia thread.");
+      }
 
       /* XXX: Now we wait for the ALL READY socket to be listening before switching.
        * If we don't get bootstrapped within this period of time something is broken/blocked.
@@ -2533,7 +2546,7 @@ int main(int argc, char **argv)
       ldebug("Waiting for Tor to bootstrap ...");
       dispmsg(" - Waiting for Tor to establish a circuit");
       i = 60 * 5; 
-      while ( (!tryconnect(TOR_TAP_VMIP, 9052)) && (i > 0) ) {
+      while ( (!tryconnect(TOR_TAP_VMIP, 9050)) && (i > 0) ) {
         Sleep(1000);
         ldebug("Tor has not bootstrapped yet, checking again... [%d left]", i);
         if (!isrunning(&pi)) 
@@ -2544,7 +2557,7 @@ int main(int argc, char **argv)
       if (i > 0) {
         /* Polipo now has a working Tor for SOCKS outbound. */
         dispmsg(" - Launching Polipo");
-        if (!createthr(&runpolipo, NULL, FALSE)) {
+        if (!createthr(&runpolipo, ctx, FALSE)) {
           lerror("Failed to start Polipo thread.");
         }
 
@@ -2558,7 +2571,7 @@ int main(int argc, char **argv)
     dispmsg("");
     dispmsg("GOOD! Tor VM is running.");
     dispmsg(" - Waiting for VM to exit ...");
-    if (bundle)
+    if (ctx->bundle)
       dispmsg(" NOTE: Select the \"Exit\" option in Vidalia to shutdown.");
     else
       dispmsg(" NOTE: Close the \"QEMU (Tor VM)\" window to shutdown.");
@@ -2573,11 +2586,13 @@ int main(int argc, char **argv)
     lerror ("Virtual machine failed to start properly.");
     linfo ("Tor VM Qemu failed to start properly.");
   }
+  ctx->running = FALSE;
   dispmsg("Shutting down.");
   dispmsg("CAUTION: Restoring network settings. Do NOT close this window!");
 
  shutdown:
-  if (bundle) {
+  CloseHandle(ctx->insthnd);
+  if (ctx->bundle) {
     disableuser(TOR_RESTRICTED_USER);
     /* cleanruserfiles(TOR_RESTRICTED_USER); */
   }
@@ -2604,6 +2619,7 @@ int main(int argc, char **argv)
     lerror ("Unable to restore network configuration.");
   }
   linfo ("Tor VM shutdown completed.");
-  return 0;
+  /* XXX: at this point be sure all threads are killed. */
+  exit(0);
 }
 
