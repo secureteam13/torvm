@@ -113,7 +113,7 @@ if [[ "$1" != "dobuild" ]]; then
   export WPCAP_INCLUDE="-I/src/${WPCAP_DIR}/wpcap/libpcap -I/src/${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
   export WPCAP_LDFLAGS="-L/src/${WPCAP_DIR}/wpcap/PRJ -L/src/${WPCAP_DIR}/packetNtx/Dll/Project"
 
-  export QEMU_VER=0.9.1
+  export QEMU_VER=0.10.5
   export QEMU_DIR="qemu-${QEMU_VER}"
   export QEMU_FILE="${QEMU_DIR}.tar.gz"
 
@@ -232,7 +232,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     chmod 600 ~/.ssh/id_rsa >/dev/null 2>&1
   fi
 
-  for dir in $ddir $bdlibdir $bindir $statedir $brootdir $instdir $thandir $bundledir $licensedir; do
+  for dir in $ddir $bdlibdir $bindir $statedir $statedir/rofs $brootdir $instdir $thandir $bundledir $licensedir; do
     if [ ! -d $dir ]; then
       mkdir -p $dir
     fi
@@ -540,7 +540,7 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
     echo "ERROR: Qemu cmdline via stdin patch failed." >&2
     exit 1
   fi
-  patch -p1 < ../qemu-winpcap-0.9.1.patch 2> /dev/null
+  patch -p1 < ../qemu-winpcap.patch 2> /dev/null
   if (( $? != 0 )); then
     echo "ERROR: Qemu winpcap patch failed." >&2
     exit 1
@@ -551,10 +551,10 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
     --disable-system \
     --disable-kqemu \
     --disable-vnc-tls \
-    --extra-cflags="-DHAVE_INTSZ_TYPES -I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
+    --disable-bluez \
+    --extra-cflags="-I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
     --extra-ldflags="-L/src/$ZLIB_DIR -L/usr/lib -L/usr/local/lib $WPCAP_LDFLAGS -L/src/pthreads-w32" \
-    --target-list=i386-softmmu \
-    --enable-mingw32 --cross-prefix=""
+    --target-list=i386-softmmu 
   if (( $? != 0 )); then
     echo "ERROR: Qemu configure failed." >&2
     exit 1

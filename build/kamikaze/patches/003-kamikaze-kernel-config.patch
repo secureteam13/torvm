@@ -1,6 +1,6 @@
 diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
 --- a/target/linux/x86/config-2.6.28	2009-05-15 10:40:04.149461000 +0000
-+++ b/target/linux/x86/config-2.6.28	2009-05-31 22:30:50.832743731 +0000
++++ b/target/linux/x86/config-2.6.28	2009-08-20 05:43:28.977447720 +0000
 @@ -2,7 +2,6 @@
  CONFIG_4KSTACKS=y
  # CONFIG_60XX_WDT is not set
@@ -368,7 +368,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_X86_RESERVE_LOW_64K=y
  # CONFIG_X86_SPEEDSTEP_CENTRINO is not set
  # CONFIG_X86_SPEEDSTEP_ICH is not set
-@@ -392,6 +433,240 @@
+@@ -392,6 +433,241 @@
  CONFIG_X86_UP_APIC=y
  CONFIG_X86_UP_IOAPIC=y
  CONFIG_X86_VERBOSE_BOOTUP=y
@@ -553,7 +553,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
 +CONFIG_INOTIFY=y
 +CONFIG_INOTIFY_USER=y
 +CONFIG_ISO9660_FS=y
-+# CONFIG_VFAT_FS is not set
++CONFIG_VFAT_FS=y
 +# CONFIG_JFFS2_FS is not set
 +# CONFIG_JFFS2_CMODE_PRIORITY is not set
 +# CONFIG_SQUASHFS is not set
@@ -563,6 +563,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
 +CONFIG_NLS_ASCII=y
 +CONFIG_NLS_ISO8859_1=y
 +CONFIG_NLS_UTF8=y
++CONFIG_NLS_CODEPAGE_437=y
 +# CONFIG_DEBUG_FS is not set
 +# CONFIG_SYSCTL_SYSCALL_CHECK is not set
 +# CONFIG_X86_VERBOSE_BOOTUP is not set

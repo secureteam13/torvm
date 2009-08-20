@@ -192,9 +192,9 @@ WPCAPSRC_F=WpcapSrc_$(WPCAPSRC_VER).zip
 WPCAPSRC_URL=http://www.winpcap.org/install/bin/$(WPCAPSRC_F)
 WPCAPSRC_SUM=9e147ff344141da0ac76e71c31be7a8036ccba6030adfe208f27a97b793a9299
 
-QEMU_F=qemu-0.9.1.tar.gz
-QEMU_URL=http://bellard.org/qemu/$(QEMU_F)
-QEMU_SUM=4756d0b4a4dc7dd88354bc6b37d381e4462dd328d0feef94803e90c0455835a5
+QEMU_F=qemu-0.10.5.tar.gz
+QEMU_URL=http://download.savannah.gnu.org/releases/qemu/$(QEMU_F)
+QEMU_SUM=d54f268f5545dd182d96c1b09e79af58efaf2e51695efd1331d560a552d657c1
 
 OVPN_F=openvpn-2.1_rc15.tar.gz
 OVPN_URL=http://openvpn.net/release/$(OVPN_F)
@@ -213,10 +213,10 @@ POLIPO_F=polipo-20080907.tar.gz
 POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
 POLIPO_SUM=c4c8b6f4d32e6d17e71160f2d4683a3ac444c81de321eeb1394a5575d973a200
 
-TORBUTTON_XPI_VER=1.2.1
+TORBUTTON_XPI_VER=1.2.2
 TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
 TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_F)
-TORBUTTON_XPI_SUM=9d2ae4f1bcc272ae6360087df483ed3f46bb9b06948104e19203dbed75ba242e
+TORBUTTON_XPI_SUM=d08fa9c1efc0203b5cf9c3fbc551dc158963821b45f1e9fe5763427332e00192
 
 MARBLE_NAME=marble-latest
 MARBLE_TGZ=$(MARBLE_NAME).tar.gz
@@ -230,23 +230,25 @@ VIDALIA_SVN=https://svn.vidalia-project.net/svn/vidalia/
 VIDALIA_BR=trunk
 VIDALIA_VER=3730
 
-# for package resources
 TORSRC_NAME=tor-latest
 TORSRC_TGZ=$(TORSRC_NAME).tar.gz
 TORSRC_GIT=git://git.torproject.org/git/tor
-TORSRC_VER=358efe1eea9be4c0e1c5e0e5e90dfb2cb0e24235
+TORSRC_VER=b9e45cc508b6fbf596e1ba40761e11d0629a3291
+
+GEOIP_F=ip-to-country.csv.zip
+GEOIP_URL=http://ip-to-country.webhosting.info/downloads/$(GEOIP_F)
+GEOIP_SUM=cb5234a10504ba2b243fb5b8f59693245ca952d42883cb3191c3287839cc1c1f
 
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
 TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
-TORBUTTON_VER=19101
+TORBUTTON_VER=20331
 
-# XXX add / switch to signed tags one key mgmt resolved
 PYCRYPTO_NAME=pycrypto-latest
 PYCRYPTO_TGZ=$(PYCRYPTO_NAME).tar.gz
 PYCRYPTO_GIT=git://git.pycrypto.org:9419/crypto/pycrypto-2.x.git
-PYCRYPTO_VER=d1c4875e1f220652fe7ff8358f56dee3b2aba31b
+PYCRYPTO_VER=812e01736ca936124daa36d15a4159e92a43b9db
 
 THANDY_NAME=thandy-latest
 THANDY_TGZ=$(THANDY_NAME).tar.gz
@@ -259,7 +261,7 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
-ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN
+ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN GEOIP
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -391,6 +393,10 @@ extract: downloads coderepodls
 		rm -rf $(TORBUTTON_NAME); $(SVNCMD) export --revision $(TORBUTTON_VER) $(SDLDIR)/$(TORBUTTON_NAME) $(TORBUTTON_NAME) ; \
 		( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
 		mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/torbutton.xpi ; rm -rf $(TORBUTTON_NAME); \
+	fi; \
+	if [ -f $(WDLDIR)/$(GEOIP_F) ]; then \
+		echo "--- Creating Tor GEOIP file from $(GEOIP_F) source ..."; \
+		$(UNZIP) $(WDLDIR)/$(GEOIP_F) -d tmp; cat tmp/*.csv | cut -d, -f1-3 | sed 's/"//g' > $(ISODIR)/dl/geoip.txt; rm -rf tmp; rm $(ISODIR)/dl/$(GEOIP_F); \
 	fi; \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \

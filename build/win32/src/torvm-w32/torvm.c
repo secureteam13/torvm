@@ -1588,7 +1588,7 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   TCHAR *cmd = malloc(CMDMAX);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, CMDMAX -1,
-            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -hda ../state/hdd.img -m %d -std-vga", qemubin, QEMU_DEF_MEM);
+            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -hda ../state/hdd.img -m %d -sdl -vga std", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1850,7 +1850,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   cmd = malloc(CMDMAX);
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -hdc fat:../state/rofs -m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
 	      qemubin,
               cmdline,
               QEMU_DEF_MEM,
@@ -1860,7 +1860,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   }
   else {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -m %d -std-vga -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -hdc fat:../state/rofs -m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
 	      qemubin,
               cmdline,
               QEMU_DEF_MEM,

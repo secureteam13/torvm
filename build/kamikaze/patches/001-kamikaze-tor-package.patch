@@ -314,8 +314,8 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-07-24 12:19:57.898944904 +0000
-@@ -0,0 +1,147 @@
++++ b/package/tor/files/tor.init	2009-08-19 00:59:09.853905297 +0000
+@@ -0,0 +1,150 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
 +export PATH=/usr/sbin:/sbin:$PATH
@@ -323,7 +323,7 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +DEFAULT=/etc/default/$BIN
 +HOME_D=/home/$BIN
 +CONF_F=$HOME_D/torrc
-+GEOIP_F=$HOME_D/geoip
++GEOIP_F=/rofs/GEOIP.TXT
 +LOG_D=/var/log/$BIN
 +LOG_F=$LOG_D/notices.log
 +SLOG_F=$LOG_D/start.log
@@ -389,6 +389,9 @@ diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 +	  echo "SocksListenAddress ${CTLIP}:${TOR_SOCKSPORT}" >> $TMP_F; \
 +	  echo "SocksPort $TOR_SOCKSPORT" >> $TMP_F; \
 +	  mv -f $TMP_F $CONF_F; \
++	fi; \
++	if [ -f $GEOIP_F ]; then \
++		echo "GeoIPFile $GEOIP_F" >> $CONF_F; \
 +	fi; \
 +	chown $RUN_USER:$RUN_GROUP $CONF_F ; \
 +        vmr_fwdadd $TOR_INT
@@ -491,8 +494,8 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +TransListenAddress 0.0.0.0
 diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 --- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torvminit	2009-07-18 09:37:22.267830591 +0000
-@@ -0,0 +1,256 @@
++++ b/package/tor/files/torvminit	2009-08-19 09:11:07.321473102 +0000
+@@ -0,0 +1,267 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
 +# See LICENSE file for rights and terms.
@@ -592,6 +595,17 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +  echo 'ERROR: unable to mount persistent storage virtual disk!'
 +  echo '       Do not run Tor in this configuration.'
 +  sleep 3
++fi
++
++# if a read-only directory is available to mount from host OS mnt it too.
++rofsdev=/dev/hdc1
++rofsopt="-oro,noexec,nodev"
++if [ -e $rofsdev ]; then
++  mkdir /rofs
++  mount $rofsopt $rofsdev /rofs 
++  if [ $? -ne 0 ]; then
++    rmdir /rofs
++  fi
 +fi
 +
 +mkdir -p /var/run
@@ -751,7 +765,7 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-07-24 12:17:59.397042898 +0000
++++ b/package/tor/files/vmrouter.sh	2009-08-19 09:11:53.693450376 +0000
 @@ -0,0 +1,153 @@
 +#!/bin/bash
 +# Utility script for Tor VM routing

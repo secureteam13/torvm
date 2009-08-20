@@ -1,7 +1,7 @@
-diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
---- orig-qemu-0.9.1/vl.c	2008-01-06 19:38:42.000000000 +0000
-+++ mod-qemu-0.9.1/vl.c	2008-08-23 05:07:36.576478509 +0000
-@@ -7582,6 +7582,7 @@
+diff -Naur a/vl.c b/vl.c
+--- a/vl.c	2009-05-20 20:47:01.000000000 +0000
++++ b/vl.c	2009-08-19 10:07:39.161453868 +0000
+@@ -4042,6 +4042,7 @@
             "Linux boot specific:\n"
             "-kernel bzImage use 'bzImage' as kernel image\n"
             "-append cmdline use 'cmdline' as kernel command line\n"
@@ -9,23 +9,23 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
             "-initrd file    use 'file' as initial ram disk\n"
             "\n"
             "Debug/Expert options:\n"
-@@ -7719,6 +7720,7 @@
-     QEMU_OPTION_old_param,
-     QEMU_OPTION_clock,
-     QEMU_OPTION_startdate,
+@@ -4182,6 +4183,7 @@
+     /* Linux boot specific: */
+     QEMU_OPTION_kernel,
+     QEMU_OPTION_append,
 +    QEMU_OPTION_appendstdin,
- };
+     QEMU_OPTION_initrd,
  
- typedef struct QEMUOption {
-@@ -7827,6 +7829,7 @@
- #endif
-     { "clock", HAS_ARG, QEMU_OPTION_clock },
-     { "startdate", HAS_ARG, QEMU_OPTION_startdate },
+     /* Debug/Expert options: */
+@@ -4302,6 +4304,7 @@
+     /* Linux boot specific: */
+     { "kernel", HAS_ARG, QEMU_OPTION_kernel },
+     { "append", HAS_ARG, QEMU_OPTION_append },
 +    { "appendstdin", 0, QEMU_OPTION_appendstdin },
-     { NULL },
- };
+     { "initrd", HAS_ARG, QEMU_OPTION_initrd },
  
-@@ -7869,6 +7872,29 @@
+     /* Debug/Expert options: */
+@@ -4532,6 +4535,29 @@
      }
  }
  
@@ -52,10 +52,10 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +    return parms;
 +}
 +
- /* XXX: currently we cannot use simultaneously different CPUs */
- static void register_machines(void)
+ #ifdef _WIN32
+ static BOOL WINAPI qemu_ctrl_handler(DWORD type)
  {
-@@ -8316,6 +8342,13 @@
+@@ -4861,6 +4887,13 @@
              case QEMU_OPTION_append:
                  kernel_cmdline = optarg;
                  break;
@@ -67,5 +67,5 @@ diff -Naur orig-qemu-0.9.1/vl.c mod-qemu-0.9.1/vl.c
 +                }
 +                break;
              case QEMU_OPTION_cdrom:
- 		drive_add("file=\"%s\"," CDROM_ALIAS, optarg);
+                 drive_add(optarg, CDROM_ALIAS);
                  break;
