@@ -233,7 +233,7 @@ VIDALIA_VER=3730
 TORSRC_NAME=tor-latest
 TORSRC_TGZ=$(TORSRC_NAME).tar.gz
 TORSRC_GIT=git://git.torproject.org/git/tor
-TORSRC_VER=b9e45cc508b6fbf596e1ba40761e11d0629a3291
+TORSRC_VER=5308eceef3e7287f77d7b10065c9f8341c5dd75b
 
 GEOIP_F=ip-to-country.csv.zip
 GEOIP_URL=http://ip-to-country.webhosting.info/downloads/$(GEOIP_F)
