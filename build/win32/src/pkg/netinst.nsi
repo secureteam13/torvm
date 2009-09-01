@@ -2,7 +2,7 @@
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
   
-!define VERSION "0.0.2.1"
+!define VERSION "0.0.3.0"
 !define INSTALLER "TorVMNetInstaller.exe"
 !define WEBSITE "https://www.torproject.org/"
 !define LICENSE "LICENSE"
@@ -47,10 +47,10 @@ FunctionEnd
 Function RunInstallers
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\license.msi" NOSC=1 /qn'
-	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
-	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
-	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
-	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update "--repo=$LOCALAPPDATA\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --force-check "--repo=$LOCALAPPDATA\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --force-check "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --force-check "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'
+	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --force-check "--repo=$LOCALAPPDATA\Thandy\Vidalia Updates" /bundleinfo/vidalia/win32/'
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\TorVM Updates" /bundleinfo/torvm/win32/'
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\Polipo Updates" /bundleinfo/polipo/win32/'
 	ExecWait '"$LOCALAPPDATA\Programs\Thandy\thandy.exe" update --install "--repo=$LOCALAPPDATA\Thandy\TorButton Updates" /bundleinfo/torbutton/win32/'

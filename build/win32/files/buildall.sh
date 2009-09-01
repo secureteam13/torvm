@@ -10,6 +10,7 @@ if [[ "$1" != "dobuild" ]]; then
 
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
+  export GEOIP_IMAGE=/src/add/geoip.iso
   export TORVMUSER_IMAGE=torvmuser.bmp
   export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
   
@@ -159,6 +160,10 @@ if [[ "$1" != "dobuild" ]]; then
 
   export WIXSRC_DIR=wixsrc
   export WIXSRC_FILE=wixsrc.tar.gz
+
+  export BITTORRENT_FILE=bittorrent_3.4.2.orig.tar.gz
+  export BITTORRENT_DIR=BitTorrent-3.4.2
+  export BTPATCH_FILE=bittorrent_3.4.2-11.1.diff
   
   if [ -d "$VS80COMNTOOLS" ]; then
     export VSTOOLSDIR="$VS80COMNTOOLS"
@@ -232,7 +237,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     chmod 600 ~/.ssh/id_rsa >/dev/null 2>&1
   fi
 
-  for dir in $ddir $bdlibdir $bindir $statedir $statedir/rofs $brootdir $instdir $thandir $bundledir $licensedir; do
+  for dir in $ddir $bdlibdir $bindir $statedir $brootdir $instdir $thandir $bundledir $licensedir; do
     if [ ! -d $dir ]; then
       mkdir -p $dir
     fi
@@ -784,6 +789,18 @@ if [[ "$THANDY_BUILT" != "yes" ]]; then
   cd /usr/src
   tar zxf thandy-latest.tar.gz
   cd thandy-latest
+  if [ -f /usr/src/$BITTORRENT_FILE ]; then
+    echo "Creating patched BitTorrent tree for Thandy use ..."
+    mkdir tmp_extract
+    (
+      cd tmp_extract
+      tar zxf /usr/src/$BITTORRENT_FILE
+      cd $BITTORRENT_DIR
+      patch -p1 < /usr/src/$BTPATCH_FILE
+    )
+    mv tmp_extract/$BITTORRENT_DIR/BitTorrent lib/
+    rm -rf tmp_extract
+  fi
   echo "Starting python Thandy build ..."
   python setup.py build
   if (( $? != 0 )); then
@@ -1338,6 +1355,36 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   mv bin lib state torvm.exe Tor_VM/
   mv save-bin bin
 
+  if [ -f $GEOIP_IMAGE ]; then
+    echo "Linking tor geoip data MSI installer package ..."
+    mkdir lib
+    cp $GEOIP_IMAGE lib/
+    heat.exe dir lib -gg -ke -sfrag -nologo -out torgeoip.wxs -template:product
+    tail +4c torgeoip.wxs > torgeoip.wxs.tmp; dos2unix torgeoip.wxs.tmp; cat torgeoip.wxs.tmp > torgeoip.wxs; rm -f torgeoip.wxs.tmp
+    wixtool.exe splice -i geoip.wxs -o geoip-tmpdir.wxs Directory:ProgramsLibDir=torgeoip.wxs:Directory:TARGETDIR
+    wixtool.exe splice -i geoip-tmpdir.wxs -o geoip-tmpall.wxs Feature:MainApplication=torgeoip.wxs:Feature:ProductFeature
+    wixtool.exe userlocal -i geoip-tmpall.wxs -o geoip-all.wxs "Software\\Tor GeoIP Data:MainApplication"
+    rm -f geoip-tmpdir.wxs geoip-tmpall.wxs
+    candle.exe $CANDLE_OPTS geoip-all.wxs
+    WIX_CAB_CACHE=_geoip.cabcache
+    WIX_LINKOUT=_geoip.wixout
+    if [ -e $WIX_CAB_CACHE ]; then
+      rm -rf $WIX_CAB_CACHE
+    fi  
+    if [ -e $WIX_LINKOUT ]; then
+      rm -rf $WIX_LINKOUT
+    fi  
+    light.exe $LIGHT_OPTS -sloc -out $WIX_LINKOUT -xo -cc $WIX_CAB_CACHE WixUI_Custom.wixobj geoip-all.wixobj -ext $WIX_UI
+    light.exe $LIGHT_OPTS -out geoip.msi -cc $WIX_CAB_CACHE $WIX_DEFAULT_LOC_LINK -reusecab $WIX_LINKOUT -ext $WIX_UI
+    if [ -f geoip.msi ]; then
+      cp geoip.msi $bundledir
+      ls -l geoip.msi
+    else
+      echo "ERROR: unable to build Tor GeoIP Data MSI installer."
+    fi  
+    rm -rf lib
+  fi
+
   echo "Linking tor MSI installer package ..."
   candle.exe $CANDLE_OPTS -dEXTLICENSE tor.wxs
   WIX_CAB_CACHE=_tor.cabcache
@@ -1610,6 +1657,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     rm -f $exename
   fi
   cp -a LicenseDocs Tor_VM/
+  # also make sure the GeoIP file is included in the stand alone Tor VM archive.
+  if [ -f $GEOIP_IMAGE ]; then
+    cp $GEOIP_IMAGE Tor_VM/lib/
+  fi
   7z.exe a -sfx7z.sfx $exename Tor_VM
   if [ -f $exename ]; then
     cp $exename $bundledir

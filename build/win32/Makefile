@@ -218,6 +218,17 @@ TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
 TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_F)
 TORBUTTON_XPI_SUM=d08fa9c1efc0203b5cf9c3fbc551dc158963821b45f1e9fe5763427332e00192
 
+BITTORRENT_VER=3.4.2.orig
+BITTORRENT_F=bittorrent_$(BITTORRENT_VER).tar.gz
+# gah, sometimes it is pub/debian/... and others debian/... ???
+BITTORRENT_URL=ftp://cdn.debian.net/debian/pool/main/b/bittorrent/$(BITTORRENT_F)
+BITTORRENT_SUM=5bc3fc2372b0765d626a01aa60575b297b7d90629db019e885cfd053bd949fc5
+
+BTPATCH_VER=3.4.2-11.1
+BTPATCH_F=bittorrent_$(BTPATCH_VER).diff.gz
+BTPATCH_URL=ftp://cdn.debian.net/debian/pool/main/b/bittorrent/$(BTPATCH_F)
+BTPATCH_SUM=9dffc33c7c31daef9c6e63aaad4cef8b137d515e31b0685b3205efbdd3cb6c21
+
 MARBLE_NAME=marble-latest
 MARBLE_TGZ=$(MARBLE_NAME).tar.gz
 MARBLE_SVN=https://svn.vidalia-project.net/svn/marble/
@@ -253,7 +264,7 @@ PYCRYPTO_VER=812e01736ca936124daa36d15a4159e92a43b9db
 THANDY_NAME=thandy-latest
 THANDY_TGZ=$(THANDY_NAME).tar.gz
 THANDY_GIT=git://git.torproject.org/git/thandy
-THANDY_VER=b346e24c3d67c129b8609d44cab77160b3cfb399
+THANDY_VER=88e9bef040e05e0d94846577cd1c0a3d8f9a0653
 
 # XXX: tmp equivalent of exit 0 when chaining cmds
 # buildscripts need some dire clean up...
@@ -261,7 +272,7 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
-ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN GEOIP
+ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN GEOIP BITTORRENT BTPATCH
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -356,6 +367,8 @@ extract: downloads coderepodls
 	mv $(ISODIR)/dl/$(LIBEVENT_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(PYTHON_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QT_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(BITTORRENT_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(BTPATCH_F) $(ISODIR)/dl/src/; gzip -d $(ISODIR)/dl/src/$(BTPATCH_F); \
 	echo "--- Repacking WinPCAP archive ..."; \
 	$(UNZIP) $(WDLDIR)/$(WPCAPSRC_F); mv winpcap WpcapSrc_$(WPCAPSRC_VER); tar cf $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar WpcapSrc_$(WPCAPSRC_VER); gzip -9 $(ISODIR)/dl/src/WpcapSrc_$(WPCAPSRC_VER).tar; rm -rf WpcapSrc_$(WPCAPSRC_VER) $(ISODIR)/dl/$(WPCAPSRC_F); \
 	echo "--- Repacking Py2Exe archive ..."; \
@@ -396,7 +409,8 @@ extract: downloads coderepodls
 	fi; \
 	if [ -f $(WDLDIR)/$(GEOIP_F) ]; then \
 		echo "--- Creating Tor GEOIP file from $(GEOIP_F) source ..."; \
-		$(UNZIP) $(WDLDIR)/$(GEOIP_F) -d tmp; cat tmp/*.csv | cut -d, -f1-3 | sed 's/"//g' > $(ISODIR)/dl/geoip.txt; rm -rf tmp; rm $(ISODIR)/dl/$(GEOIP_F); \
+		$(UNZIP) $(WDLDIR)/$(GEOIP_F) -d tmp; cat tmp/*.csv | cut -d, -f1-3 | sed 's/"//g' > $(ISODIR)/add/GEOIP.TXT; \
+		mkisofs -hide-rr-moved -pad -l -o $(ISODIR)/add/geoip.iso -J $(ISODIR)/add/GEOIP.TXT ; rm -rf tmp; \
 	fi; \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \

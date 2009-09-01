@@ -2,7 +2,7 @@
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
   
-!define VERSION "0.0.2.1"
+!define VERSION "0.0.3.0"
 !define INSTALLER "TorVMBundle.exe"
 !define WEBSITE "https://www.torproject.org/"
 !define LICENSE "LICENSE"
@@ -42,6 +42,7 @@ SectionEnd
 Function ExtractPackages
 	File "license.msi"
 	File "torvm.msi"
+	File "geoip.msi"
 	File "torbutton.msi"
 	File "thandy.msi"
 	File "polipo.msi"
@@ -50,6 +51,7 @@ FunctionEnd
 
 Function RunInstallers
 	ExecWait 'msiexec /i "$INSTDIR\torvm.msi" BUNDLE=1 /qn'
+	ExecWait 'msiexec /i "$INSTDIR\geoip.msi" /qn'
 	ExecWait 'msiexec /i "$INSTDIR\vidalia.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\thandy.msi" NOSC=1 /qn'
 	ExecWait 'msiexec /i "$INSTDIR\polipo.msi" NOSC=1 /qn'
