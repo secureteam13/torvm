@@ -1,6 +1,6 @@
 diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
 --- a/target/linux/x86/config-2.6.28	2009-05-15 10:40:04.149461000 +0000
-+++ b/target/linux/x86/config-2.6.28	2009-09-01 01:16:26.598309604 +0000
++++ b/target/linux/x86/config-2.6.28	2009-09-03 17:12:02.497449021 +0000
 @@ -2,7 +2,6 @@
  CONFIG_4KSTACKS=y
  # CONFIG_60XX_WDT is not set
@@ -253,7 +253,21 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_NSC_GPIO is not set
  CONFIG_NVRAM=y
  # CONFIG_OLPC is not set
-@@ -282,26 +314,30 @@
+@@ -270,6 +302,13 @@
+ CONFIG_PAGEFLAGS_EXTENDED=y
+ CONFIG_PAGE_OFFSET=0xC0000000
+ # CONFIG_PARAVIRT_GUEST is not set
++CONFIG_VIRTUALIZATION=y
++# CONFIG_KVM is not set
++# CONFIG_LGUEST is not set
++CONFIG_VIRTIO=y
++CONFIG_VIRTIO_RING=y
++CONFIG_VIRTIO_PCI=y
++CONFIG_VIRTIO_BALLOON=y
+ # CONFIG_PC8736x_GPIO is not set
+ # CONFIG_PC87413_WDT is not set
+ CONFIG_PCI=y
+@@ -282,26 +321,30 @@
  # CONFIG_PCI_GODIRECT is not set
  # CONFIG_PCI_GOMMCONFIG is not set
  # CONFIG_PCI_GOOLPC is not set
@@ -289,7 +303,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_SCSI_DMA is not set
  CONFIG_SCx200=y
  CONFIG_SCx200HR_TIMER=y
-@@ -318,26 +354,29 @@
+@@ -318,26 +361,29 @@
  # CONFIG_SERIO_RAW is not set
  CONFIG_SERIO_SERPORT=y
  # CONFIG_SLAB is not set
@@ -322,7 +336,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_VM86=y
  CONFIG_VM_EVENT_COUNTERS=y
  # CONFIG_VORTEX is not set
-@@ -349,23 +388,25 @@
+@@ -349,23 +395,25 @@
  # CONFIG_WDT is not set
  CONFIG_X86=y
  CONFIG_X86_32=y
@@ -352,7 +366,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_X86_LOCAL_APIC=y
  # CONFIG_X86_LONGRUN is not set
  CONFIG_X86_MCE=y
-@@ -377,13 +418,13 @@
+@@ -377,13 +425,13 @@
  # CONFIG_X86_P4_CLOCKMOD is not set
  # CONFIG_X86_PAE is not set
  CONFIG_X86_PAT=y
@@ -368,7 +382,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_X86_RESERVE_LOW_64K=y
  # CONFIG_X86_SPEEDSTEP_CENTRINO is not set
  # CONFIG_X86_SPEEDSTEP_ICH is not set
-@@ -392,6 +433,240 @@
+@@ -392,6 +440,240 @@
  CONFIG_X86_UP_APIC=y
  CONFIG_X86_UP_IOAPIC=y
  CONFIG_X86_VERBOSE_BOOTUP=y

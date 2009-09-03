@@ -657,7 +657,7 @@ BOOL entropy(DWORD   len,
     free(*rndbuf);
     *rndbuf = NULL;
   }
-  CloseHandle(provhnd);
+  CryptReleaseContext(provhnd, 0);
   return *rndbuf ? TRUE : FALSE;
 }
 

@@ -39,10 +39,6 @@ BOOL disableuser (LPTSTR  username);
 BOOL initruserprofile(userinfo *info);
                       
 
-/* Obtain entropy from Crypto API */
-BOOL entropy (LPBYTE buf,
-              DWORD  len);
-
 /* Generate RFC2440-style iterated and salted string-to-key for control port
  * Like other point-to-pointer arguments caller is responsible for free'ing
  * hashkey returned on successful invocation.

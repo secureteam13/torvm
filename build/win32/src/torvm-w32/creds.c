@@ -989,8 +989,3 @@ BOOL disableuser (LPTSTR username)
   return TRUE;
 }
 
-BOOL entropy (LPBYTE buf,
-              DWORD  len)
-{
-}
-
