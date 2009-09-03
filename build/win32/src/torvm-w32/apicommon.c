@@ -625,30 +625,39 @@ BOOL rmdirtree(LPSTR path)
   return TRUE;
 }
 
-BOOL base16encode(LPBYTE   data,
-                  DWORD    len,
-                  char **  hexstr)
+/* NOTE: because of possibly insecure/exposed PRNG state on some win32 hosts
+ *       we must read past the first 128Kbytes of generator output before
+ *       using any entropy from the pool.
+ *       http://eprint.iacr.org/2007/419 
+ */
+BOOL entropy(DWORD   len,
+             BYTE ** rndbuf)
 {
-  BOOL retval = FALSE;
-  int olen = 0;
-  *hexstr = NULL;
-  DWORD i;
-  /* sanity check long before we need to worry about int overflow... */
-#define BASE16BUF_MAXSIZE (1024*1024)
-  if ((unsigned long)len > BASE16BUF_MAXSIZE) {
-    lerror ("Bogus call to base16encode with length: %ld. Over sanity limit of %ld", len, BASE16BUF_MAXSIZE);
+  *rndbuf = NULL;
+  HCRYPTPROV provhnd;
+  int retval, i;
+  BYTE *nullbuf = NULL;
+  DWORD nblen = 1024;
+  retval = CryptAcquireContext(&provhnd, NULL, NULL, PROV_RSA_FULL, 0);
+  if (retval == 0) {
+    lerror("CryptAcquireContext failed in call to entropy.");
     return FALSE;
   }
-  olen = len * 2 + 1;
-  *hexstr = malloc(olen);
-  if (NULL == *hexstr) {
-    lerror ("base16encode malloc failed with length: %ld.", olen);
-    return FALSE;
+  rndbuf = malloc(len);
+  nullbuf = malloc(nblen);
+  for (i = 0; i < 128; i++) {
+    if (!CryptGenRandom(provhnd, nblen, nullbuf)) {
+      free(*rndbuf);
+      *rndbuf = NULL;
+      i=128;
+    }
   }
-  for (i = 0; i < len; i++) {
-    snprintf((*hexstr)+(i*2), 3, "%02hhx", (short)data[i]);
+  free(nullbuf);
+  if (*rndbuf && !CryptGenRandom(provhnd, len, *rndbuf)) {
+    free(*rndbuf);
+    *rndbuf = NULL;
   }
-  (*hexstr)[olen-1] = NULL;
-  return retval;
+  CloseHandle(provhnd);
+  return *rndbuf ? TRUE : FALSE;
 }
 

@@ -155,11 +155,7 @@ BOOL tryconnect(const char * addr,
 
 BOOL rmdirtree(LPSTR path);
 
-/* Caller is responsible for free'ing hexstr.  Note that it will be exactly
- * twice as long plus 1 (null terminated) as the input buffer.
- */
-BOOL base16encode(LPBYTE   data,
-                  DWORD    len,
-                  char **  hexstr);
+BOOL entropy(DWORD   len,
+             BYTE ** rndbuf);
 
 #endif /* apicommon_h */

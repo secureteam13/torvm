@@ -16,8 +16,8 @@
 #define TOR_CAP_SYS    "tornpf.sys"
 #define TOR_HDD_FILE   "hdd.img"
 #define TOR_RESTRICTED_USER "Tor"
-#define QEMU_DEF_MEM   32
-#define CAP_MTU        1480
+#define QEMU_DEF_MEM   48
+#define CAP_MTU        1500
 
 /* logging:
  *   lerror to stderr and log file(s) if set
@@ -1490,9 +1490,34 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                    char **               cmdline)
 {
   const DWORD  cmdlen = CMDMAX;
-  *cmdline = malloc(cmdlen);
+  BYTE * rndstr = NULL;
+  char * rndarg = NULL;
+  char * cchr;
+  DWORD rndlen = 32;
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
+  *cmdline = malloc(cmdlen);
+  rndarg = malloc(cmdlen);
+  memset(rndarg, 0, cmdlen);
+  if (!entropy(rndlen, &rndstr)) {
+    free(rndarg);
+    rndarg = NULL;
+  }
+  else {
+    strcpy(rndarg, "ENTROPY=");
+    cchr = rndarg;
+    while (*cchr)
+      cchr++;
+    for (; rndlen >= 0; --rndlen) {
+      snprintf (cchr, 2,
+                "%02X",
+                *(rndstr + rndlen));
+      cchr += 2;
+    }
+    *cchr = 0;
+    free(rndstr);
+    rndstr = NULL;
+  }
 
   /* Give the VM our hostname, since it is assuming the host's place in the network. */
   char * myhostname = getenv("COMPUTERNAME");
@@ -1506,13 +1531,14 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
 
   if (noinit) {
     snprintf (*cmdline, cmdlen -1,
-              "%s NOINIT",
-              basecmds);
+              "%s NOINIT %s",
+              basecmds,
+              rndarg ? rndarg : "");
   }
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1528,7 +1554,8 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 brif->gwmacaddr ? "ARPENT1=" : "",
                 brif->gwmacaddr ? brif->gwmacaddr : "",
                 brif->gwmacaddr ? "-" : "",
-                brif->gwmacaddr ? brif->gateway : "");
+                brif->gwmacaddr ? brif->gateway : "",
+                rndarg ? rndarg : "");
     }
     else {
       /* fallback if we can't get HOSTNAME, use DHCP client name. */
@@ -1536,7 +1563,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s%s%s%s%s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1558,9 +1585,12 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
                 brif->svrmacaddr ? "ARPENT2=" : "",
                 brif->svrmacaddr ? brif->svrmacaddr : "",
                 brif->svrmacaddr ? "-" : "",
-                brif->svrmacaddr ? brif->dhcpsvr : "");
+                brif->svrmacaddr ? brif->dhcpsvr : "",
+                rndarg ? rndarg : "");
     }
   }
+  if (rndarg)
+    free(rndarg);
   return TRUE;
 }
 
@@ -1730,10 +1760,16 @@ DWORD WINAPI runpolipo (LPVOID arg)
   LPTSTR pcfgdestsave = NULL;
   DWORD opts = CREATE_NEW_PROCESS_GROUP;
   HANDLE tmphnd;
+  HANDLE stdin_rd;
+  HANDLE stdin_wr;
+  HANDLE stdout_rd;
+  HANDLE stdout_wr;
+  CHAR * buff = NULL;
+  DWORD bufsz, numread;
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   ZeroMemory( &pi, sizeof(pi) );
-  
+
   if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia", &dir)) {
     lerror ("Unable to build path for Vidalia programs dir."); 
     goto cleanup;
@@ -1764,6 +1800,9 @@ DWORD WINAPI runpolipo (LPVOID arg)
             exe,
             pcfgdest);
 
+  bufsz = 512; /* Write to log in small chunks. */
+  buff = malloc(bufsz);
+
   while (ctx->running) {
     ldebug ("Launching Polipo in dir: %s , with cmd: %s", dir, cmd);
     if( !CreateProcess(NULL,
@@ -1779,11 +1818,29 @@ DWORD WINAPI runpolipo (LPVOID arg)
       lerror ("Failed to launch process.  Error code: %d", GetLastError());
       goto cleanup;
     }
+    CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
+    SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0);
+    CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
+    SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+    si.hStdError = stdout_wr;
+    si.hStdOutput = stdout_wr;
+    si.hStdInput = stdin_rd;
+    si.dwFlags |= STARTF_USESTDHANDLES; 
+  
+    CloseHandle(stdout_wr);
+    CloseHandle(stdin_rd);
+    CloseHandle(stdin_wr);
+
     while ( GetExitCodeProcess(pi.hProcess, &exitcode)
           && (exitcode == STILL_ACTIVE)
           && (ctx->running) ) {
+      while (ReadFile(stdout_rd, buff, bufsz-1, &numread, NULL) && (numread > 0)) {
+        buff[bufsz-1] = 0;
+        ldebug ("polipo std output: %s", buff);
+      }
       Sleep (500);
     }
+    CloseHandle(stdout_rd);
     if (exitcode == STILL_ACTIVE) {
       ldebug ("Shutdown signaled, stopping Polipo.");
       TerminateProcess(pi.hProcess, 0);
@@ -1794,6 +1851,8 @@ DWORD WINAPI runpolipo (LPVOID arg)
   }
 
  cleanup:
+  if(buff)
+    free(buff);
   if(cmd)
     free(cmd);
   if(exe)
@@ -1825,8 +1884,12 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
+  LPTSTR iso = NULL;
+  LPTSTR isoarg = NULL;
   /* If Tor VM Qemu instance is not below normal prio, performance of host suffers. */
-  DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS;
+  /* DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS; */
+  /* DWORD opts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS; */
+  DWORD opts = CREATE_NEW_PROCESS_GROUP | ABOVE_NORMAL_PRIORITY_CLASS;
   DWORD numwritten;
   DWORD pipesz;
   LPTSTR qemubin = NULL;
@@ -1839,6 +1902,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     lerror ("Unable to build path for qemu program.");
     return FALSE;
   }
+  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "geoip.iso", &iso)) {
+    lerror ("Unable to build path for GeoIP data iso.");
+    iso = NULL;
+  }
 
   ZeroMemory( &si, sizeof(si) );
   ZeroMemory( &sattr, sizeof(sattr) );
@@ -1848,11 +1915,18 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL; */
   cmd = malloc(CMDMAX);
+  if (iso) {
+    isoarg = malloc(CMDMAX);
+    snprintf (isoarg, CMDMAX -1,
+              "-hdc \"%s\" ",
+              iso);
+  }
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -hdc fat:../state/rofs -m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img %s-m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
 	      qemubin,
               cmdline,
+              iso ? isoarg : "",
               QEMU_DEF_MEM,
               macaddr,
               bridgeintf,
@@ -1860,9 +1934,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   }
   else {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img -hdc fat:../state/rofs -m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img %s-m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
 	      qemubin,
               cmdline,
+              iso ? isoarg : "",
               QEMU_DEF_MEM,
               macaddr,
               bridgeintf);
@@ -1900,6 +1975,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
                      pi) ) {
     lerror ("Failed to launch Qemu Tor VM process.  Error code: %d", GetLastError());
     return FALSE;
+  }
+  if (iso) {
+    free(iso);
+    free(isoarg);
   }
 /*
   FlushFileBuffers (stdin_wr);

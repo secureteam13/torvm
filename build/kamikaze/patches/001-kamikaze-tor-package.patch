@@ -765,8 +765,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-08-19 09:11:53.693450376 +0000
-@@ -0,0 +1,153 @@
++++ b/package/tor/files/vmrouter.sh	2009-09-03 02:24:59.053455953 +0000
+@@ -0,0 +1,171 @@
 +#!/bin/bash
 +# Utility script for Tor VM routing
 +# Source or run directly.
@@ -777,6 +777,10 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +CLIENT_BLOCK_TCP_PORTS="445 139 138 137 53 25"
 +TOR_TRANSPORT=9095
 +TOR_DNSPORT=9093
++LOG_TO=/var/log/vmrouter.log
++if [ -z $DOLOG ]; then
++  export DOLOG=1
++fi
 +
 +trap_tbl="TRAP"
 +host_filt_tbl="HOSTIN"
@@ -785,128 +789,142 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +cli_postnat_tbl="CLIPOST"
 +
 +vmr_trapon() {
-+  iptables -t filter -I $trap_tbl -j DROP
-+  iptables -t filter -I $trap_tbl -p tcp -j TARPIT
++  if (( DOLOG )); then echo "vmr_trapon:">>$LOG_TO 2>&1; fi
++  iptables -t filter -I $trap_tbl -j DROP >>$LOG_TO 2>&1
++  iptables -t filter -I $trap_tbl -p tcp -j TARPIT >>$LOG_TO 2>&1
 +}
 +
 +vmr_trapoff() {
-+  iptables -t filter --flush $trap_tbl
++  if (( DOLOG )); then echo "vmr_trapoff:">>$LOG_TO 2>&1; fi
++  iptables -t filter --flush $trap_tbl >>$LOG_TO 2>&1
 +}
 +
 +vmr_init() {
-+  iptables -t filter --flush INPUT
-+  iptables -t filter --flush FORWARD
-+  iptables -t filter --flush OUTPUT
-+  iptables -t nat --flush PREROUTING
-+  iptables -t nat --flush POSTROUTING
++  if (( DOLOG )); then echo "vmr_init:">>$LOG_TO 2>&1; fi
++  iptables -t filter --flush INPUT >>$LOG_TO 2>&1
++  iptables -t filter --flush FORWARD >>$LOG_TO 2>&1
++  iptables -t filter --flush OUTPUT >>$LOG_TO 2>&1
++  iptables -t nat --flush PREROUTING >>$LOG_TO 2>&1
++  iptables -t nat --flush POSTROUTING >>$LOG_TO 2>&1
 +
 +  # default policy drop
-+  #iptables -t filter -P INPUT DROP
-+  #iptables -t filter -P FORWARD DROP
-+  #iptables -t filter -P OUTPUT DROP
-+  iptables -t filter -P INPUT ACCEPT
-+  iptables -t filter -P FORWARD ACCEPT
-+  iptables -t filter -P OUTPUT ACCEPT
++  #iptables -t filter -P INPUT DROP >>$LOG_TO 2>&1
++  #iptables -t filter -P FORWARD DROP >>$LOG_TO 2>&1
++  #iptables -t filter -P OUTPUT DROP >>$LOG_TO 2>&1
++  iptables -t filter -P INPUT ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -P FORWARD ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -P OUTPUT ACCEPT >>$LOG_TO 2>&1
 +
 +  # trap table is the global on/off switch for traffic
 +  # use a trap table so that tarpit or drop can be set
 +  # as atomic op across input/forward/output.
-+  iptables -t filter -N $trap_tbl
-+  iptables -t filter -I INPUT -g $trap_tbl
-+  iptables -t filter -I FORWARD -g $trap_tbl
-+  iptables -t filter -I OUTPUT -g $trap_tbl
++  iptables -t filter -N $trap_tbl >>$LOG_TO 2>&1
++  iptables -t filter -I INPUT -g $trap_tbl >>$LOG_TO 2>&1
++  iptables -t filter -I FORWARD -g $trap_tbl >>$LOG_TO 2>&1
++  iptables -t filter -I OUTPUT -g $trap_tbl >>$LOG_TO 2>&1
 +
 +  # host filter traffic things to/from the VM
-+  iptables -t filter -N $host_filt_tbl
-+  iptables -t filter -A INPUT -g $host_filt_tbl
-+  iptables -t filter -A $host_filt_tbl -j RETURN
++  iptables -t filter -N $host_filt_tbl >>$LOG_TO 2>&1
++  iptables -t filter -A INPUT -g $host_filt_tbl >>$LOG_TO 2>&1
++  iptables -t filter -A $host_filt_tbl -j RETURN >>$LOG_TO 2>&1
 +
 +  # client tables for routed traffic
-+  iptables -t filter -N $cli_filt_tbl
-+  iptables -t filter -A FORWARD -g $cli_filt_tbl
-+  iptables -t nat -N $cli_prenat_tbl
-+  iptables -t nat -A PREROUTING -g $cli_prenat_tbl
-+  iptables -t nat -N $cli_postnat_tbl
-+  iptables -t nat -A POSTROUTING -g $cli_postnat_tbl
++  iptables -t filter -N $cli_filt_tbl >>$LOG_TO 2>&1
++  iptables -t filter -A FORWARD -g $cli_filt_tbl >>$LOG_TO 2>&1
++  iptables -t nat -N $cli_prenat_tbl >>$LOG_TO 2>&1
++  iptables -t nat -A PREROUTING -g $cli_prenat_tbl >>$LOG_TO 2>&1
++  iptables -t nat -N $cli_postnat_tbl >>$LOG_TO 2>&1
++  iptables -t nat -A POSTROUTING -g $cli_postnat_tbl >>$LOG_TO 2>&1
 +
 +  # log default drop targets
-+  iptables -t filter -A INPUT -j LOG
-+  iptables -t filter -A FORWARD -j LOG
-+  iptables -t filter -A OUTPUT -j LOG
++  iptables -t filter -A INPUT -j LOG >>$LOG_TO 2>&1
++  iptables -t filter -A FORWARD -j LOG >>$LOG_TO 2>&1
++  iptables -t filter -A OUTPUT -j LOG >>$LOG_TO 2>&1
 +}
 +
 +vmr_fwdsetup() {
++  if (( DOLOG )); then echo "vmr_fwdsetup:">>$LOG_TO 2>&1; fi
 +  # expects default route interface argument
 +  if [ -z "$1" ]; then
 +    return $FAIL
 +  fi
-+  iptables -t filter -I $cli_filt_tbl -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-+  iptables -t filter -I $cli_filt_tbl -m state --state RELATED,ESTABLISHED -j ACCEPT
-+  iptables -t filter -I $cli_filt_tbl -m state --state INVALID -j DROP
++  iptables -t filter -I $cli_filt_tbl -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >>$LOG_TO 2>&1
++  iptables -t filter -I $cli_filt_tbl -m state --state RELATED,ESTABLISHED -j ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -I $cli_filt_tbl -m state --state INVALID -j DROP >>$LOG_TO 2>&1
 +  for PORTNUM in $CLIENT_BLOCK_TCP_PORTS; do
-+    iptables -t filter -I $cli_filt_tbl -p tcp --dport $PORTNUM -j DROP
++    iptables -t filter -I $cli_filt_tbl -p tcp --dport $PORTNUM -j DROP >>$LOG_TO 2>&1
 +  done
-+  iptables -t filter -A $cli_filt_tbl -j RETURN
-+  iptables -t nat -I $cli_postnat_tbl -o "$1" -j MASQUERADE
-+  iptables -t filter -A OUTPUT -o "$1" -j ACCEPT
-+  iptables -t filter -I $host_filt_tbl -i "$1" -m state --state ESTABLISHED,RELATED -j ACCEPT
++  iptables -t filter -A $cli_filt_tbl -j RETURN >>$LOG_TO 2>&1
++  iptables -t nat -I $cli_postnat_tbl -o "$1" -j MASQUERADE >>$LOG_TO 2>&1
++  iptables -t filter -A OUTPUT -o "$1" -j ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -I $host_filt_tbl -i "$1" -m state --state ESTABLISHED,RELATED -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_fwdadd() {
++  if (( DOLOG )); then echo "vmr_fwdadd:">>$LOG_TO 2>&1; fi
 +  # expects interface to forward for as argument
 +  if [ -z "$1" ]; then
 +    return $FAIL
 +  fi
-+  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT
-+  iptables -t nat -A $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT >>$LOG_TO 2>&1
 +}
 +
 +vmr_fwddel() {
++  if (( DOLOG )); then echo "vmr_fwddel:">>$LOG_TO 2>&1; fi
 +  # expects interface to forward for as argument
 +  if [ -z "$1" ]; then
 +    return $FAIL
 +  fi
-+  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT
-+  iptables -t nat -D $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT >>$LOG_TO 2>&1
 +}
 +
 +vmr_opendhcp() {
++  if (( DOLOG )); then echo "vmr_opendhcp:">>$LOG_TO 2>&1; fi
 +  # expects dhcp interface as argument
 +  if [ -z "$1" ]; then
 +    return $FAIL
 +  fi
-+  iptables -t filter -I $host_filt_tbl -i "$1" -p udp --dport 67:68 --sport 67:68 -j ACCEPT
++  iptables -t filter -I $host_filt_tbl -i "$1" -p udp --dport 67:68 --sport 67:68 -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_opentcp() {
-+  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP
-+  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
++  if (( DOLOG )); then echo "vmr_opentcp:">>$LOG_TO 2>&1; fi
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP >>$LOG_TO 2>&1
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_openudp() {
-+  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP
-+  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
++  if (( DOLOG )); then echo "vmr_openudp:">>$LOG_TO 2>&1; fi
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP >>$LOG_TO 2>&1
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_closetcp() {
-+  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT
-+  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP
++  if (( DOLOG )); then echo "vmr_closetcp:">>$LOG_TO 2>&1; fi
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +}
 +
 +vmr_closeudp() {
-+  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT
-+  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP
++  if (( DOLOG )); then echo "vmr_closeudp:">>$LOG_TO 2>&1; fi
++  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
++  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +}
 +
 +vmr_redirtcp() {
-+  iptables -t nat -A $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4"
++  if (( DOLOG )); then echo "vmr_redirtcp:">>$LOG_TO 2>&1; fi
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4" >>$LOG_TO 2>&1
 +}
 +
 +vmr_undirtcp() {
-+  iptables -t nat -D $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4"
++  if (( DOLOG )); then echo "vmr_undirtcp:">>$LOG_TO 2>&1; fi
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4" >>$LOG_TO 2>&1
 +}
 +
 +vmr_setarp() {
++  if (( DOLOG )); then echo "vmr_setarp:">>$LOG_TO 2>&1; fi
 +  # expects interface, ip, mac arguments
 +  if [ -z "$1" ]; then
 +    return $FAIL
@@ -917,6 +935,6 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  if [ -z "$3" ]; then
 +    return $FAIL
 +  fi
-+  arp -i "$1" -s "$2" "$3"
++  arp -i "$1" -s "$2" "$3" >>$LOG_TO 2>&1
 +}
 +
