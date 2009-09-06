@@ -309,8 +309,8 @@ diff -Naur a/package/base-files/files/etc/config/system b/package/base-files/fil
 -	option timezone	UTC
 diff -Naur a/package/base-files/files/etc/device_table.txt b/package/base-files/files/etc/device_table.txt
 --- a/package/base-files/files/etc/device_table.txt	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/base-files/files/etc/device_table.txt	2009-02-01 09:30:07.194358000 +0000
-@@ -0,0 +1,44 @@
++++ b/package/base-files/files/etc/device_table.txt	2009-09-05 23:00:56.137449152 +0000
+@@ -0,0 +1,52 @@
 +#<name>		<type>	<mode>	<uid>	<gid>	<major>	<minor>	<start>	<inc>	<count>
 +#/dev		d	755	0	0	-	-	-	-	-
 +#/dev		d	755	0	0	-	-	-	-	-
@@ -355,6 +355,14 @@ diff -Naur a/package/base-files/files/etc/device_table.txt b/package/base-files/
 +/dev/sdh	b	640	0	0	8	113	1	1	15
 +/dev/sg	c	640	0	0	21	0	0	1	15
 +/dev/scd	b	640	0	0	11	0	0	1	15
++/dev/vda	b	640	0	0	254	0	0	0	-
++/dev/vda	b	640	0	0	254	1	1	1	15
++/dev/vdb	b	640	0	0	254	16	0	0	-
++/dev/vdb	b	640	0	0	254	17	1	1	15
++/dev/vdc	b	640	0	0	254	32	0	0	-
++/dev/vdc	b	640	0	0	254	33	1	1	15
++/dev/vdd	b	640	0	0	254	48	0	0	-
++/dev/vdd	b	640	0	0	254	49	1	1	15
 diff -Naur a/package/base-files/files/etc/diag.sh b/package/base-files/files/etc/diag.sh
 --- a/package/base-files/files/etc/diag.sh	2009-04-30 21:00:57.896294000 +0000
 +++ b/package/base-files/files/etc/diag.sh	1970-01-01 00:00:00.000000000 +0000

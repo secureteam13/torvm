@@ -494,8 +494,8 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +TransListenAddress 0.0.0.0
 diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 --- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torvminit	2009-08-19 09:11:07.321473102 +0000
-@@ -0,0 +1,267 @@
++++ b/package/tor/files/torvminit	2009-09-05 23:17:14.921449320 +0000
+@@ -0,0 +1,285 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
 +# See LICENSE file for rights and terms.
@@ -549,7 +549,7 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +mkdir -p /dev/pts /dev/shm
 +mount devpts /dev/pts -t devpts
 +
-+# attempt mount of persistent virtual disk
++# setup device files
 +mdbin=`which makedevs`
 +devtable=/etc/device_table.txt
 +if [ -x $mdbin ]; then 
@@ -560,14 +560,18 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +    MAKEDEVS >/dev/null 2>&1
 +  fi
 +fi
-+# last attempt: if no disk exists, assume hda1 and create manually with mknod.
-+hddev=/dev/hda1
-+hdopt="b 3 1"
++
++# check for paravirt disk device
 +hdmntopt="-onoatime,nodiratime"
-+if [ ! -e $hddev ]; then
-+  grep `basename $hddev` /proc/partitions >/dev/null 2>&1
++grep vda1 /proc/partitions >/dev/null 2>&1
++if [ $? -eq 0 ]; then
++  hddev=/dev/vda1
++else
++  grep hda1 /proc/partitions >/dev/null 2>&1
 +  if [ $? -eq 0 ]; then
-+    mknod $hddev $hdopt
++    hddev=/dev/hda1
++  else
++    hddev=/dev/sda1
 +  fi
 +fi
 +mkdir /home
@@ -598,11 +602,25 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 +
 +# if a read-only directory is available to mount from host OS mnt it too.
-+rofsdev=/dev/hdc1
++rodrives="sdb sda hda hdc vdb vdc"
++rofsdev=""
++for RODR in $rodrives; do
++  grep $RODR /proc/partitions >/dev/null 2>&1
++  if [ $? -eq 0 ]; then
++    grep "${RODR}1" /proc/partitions >/dev/null 2>&1
++    if [ $? -ne 0 ]; then
++      rofsdev="/dev/${RODR}"
++    fi
++  fi
++done
++# If the VM software (Qemu) doesn't show CDROM as block dev, fallback to hdc
++if [[ "$rofsdev" == "" ]]; then
++  rofsdev=/dev/hdc
++fi
 +rofsopt="-oro,noexec,nodev"
 +if [ -e $rofsdev ]; then
 +  mkdir /rofs
-+  mount $rofsopt $rofsdev /rofs 
++  mount $rofsopt $rofsdev /rofs >/dev/null 2>&1
 +  if [ $? -ne 0 ]; then
 +    rmdir /rofs
 +  fi
@@ -765,9 +783,9 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-09-03 02:24:59.053455953 +0000
-@@ -0,0 +1,171 @@
-+#!/bin/bash
++++ b/package/tor/files/vmrouter.sh	2009-09-06 00:49:21.396238259 +0000
+@@ -0,0 +1,174 @@
++#!/bin/sh
 +# Utility script for Tor VM routing
 +# Source or run directly.
 +
@@ -781,6 +799,9 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +if [ -z $DOLOG ]; then
 +  export DOLOG=1
 +fi
++if [ $DOLOG -eq 0 ]; then
++  LOG_TO=/dev/null
++fi
 +
 +trap_tbl="TRAP"
 +host_filt_tbl="HOSTIN"
@@ -789,18 +810,18 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +cli_postnat_tbl="CLIPOST"
 +
 +vmr_trapon() {
-+  if (( DOLOG )); then echo "vmr_trapon:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_trapon:">>$LOG_TO 2>&1; fi
 +  iptables -t filter -I $trap_tbl -j DROP >>$LOG_TO 2>&1
 +  iptables -t filter -I $trap_tbl -p tcp -j TARPIT >>$LOG_TO 2>&1
 +}
 +
 +vmr_trapoff() {
-+  if (( DOLOG )); then echo "vmr_trapoff:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_trapoff:">>$LOG_TO 2>&1; fi
 +  iptables -t filter --flush $trap_tbl >>$LOG_TO 2>&1
 +}
 +
 +vmr_init() {
-+  if (( DOLOG )); then echo "vmr_init:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_init:">>$LOG_TO 2>&1; fi
 +  iptables -t filter --flush INPUT >>$LOG_TO 2>&1
 +  iptables -t filter --flush FORWARD >>$LOG_TO 2>&1
 +  iptables -t filter --flush OUTPUT >>$LOG_TO 2>&1
@@ -843,9 +864,9 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +}
 +
 +vmr_fwdsetup() {
-+  if (( DOLOG )); then echo "vmr_fwdsetup:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_fwdsetup:">>$LOG_TO 2>&1; fi
 +  # expects default route interface argument
-+  if [ -z "$1" ]; then
++  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
 +  iptables -t filter -I $cli_filt_tbl -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >>$LOG_TO 2>&1
@@ -861,9 +882,9 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +}
 +
 +vmr_fwdadd() {
-+  if (( DOLOG )); then echo "vmr_fwdadd:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_fwdadd:">>$LOG_TO 2>&1; fi
 +  # expects interface to forward for as argument
-+  if [ -z "$1" ]; then
++  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
 +  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
@@ -871,9 +892,9 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +}
 +
 +vmr_fwddel() {
-+  if (( DOLOG )); then echo "vmr_fwddel:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_fwddel:">>$LOG_TO 2>&1; fi
 +  # expects interface to forward for as argument
-+  if [ -z "$1" ]; then
++  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
@@ -881,58 +902,58 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +}
 +
 +vmr_opendhcp() {
-+  if (( DOLOG )); then echo "vmr_opendhcp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_opendhcp:">>$LOG_TO 2>&1; fi
 +  # expects dhcp interface as argument
-+  if [ -z "$1" ]; then
++  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
 +  iptables -t filter -I $host_filt_tbl -i "$1" -p udp --dport 67:68 --sport 67:68 -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_opentcp() {
-+  if (( DOLOG )); then echo "vmr_opentcp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_opentcp:">>$LOG_TO 2>&1; fi
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_openudp() {
-+  if (( DOLOG )); then echo "vmr_openudp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_openudp:">>$LOG_TO 2>&1; fi
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +}
 +
 +vmr_closetcp() {
-+  if (( DOLOG )); then echo "vmr_closetcp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_closetcp:">>$LOG_TO 2>&1; fi
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +}
 +
 +vmr_closeudp() {
-+  if (( DOLOG )); then echo "vmr_closeudp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_closeudp:">>$LOG_TO 2>&1; fi
 +  iptables -t filter -D $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j ACCEPT >>$LOG_TO 2>&1
 +  iptables -t filter -I $host_filt_tbl -i "$1" -d "$2" -p udp --dport "$3" -j DROP >>$LOG_TO 2>&1
 +}
 +
 +vmr_redirtcp() {
-+  if (( DOLOG )); then echo "vmr_redirtcp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_redirtcp:">>$LOG_TO 2>&1; fi
 +  iptables -t nat -A $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4" >>$LOG_TO 2>&1
 +}
 +
 +vmr_undirtcp() {
-+  if (( DOLOG )); then echo "vmr_undirtcp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_undirtcp:">>$LOG_TO 2>&1; fi
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -d "$2" -p tcp --dport "$3" -j REDIRECT --to "$4" >>$LOG_TO 2>&1
 +}
 +
 +vmr_setarp() {
-+  if (( DOLOG )); then echo "vmr_setarp:">>$LOG_TO 2>&1; fi
++  if [ $DOLOG -eq 1 ]; then echo "vmr_setarp:">>$LOG_TO 2>&1; fi
 +  # expects interface, ip, mac arguments
-+  if [ -z "$1" ]; then
++  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
-+  if [ -z "$2" ]; then
++  if [ -z $2 ]; then
 +    return $FAIL
 +  fi
-+  if [ -z "$3" ]; then
++  if [ -z $3 ]; then
 +    return $FAIL
 +  fi
 +  arp -i "$1" -s "$2" "$3" >>$LOG_TO 2>&1

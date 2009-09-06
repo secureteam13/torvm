@@ -633,17 +633,17 @@ BOOL rmdirtree(LPSTR path)
 BOOL entropy(DWORD   len,
              BYTE ** rndbuf)
 {
-  *rndbuf = NULL;
   HCRYPTPROV provhnd;
   int retval, i;
   BYTE *nullbuf = NULL;
   DWORD nblen = 1024;
+  *rndbuf = NULL;
   retval = CryptAcquireContext(&provhnd, NULL, NULL, PROV_RSA_FULL, 0);
   if (retval == 0) {
     lerror("CryptAcquireContext failed in call to entropy.");
     return FALSE;
   }
-  rndbuf = malloc(len);
+  *rndbuf = malloc(len);
   nullbuf = malloc(nblen);
   for (i = 0; i < 128; i++) {
     if (!CryptGenRandom(provhnd, nblen, nullbuf)) {

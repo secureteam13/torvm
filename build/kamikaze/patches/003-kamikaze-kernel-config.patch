@@ -1,6 +1,6 @@
 diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
 --- a/target/linux/x86/config-2.6.28	2009-05-15 10:40:04.149461000 +0000
-+++ b/target/linux/x86/config-2.6.28	2009-09-03 17:12:02.497449021 +0000
++++ b/target/linux/x86/config-2.6.28	2009-09-05 22:40:47.701450885 +0000
 @@ -2,7 +2,6 @@
  CONFIG_4KSTACKS=y
  # CONFIG_60XX_WDT is not set
@@ -111,7 +111,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_GENERIC_IOMAP=y
  CONFIG_GENERIC_ISA_DMA=y
  # CONFIG_GENERIC_TIME_VSYSCALL is not set
-@@ -126,36 +137,46 @@
+@@ -126,36 +137,47 @@
  CONFIG_HAVE_ARCH_TRACEHOOK=y
  CONFIG_HAVE_ATOMIC_IOMAP=y
  # CONFIG_HAVE_CPUMASK_OF_CPU_MAP is not set
@@ -159,18 +159,18 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_HT_IRQ=y
  # CONFIG_HUGETLBFS is not set
  CONFIG_HW_CONSOLE=y
--CONFIG_HW_RANDOM=y
-+# CONFIG_HW_RANDOM is not set
+ CONFIG_HW_RANDOM=y
  # CONFIG_HW_RANDOM_AMD is not set
 -CONFIG_HW_RANDOM_GEODE=y
 +# CONFIG_HW_RANDOM_GEODE is not set
  # CONFIG_HW_RANDOM_INTEL is not set
 -CONFIG_HW_RANDOM_VIA=y
 +# CONFIG_HW_RANDOM_VIA is not set
++CONFIG_HW_RANDOM_VIRTIO=y
  # CONFIG_I2C is not set
  # CONFIG_I6300ESB_WDT is not set
  # CONFIG_I8K is not set
-@@ -170,7 +191,7 @@
+@@ -170,7 +192,7 @@
  CONFIG_IDE_GENERIC=y
  # CONFIG_IDE_PROC_FS is not set
  CONFIG_IDE_TIMINGS=y
@@ -179,7 +179,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_INPUT=y
  CONFIG_INPUT_KEYBOARD=y
  CONFIG_INPUT_MOUSE=y
-@@ -178,6 +199,8 @@
+@@ -178,6 +200,8 @@
  CONFIG_INPUT_MOUSEDEV_PSAUX=y
  CONFIG_INPUT_MOUSEDEV_SCREEN_X=1024
  CONFIG_INPUT_MOUSEDEV_SCREEN_Y=768
@@ -188,7 +188,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_IOMMU_HELPER is not set
  CONFIG_IO_DELAY_0X80=y
  # CONFIG_IO_DELAY_0XED is not set
-@@ -195,6 +218,9 @@
+@@ -195,6 +219,9 @@
  # CONFIG_IT87_WDT is not set
  # CONFIG_ITCO_WDT is not set
  CONFIG_KALLSYMS=y
@@ -198,7 +198,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_KEXEC=y
  CONFIG_KEYBOARD_ATKBD=y
  # CONFIG_KEYBOARD_LKKBD is not set
-@@ -204,13 +230,15 @@
+@@ -204,13 +231,15 @@
  # CONFIG_KEYBOARD_XTKBD is not set
  CONFIG_KTIME_SCALAR=y
  # CONFIG_LANCE is not set
@@ -216,7 +216,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_MACHZ_WDT is not set
  # CONFIG_MACINTOSH_DRIVERS is not set
  CONFIG_MATH_EMULATION=y
-@@ -231,15 +259,16 @@
+@@ -231,15 +260,16 @@
  # CONFIG_MK6 is not set
  # CONFIG_MK7 is not set
  # CONFIG_MK8 is not set
@@ -239,7 +239,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_MOUSE_SERIAL is not set
  # CONFIG_MOUSE_VSXXXAA is not set
  # CONFIG_MPENTIUM4 is not set
-@@ -259,10 +288,13 @@
+@@ -259,17 +289,36 @@
  # CONFIG_MWINCHIPC6 is not set
  CONFIG_NAMESPACES=y
  # CONFIG_NATSEMI is not set
@@ -253,21 +253,31 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_NSC_GPIO is not set
  CONFIG_NVRAM=y
  # CONFIG_OLPC is not set
-@@ -270,6 +302,13 @@
+ # CONFIG_OPTIMIZE_INLINING is not set
  CONFIG_PAGEFLAGS_EXTENDED=y
  CONFIG_PAGE_OFFSET=0xC0000000
- # CONFIG_PARAVIRT_GUEST is not set
+-# CONFIG_PARAVIRT_GUEST is not set
 +CONFIG_VIRTUALIZATION=y
++CONFIG_PARAVIRT_GUEST=y
++# CONFIG_VMI is not set
 +# CONFIG_KVM is not set
-+# CONFIG_LGUEST is not set
++CONFIG_KVM_CLOCK=y
++# CONFIG_KVM_GUEST is not set
++CONFIG_LGUEST=y
++CONFIG_LGUEST_GUEST=y
++CONFIG_PARAVIRT=y
++CONFIG_PARAVIRT_CLOCK=y
 +CONFIG_VIRTIO=y
 +CONFIG_VIRTIO_RING=y
 +CONFIG_VIRTIO_PCI=y
 +CONFIG_VIRTIO_BALLOON=y
++CONFIG_VIRTIO_BLK=y
++CONFIG_VIRTIO_NET=y
++CONFIG_VIRTIO_CONSOLE=y
  # CONFIG_PC8736x_GPIO is not set
  # CONFIG_PC87413_WDT is not set
  CONFIG_PCI=y
-@@ -282,26 +321,30 @@
+@@ -282,26 +331,30 @@
  # CONFIG_PCI_GODIRECT is not set
  # CONFIG_PCI_GOMMCONFIG is not set
  # CONFIG_PCI_GOOLPC is not set
@@ -303,7 +313,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  # CONFIG_SCSI_DMA is not set
  CONFIG_SCx200=y
  CONFIG_SCx200HR_TIMER=y
-@@ -318,26 +361,29 @@
+@@ -318,26 +371,29 @@
  # CONFIG_SERIO_RAW is not set
  CONFIG_SERIO_SERPORT=y
  # CONFIG_SLAB is not set
@@ -336,7 +346,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_VM86=y
  CONFIG_VM_EVENT_COUNTERS=y
  # CONFIG_VORTEX is not set
-@@ -349,23 +395,25 @@
+@@ -349,23 +405,25 @@
  # CONFIG_WDT is not set
  CONFIG_X86=y
  CONFIG_X86_32=y
@@ -366,7 +376,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_X86_LOCAL_APIC=y
  # CONFIG_X86_LONGRUN is not set
  CONFIG_X86_MCE=y
-@@ -377,13 +425,13 @@
+@@ -377,13 +435,13 @@
  # CONFIG_X86_P4_CLOCKMOD is not set
  # CONFIG_X86_PAE is not set
  CONFIG_X86_PAT=y
@@ -382,7 +392,7 @@ diff -Naur a/target/linux/x86/config-2.6.28 b/target/linux/x86/config-2.6.28
  CONFIG_X86_RESERVE_LOW_64K=y
  # CONFIG_X86_SPEEDSTEP_CENTRINO is not set
  # CONFIG_X86_SPEEDSTEP_ICH is not set
-@@ -392,6 +440,240 @@
+@@ -392,6 +450,240 @@
  CONFIG_X86_UP_APIC=y
  CONFIG_X86_UP_IOAPIC=y
  CONFIG_X86_VERBOSE_BOOTUP=y

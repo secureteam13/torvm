@@ -1493,7 +1493,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   BYTE * rndstr = NULL;
   char * rndarg = NULL;
   char * cchr;
-  DWORD rndlen = 32;
+  int rndlen = 32;
   const char * basecmds = "quiet loglevel=0 clocksource=hpet";
   const char * dbgcmds  = "loglevel=9 clocksource=hpet DEBUGINIT";
   *cmdline = malloc(cmdlen);
@@ -1508,11 +1508,12 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
     cchr = rndarg;
     while (*cchr)
       cchr++;
-    for (; rndlen >= 0; --rndlen) {
-      snprintf (cchr, 2,
+    while (rndlen > 0) {
+      snprintf (cchr, 3,
                 "%02X",
-                *(rndstr + rndlen));
+                rndstr[rndlen-1]);
       cchr += 2;
+      rndlen--;
     }
     *cchr = 0;
     free(rndstr);
@@ -1538,7 +1539,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   else {
     if (brif->isdhcp == FALSE) {
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1563,7 +1564,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
         myhostname = brif->dhcpname;
 
       snprintf (*cmdline, cmdlen -1,
-                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s%s%s%s%s",
+                "%s %s%s %s IP=%s MASK=%s GW=%s MAC=%s MTU=%d PRIVIP=%s ISDHCP DHCPSVR=%s DHCPNAME=%s CTLSOCK=%s:9051 HASHPW=%s %s%s%s%s %s%s%s%s %s",
                 usedebug ? dbgcmds : basecmds,
                 myhostname ? "USEHOSTNAME=" : "",
                 myhostname ? myhostname : "",
@@ -1618,7 +1619,7 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   TCHAR *cmd = malloc(CMDMAX);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, CMDMAX -1,
-            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -hda ../state/hdd.img -m %d -sdl -vga std", qemubin, QEMU_DEF_MEM);
+            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -drive file=../state/hdd.img,if=virtio -m %d -sdl -vga std", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1921,9 +1922,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
               "-hdc \"%s\" ",
               iso);
   }
+  ldebug ("Qemu invocation with cmdline: %s and iso path: %s", cmdline, iso ? iso : "");
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img %s-m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\" -net nic,vlan=0,model=pcnet -net tap,vlan=0,ifname=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=virtio %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\" -net nic,model=virtio -net tap,ifname=\"%s\"",
 	      qemubin,
               cmdline,
               iso ? isoarg : "",
@@ -1934,7 +1936,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   }
   else {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -hda ../state/hdd.img %s-m %d -sdl -vga std -net nic,model=pcnet,macaddr=%s -net pcap,devicename=\"%s\"",
+              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=virtio %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\"",
 	      qemubin,
               cmdline,
               iso ? isoarg : "",
