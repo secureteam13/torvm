@@ -18,6 +18,7 @@ md %DDIR%
 cd %DDIR%
 md bin
 cd /d %ISODRV%
+copy pkgenv.sh %DDRV%%DDIR%\
 cd bin
 copy *.* %DDRV%%DDIR%\bin\
 cd /d %DDRV%

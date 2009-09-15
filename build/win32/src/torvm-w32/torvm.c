@@ -233,6 +233,7 @@ static void dispmsg(LPTSTR msg)
     WriteFile(hnd, msg, strlen(msg), NULL, NULL);
     msg = "\r\n";
     WriteFile(hnd, msg, strlen(msg), NULL, NULL);
+    FlushFileBuffers(hnd);
   }
 }
 
@@ -632,7 +633,6 @@ BOOL uninstalltornpf (void)
 
 BOOL savenetconfig(void)
 {
-#define READSIZE 4096
   HANDLE fh = NULL;
   HANDLE stdin_rd = NULL;
   HANDLE stdin_wr = NULL;
@@ -721,8 +721,8 @@ BOOL savenetconfig(void)
   CloseHandle(stdin_rd);
   CloseHandle(stdin_wr);
 
-  buff = malloc(READSIZE);
-  while (ReadFile(stdout_rd, buff, READSIZE, &numread, NULL) && (numread > 0)) {
+  buff = malloc(CMDMAX);
+  while (ReadFile(stdout_rd, buff, CMDMAX, &numread, NULL) && (numread > 0)) {
     WriteFile(fh, buff, numread, &numwritten, NULL);
     ldebug ("Read %d bytes from net dump and wrote %d to save file.", numread, numwritten);
   }
@@ -740,13 +740,20 @@ BOOL savenetconfig(void)
 
 BOOL restorenetconfig(void)
 {
+  HANDLE stdin_rd = NULL;
+  HANDLE stdin_wr = NULL;
+  HANDLE stdout_rd = NULL;
+  HANDLE stdout_wr = NULL;
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
+  SECURITY_ATTRIBUTES sattr;
   LPTSTR cmd = NULL;
   LPTSTR dir = NULL;
   LPTSTR savepath = NULL;
   DWORD exitcode;
   DWORD opts = 0;
+  DWORD numread;
+  CHAR * buff = NULL;
 
   if (getosversion() >= OS_VISTA) {
     cmd = "\"netsh.exe\" advfirewall import \"" TOR_VM_STATE "\\firewall.wfw\"";
@@ -765,8 +772,22 @@ BOOL restorenetconfig(void)
 
   ZeroMemory( &pi, sizeof(pi) );
   ZeroMemory( &si, sizeof(si) );
+  ZeroMemory( &sattr, sizeof(sattr) );
   si.cb = sizeof(si);
+  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sattr.bInheritHandle = TRUE;
   cmd = "\"netsh.exe\" exec netcfg.save";
+
+  CreatePipe(&stdout_rd, &stdout_wr, &sattr, 0);
+  SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0);
+
+  CreatePipe(&stdin_rd, &stdin_wr, &sattr, 0);
+  SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+
+  si.hStdError = stdout_wr;
+  si.hStdOutput = stdout_wr;
+  si.hStdInput = stdin_rd;
+  si.dwFlags |= STARTF_USESTDHANDLES;
 
   if( !CreateProcess(NULL,
                      cmd,
@@ -781,10 +802,21 @@ BOOL restorenetconfig(void)
     lerror ("Failed to launch process.  Error code: %d", GetLastError());
   }
 
+  CloseHandle(stdout_wr);
+  CloseHandle(stdin_rd);
+  CloseHandle(stdin_wr);
+
+  buff = malloc(CMDMAX);
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
+    while (ReadFile(stdout_rd, buff, CMDMAX-1, &numread, NULL) && (numread > 0)) {
+      buff[numread] = 0;
+      ldebug("Restore net config cmd stdout: %s", buff);
+    }
     Sleep (500);
   }
 
+  free(buff);
+  CloseHandle(stdout_rd);
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
 
@@ -1619,7 +1651,7 @@ BOOL spawnprocess (PROCESS_INFORMATION * pi,
   TCHAR *cmd = malloc(CMDMAX);
   /* TODO: clean this up once the msys path munging works.  kernel and hdd need to be unixy paths */
   snprintf (cmd, CMDMAX -1,
-            "\"%s\" -L . -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -drive file=../state/hdd.img,if=virtio -m %d -sdl -vga std", qemubin, QEMU_DEF_MEM);
+            "\"%s\" -L . -no-kqemu -clock dynticks -no-reboot -kernel ../lib/vmlinuz -append \"loglevel=9 NOINIT\" -drive file=../state/hdd.img,if=virtio -m %d -sdl -vga std", qemubin, QEMU_DEF_MEM);
   ldebug ("Launching Qemu with cmd: %s", cmd);
   if( !CreateProcess(NULL,
                      cmd,
@@ -1836,7 +1868,7 @@ DWORD WINAPI runpolipo (LPVOID arg)
           && (exitcode == STILL_ACTIVE)
           && (ctx->running) ) {
       while (ReadFile(stdout_rd, buff, bufsz-1, &numread, NULL) && (numread > 0)) {
-        buff[bufsz-1] = 0;
+        buff[numread] = 0;
         ldebug ("polipo std output: %s", buff);
       }
       Sleep (500);
@@ -1887,10 +1919,12 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   LPTSTR dir = NULL;
   LPTSTR iso = NULL;
   LPTSTR isoarg = NULL;
+  LPTSTR drvtype = "virtio"; /* ide, virtio, scsi, etc. */
   /* If Tor VM Qemu instance is not below normal prio, performance of host suffers. */
   /* DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS; */
   /* DWORD opts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS; */
-  DWORD opts = CREATE_NEW_PROCESS_GROUP | ABOVE_NORMAL_PRIORITY_CLASS;
+  /* DWORD opts = CREATE_NEW_PROCESS_GROUP | ABOVE_NORMAL_PRIORITY_CLASS; */
+  DWORD opts = CREATE_NEW_PROCESS_GROUP;
   DWORD numwritten;
   DWORD pipesz;
   LPTSTR qemubin = NULL;
@@ -1925,9 +1959,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   ldebug ("Qemu invocation with cmdline: %s and iso path: %s", cmdline, iso ? iso : "");
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=virtio %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\" -net nic,model=virtio -net tap,ifname=\"%s\"",
+              "\"%s\" -name \"Tor VM\" -L . -no-kqemu -clock dynticks -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=%s %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\" -net nic,model=virtio -net tap,ifname=\"%s\"",
 	      qemubin,
               cmdline,
+              drvtype,
               iso ? isoarg : "",
               QEMU_DEF_MEM,
               macaddr,
@@ -1936,9 +1971,10 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   }
   else {
     snprintf (cmd, CMDMAX -1,
-              "\"%s\" -name \"Tor VM \" -L . -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=virtio %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\"",
+              "\"%s\" -name \"Tor VM\" -L . -no-kqemu -clock dynticks -no-reboot -kernel ../lib/vmlinuz -append \"%s\" -drive file=../state/hdd.img,if=%s %s-m %d -sdl -vga std -net nic,model=virtio,macaddr=%s -net pcap,devicename=\"%s\"",
 	      qemubin,
               cmdline,
+              drvtype,
               iso ? isoarg : "",
               QEMU_DEF_MEM,
               macaddr,
@@ -2506,12 +2542,6 @@ int main(int argc, char **argv)
         lerror ("Unable to disable windows firewall.");
       }
     }
-    if (! cleararpcache()) {
-      lerror ("Unable to clear arp cache.");
-    }
-    if (! flushdns()) {
-      lerror ("Unable to flush cached DNS entries.");
-    }
   }
 
   /* all invocations past this point need a virtual disk at minimum */
@@ -2582,12 +2612,21 @@ int main(int argc, char **argv)
     goto shutdown;
   }
   if (! isconnected(tapconn->guid)) {
-    lerror ("Network tap device is not connected to VM.");
+    lerror ("Network tap device failed to connect to Tor VM.");
+    dispmsg ("Network tap device failed to connect to Tor VM.");
     goto shutdown;
   }
+  /* XXX: Why does the tap device hang here on a bad start? */
   if (! configtap()) {
     lerror ("Unable to configure tap device.");
+    dispmsg ("Unable to configure tap device.");
     goto shutdown;
+  }
+  if (! cleararpcache()) {
+    lerror ("Unable to clear arp cache.");
+  }
+  if (! flushdns()) {
+    lerror ("Unable to flush cached DNS entries.");
   }
 
   /* XXX: temp hack - in bundle mode launch Vidalia with a custom config
@@ -2649,6 +2688,11 @@ int main(int argc, char **argv)
   }
 
   if (isrunning(&pi)) {
+    /* XXX: One more flush to clear cached negative lookups before boostrap? */
+    if (! flushdns()) {
+      lerror ("Unable to flush cached DNS entries.");
+    }
+
     dispmsg("");
     dispmsg("GOOD! Tor VM is running.");
     dispmsg(" - Waiting for VM to exit ...");

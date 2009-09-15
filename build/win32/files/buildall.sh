@@ -8,6 +8,10 @@ if [[ "$1" != "dobuild" ]]; then
   export CC=gcc
   export DEF_CONF_BUILD="--build=i686-pc-mingw32"
 
+  if [ -f /src/pkgenv.sh ]; then
+    source /src/pkgenv.sh
+  fi
+
   export KERNEL_IMAGE=/src/add/vmlinuz
   export VMHDD_IMAGE=/src/add/hdd.img
   export GEOIP_IMAGE=/src/add/geoip.iso
@@ -117,6 +121,8 @@ if [[ "$1" != "dobuild" ]]; then
   export QEMU_VER=0.10.5
   export QEMU_DIR="qemu-${QEMU_VER}"
   export QEMU_FILE="${QEMU_DIR}.tar.gz"
+
+  export KQEMU_DIR="kqemu-${KQEMU_VER}"
 
   export CMAKE_VER="2.6.2"
   export CMAKE_DIR="cmake-${CMAKE_VER}"
@@ -554,7 +560,6 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
     --enable-uname-release="Tor VM" \
     --disable-werror \
     --disable-system \
-    --disable-kqemu \
     --disable-vnc-tls \
     --disable-bluez \
     --extra-cflags="-I. -I.. -I/src/$ZLIB_DIR -I/usr/include -I/usr/local/include $WPCAP_INCLUDE -I/src/pthreads-w32 -I/usr/include/SDL" \
@@ -578,6 +583,32 @@ if [[ "$QEMU_BUILT" != "yes" ]]; then
   pkgbuilt QEMU_BUILT
 fi
 
+
+if [[ "$KQEMU_BUILT" != "yes" ]]; then
+  echo "Building kqemu accelerator ..."
+  cd /usr/src
+  KQEMU_DIR="kqemu-${KQEMU_VER}"
+  tar zxf $KQEMU_F
+  cd $KQEMU_DIR
+  if [ -f ../kqemu-gcc-asm.patch ]; then
+    echo "Patching KQemu sources ..."
+    patch -p1 < ../kqemu-gcc-asm.patch
+    if (( $? != 0 )); then
+      echo "ERROR: KQemu patch failed." >&2
+      exit 1
+    fi
+  fi
+  make
+  if (( $? != 0 )); then
+    echo "ERROR: kqemu build failed." >&2
+    exit 1
+  fi
+  cp kqemu.inf $libdir/
+  cp kqemu.sys $libdir/
+  cp LICENSE $licensedir/KQemu-LICENSE.txt
+
+  pkgbuilt KQEMU_BUILT
+fi
 
 if [[ "$W32CTL_BUILT" != "yes" ]]; then
   echo "Building torvm-w32 controller ..."

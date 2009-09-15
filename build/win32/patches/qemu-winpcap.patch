@@ -116,8 +116,8 @@ diff -Naur a/dyngen-exec.h b/dyngen-exec.h
  typedef struct __sFILE FILE;
 diff -Naur a/net.c b/net.c
 --- a/net.c	2009-05-20 20:46:59.000000000 +0000
-+++ b/net.c	2009-08-20 05:13:47.981451257 +0000
-@@ -1043,6 +1043,261 @@
++++ b/net.c	2009-09-14 06:18:23.292244586 +0000
+@@ -1043,6 +1043,262 @@
  
  #endif /* !_WIN32 */
  
@@ -310,7 +310,7 @@ diff -Naur a/net.c b/net.c
 +
 +void eth_callback(u_char *user, const struct pcap_pkthdr *phdr, const u_char *pdata)
 +{
-+    if(phdr->len<1501)
++    if(phdr->len)
 +    {
 +        qemu_send_packet(pcap_vc, pdata, phdr->len);
 +    }
@@ -319,11 +319,12 @@ diff -Naur a/net.c b/net.c
 +/* bad winpcap api only sets these when remote-pcap is enabled. */
 +#define PCAP_OPENFLAG_PROMISCUOUS 1
 +#define PCAP_OPENFLAG_NOCAPTURE_LOCAL 8
-+#define PCAP_READ_TIMEOUT 15
++/* #define PCAP_READ_TIMEOUT 15  use no timeout for faster responsiveness. */
++#define PCAP_READ_TIMEOUT 1
 +
 +int eth_open(char* name)
 +{
-+    const int bufsz = 1520;
++    const int bufsz = 65535;
 +    char errbuf[PCAP_ERRBUF_SIZE];
 +    char* msg;
 +
@@ -363,15 +364,15 @@ diff -Naur a/net.c b/net.c
 +        pthread_create (&dev->reader_thread, &attr, _pcap_send, (void *)dev);
 +        pthread_attr_destroy(&attr);
 +    }
-+#else /* !defined (USE_READER_THREAD */
++#else /* !defined (USE_READER_THREAD) */
 +#ifdef USE_SETNONBLOCK
 +    /* set ethernet device non-blocking so pcap_dispatch() doesn't hang */
-+    if (pcap_setnonblock (dev->pcaphandle, 1, errbuf) == -1) {
++    if (pcap_setnonblock (pcaphandle, 1, errbuf) == -1) {
 +        msg = "Eth: Failed to set non-blocking: %s\r\n";
 +        printf (msg, errbuf);
 +    }
 +#endif
-+#endif /* !defined (USE_READER_THREAD */
++#endif /* !defined (USE_READER_THREAD) */
 +    return 0;
 +}
 +#endif //CONFIG_PCAP
@@ -379,7 +380,7 @@ diff -Naur a/net.c b/net.c
  #if defined(CONFIG_VDE)
  typedef struct VDEState {
      VLANClientState *vc;
-@@ -1752,6 +2007,14 @@
+@@ -1752,6 +2008,14 @@
          }
      } else
  #endif
@@ -394,7 +395,7 @@ diff -Naur a/net.c b/net.c
      if (!strcmp(device, "socket")) {
          if (get_param_value(buf, sizeof(buf), "fd", p) > 0) {
              int fd;
-@@ -1828,6 +2091,9 @@
+@@ -1828,6 +2092,9 @@
  #ifdef CONFIG_VDE
                                         ,"vde"
  #endif

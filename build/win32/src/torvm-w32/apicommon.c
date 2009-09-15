@@ -301,7 +301,8 @@ BOOL runcommand(LPSTR cmd,
   HANDLE stdout_rd;
   HANDLE stdout_wr;
   DWORD exitcode;
-  DWORD opts = CREATE_NEW_PROCESS_GROUP;
+  /* Make sure interface configuration and other tasks operate quickly. */
+  DWORD opts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS;
   DWORD bufsz, numread;
   CHAR * buff = NULL;
    
@@ -346,7 +347,7 @@ BOOL runcommand(LPSTR cmd,
   buff = malloc(bufsz);
   while ( GetExitCodeProcess(pi.hProcess, &exitcode) && (exitcode == STILL_ACTIVE) ) {
     while (ReadFile(stdout_rd, buff, bufsz-1, &numread, NULL) && (numread > 0)) {
-      buff[bufsz-1] = 0;
+      buff[numread] = 0;
       ldebug ("runcommand output: %s", buff);
     }
     Sleep (500);

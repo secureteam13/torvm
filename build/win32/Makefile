@@ -192,9 +192,15 @@ WPCAPSRC_F=WpcapSrc_$(WPCAPSRC_VER).zip
 WPCAPSRC_URL=http://www.winpcap.org/install/bin/$(WPCAPSRC_F)
 WPCAPSRC_SUM=9e147ff344141da0ac76e71c31be7a8036ccba6030adfe208f27a97b793a9299
 
-QEMU_F=qemu-0.10.5.tar.gz
+QEMU_VER=0.10.5
+QEMU_F=qemu-$(QEMU_VER).tar.gz
 QEMU_URL=http://download.savannah.gnu.org/releases/qemu/$(QEMU_F)
 QEMU_SUM=d54f268f5545dd182d96c1b09e79af58efaf2e51695efd1331d560a552d657c1
+
+KQEMU_VER=1.4.0pre1
+KQEMU_F=kqemu-$(KQEMU_VER).tar.gz
+KQEMU_URL=http://www.qemu.org/$(KQEMU_F)
+KQEMU_SUM=bac3e84eae1c867b06cd06ed2bcf563ba8304bd4e5a900880c2abe61b9aab491
 
 OVPN_F=openvpn-2.1_rc15.tar.gz
 OVPN_URL=http://openvpn.net/release/$(OVPN_F)
@@ -272,7 +278,7 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
-ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU TORBUTTON_XPI OVPN GEOIP BITTORRENT BTPATCH
+ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU KQEMU TORBUTTON_XPI OVPN GEOIP BITTORRENT BTPATCH
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -292,6 +298,16 @@ $(1):
 endef
 
 $(foreach pkgname,$(ALLPKGNAMES),$(eval $(call DOWNLOAD_exp,$(pkgname))))
+
+PKGENVFILE=pkgenv.sh
+PKGENVSETUP:=echo
+define PKGENV_exp
+_CPKG_F:=$$($(1)_F)
+_CPKG_VER:=$$($(1)_VER)
+PKGENVSETUP:=$(PKGENVSETUP) ; echo $(1)_F=$(_CPKG_F) ; echo $(1)_VER=$(_CPKG_VER)
+endef
+
+$(foreach pkgname,$(ALLPKGNAMES),$(eval $(call PKGENV_exp,$(pkgname))))
 
 # now for primary targets...
 downloads: $(ALLPKGNAMES)
@@ -321,7 +337,7 @@ extract: downloads coderepodls
 	if [ -e ../kamikaze/x86-vm/bin/openwrt-x86-vmlinuz ]; then \
 		cp ../kamikaze/x86-vm/bin/openwrt-x86-vmlinuz $(ISODIR)/add/vmlinuz; \
 	fi; \
-	if [ -e $(BUILD_SCP_IDF) ]; then \
+	if [ -e "$(BUILD_SCP_IDF)" ]; then \
 		mkdir $(ISODIR)/ssh; \
 		cp "$(BUILD_SCP_IDF)" $(ISODIR)/ssh/; \
 		echo "$(BUILD_SCP_USER)" > $(ISODIR)/ssh/user; \
@@ -337,6 +353,7 @@ extract: downloads coderepodls
 	fi; \
 	echo "export SEVNZIP_INST=$(SEVNZIP_INST)" >> $(ISODIR)/bldopts; \
 	echo "export SEVNZIP_PKG=$(SEVNZIP_OPT_PKG)" >> $(ISODIR)/bldopts; \
+	$(SHELL) -c "$(PKGENVSETUP)" > $(ISODIR)/dl/src/$(PKGENVFILE) ; chmod +x $(ISODIR)/dl/src/$(PKGENVFILE); \
 	echo "--- Copying packages for ISO image file system ..."; \
 	cp files/autorun.inf files/install.bat $(ISODIR)/; \
 	cp files/*.vbs $(ISODIR)/bin/; \
@@ -346,8 +363,8 @@ extract: downloads coderepodls
 	cp files/prefs.js $(ISODIR)/add/; \
 	gzip -d $(ISODIR)/add/hdd.img.gz; \
 	cp files/fstab $(ISODIR)/bin/; \
-	cp files/buildall.sh $(ISODIR)/dl/src; \
-	cp patches/* $(ISODIR)/dl/src; \
+	cp files/buildall.sh $(ISODIR)/dl/src/; \
+	cp patches/* $(ISODIR)/dl/src/; \
 	cp -a $(addprefix $(WDLDIR)/,$(ALLPKGFILES)) $(ISODIR)/dl/; \
 	tar zxf $(WDLDIR)/$(MINGWRUN_F) bin; mv bin/* $(ISODIR)/bin/;rmdir bin; \
 	$(UNZIP) $(WDLDIR)/$(LIBARCH_F) -d $(ISODIR)/ bin/bsdtar.exe bin/libarchive2.dll; \
@@ -356,6 +373,7 @@ extract: downloads coderepodls
 	$(UNZIP) $(WDLDIR)/$(BZIP2_F) -d $(ISODIR)/; \
 	mv $(ISODIR)/dl/$(PTHREADS_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(QEMU_F) $(ISODIR)/dl/src/; \
+	mv $(ISODIR)/dl/$(KQEMU_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(GROFF_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(CMAKE_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SSLSRC_F) $(ISODIR)/dl/src/; \
