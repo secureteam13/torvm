@@ -122,8 +122,6 @@ if [[ "$1" != "dobuild" ]]; then
   export QEMU_DIR="qemu-${QEMU_VER}"
   export QEMU_FILE="${QEMU_DIR}.tar.gz"
 
-  export KQEMU_DIR="kqemu-${KQEMU_VER}"
-
   export CMAKE_VER="2.6.2"
   export CMAKE_DIR="cmake-${CMAKE_VER}"
   export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
@@ -595,19 +593,17 @@ if [[ "$KQEMU_BUILT" != "yes" ]]; then
     patch -p1 < ../kqemu-gcc-asm.patch
     if (( $? != 0 )); then
       echo "ERROR: KQemu patch failed." >&2
-      exit 1
     fi
   fi
   make
   if (( $? != 0 )); then
     echo "ERROR: kqemu build failed." >&2
-    exit 1
+  else
+    cp kqemu.inf $libdir/
+    cp kqemu.sys $libdir/
+    cp LICENSE $licensedir/KQemu-LICENSE.txt
+    pkgbuilt KQEMU_BUILT
   fi
-  cp kqemu.inf $libdir/
-  cp kqemu.sys $libdir/
-  cp LICENSE $licensedir/KQemu-LICENSE.txt
-
-  pkgbuilt KQEMU_BUILT
 fi
 
 if [[ "$W32CTL_BUILT" != "yes" ]]; then
