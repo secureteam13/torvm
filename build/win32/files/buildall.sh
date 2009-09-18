@@ -66,7 +66,8 @@ if [[ "$1" != "dobuild" ]]; then
     echo '#!/bin/bash' > $bstatefile
     chmod +x $bstatefile
   fi
-  
+ 
+  export srcroot="/usr/src" 
   export bdlibdir="${ddir}/lib"
   export bindir="${ddir}/bin"
   export statedir="${ddir}/state"
@@ -81,61 +82,24 @@ if [[ "$1" != "dobuild" ]]; then
   SEVNZIP_DEF_INSTPATH="/${sysdrive}/Program Files/7-Zip"
   export PATH="$PATH:${SEVNZIP_DEF_INSTPATH}"
   
-  export ZLIB_VER="1.2.3"
-  export ZLIB_DIR="zlib-${ZLIB_VER}"
-  export ZLIB_FILE="zlib-${ZLIB_VER}.tar.gz"
-
-  export LIBEVENT_VER=2.0.1-alpha
-  export LIBEVENT_FILE="libevent-${LIBEVENT_VER}.tar.gz"
-  export LIBEVENT_DIR="libevent-${LIBEVENT_VER}"
-  
   export TOR_DIR="tor-latest"
   export TOR_FILE="tor-latest.tar.gz"
   
-  export PTHREAD_VER=2-8-0
-  export PTHREAD_DIR="pthreads-w32-${PTHREAD_VER}-release"
-  export PTHREAD_FILE="${PTHREAD_DIR}.tar.gz"
-  
-  export OPENSSL_VER="0.9.8k"
-  export OPENSSL_DIR="openssl-${OPENSSL_VER}"
-  export OPENSSL_FILE="openssl-${OPENSSL_VER}.tar.gz"
-  
-  export GROFF_VER="1.19.2"
-  export GROFF_DIR="groff-${GROFF_VER}"
-  export GROFF_FILE="groff-${GROFF_VER}.tar.gz"
-
-  export SDL_VER=1.2.13
-  export SDL_DIR="SDL-${SDL_VER}"
-  export SDL_FILE="${SDL_DIR}.tar.gz"
-
-  export OPENVPN_VER=2.1_rc15
-  export OPENVPN_DIR="openvpn-${OPENVPN_VER}"
-  export OPENVPN_FILE="${OPENVPN_DIR}.tar.gz"
-
-  export WPCAP_VER=4_1_beta5
-  export WPCAP_DIR="WpcapSrc_${WPCAP_VER}"
+  export WPCAP_DIR="WpcapSrc_${WPCAPSRC_VER}"
   export WPCAP_FILE="${WPCAP_DIR}.tar.gz"
   export WPCAP_INCLUDE="-I/src/${WPCAP_DIR}/wpcap/libpcap -I/src/${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
   export WPCAP_LDFLAGS="-L/src/${WPCAP_DIR}/wpcap/PRJ -L/src/${WPCAP_DIR}/packetNtx/Dll/Project"
 
-  export QEMU_VER=0.10.5
-  export QEMU_DIR="qemu-${QEMU_VER}"
-  export QEMU_FILE="${QEMU_DIR}.tar.gz"
-
-  export CMAKE_VER="2.6.2"
   export CMAKE_DIR="cmake-${CMAKE_VER}"
-  export CMAKE_FILE="cmake-${CMAKE_VER}.tar.gz"
   export CMAKEBIN="/$sysdrive/Program Files/CMake/bin"
-  export PATH="${PATH}:${CMAKEBIN}:/src/$CMAKE_DIR/bin"
+  export PATH="${PATH}:${CMAKEBIN}:$srcroot/$CMAKE_DIR/bin"
   
-  export QT_VER="4.5.1"
   export QT_DIR="qt-all-opensource-src-${QT_VER}"
-  export QT_FILE="${QT_DIR}.tar.bz2"
   export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
   export QT_BIN="${QT_ROOT}/bin"
-  export QTDIR="${sysdrive}:\Qt\4.5.1"
+  export QTDIR="${sysdrive}:\\Qt\\${QT_VER}"
   export QMAKESPEC=win32-g++
-  export PATH="$PATH:$QT_BIN:$QTDIR\bin"
+  export PATH="$PATH:$QT_BIN:$QTDIR\\bin"
   
   export PYTHON_ROOT=/$sysdrive/Python26
   export PATH=$PATH:$PYTHON_ROOT
@@ -151,12 +115,6 @@ if [[ "$1" != "dobuild" ]]; then
   export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release -DUSE_AUTOUPDATE=1"
   export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
   
-  export GNURX_FILE=mingw-libgnurx-2.5.1-src.tar.gz
-  export GNURX_DIR=mingw-libgnurx-2.5.1
-  
-  export POLIPO_FILE=polipo-20080907.tar.gz
-  export POLIPO_DIR=polipo-20080907
-  
   export TORBUTTON_FILE=torbutton.xpi
   
   export NSIS_DIR=nsis-2.42
@@ -165,8 +123,7 @@ if [[ "$1" != "dobuild" ]]; then
   export WIXSRC_DIR=wixsrc
   export WIXSRC_FILE=wixsrc.tar.gz
 
-  export BITTORRENT_FILE=bittorrent_3.4.2.orig.tar.gz
-  export BITTORRENT_DIR=BitTorrent-3.4.2
+  export BITTORRENT_DIR="BitTorrent-${BITTORRENT_VER}"
   export BTPATCH_FILE=bittorrent_3.4.2-11.1.diff
   
   if [ -d "$VS80COMNTOOLS" ]; then
@@ -247,7 +204,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     fi
   done
 
-  if [ -d /usr/usr ]; then
+  if [ -d $srcroot ]; then
     # ahh, gotta love the msys /usr <-> / equivalence hack.
     cd /usr/usr
     if [ -d local ]; then
@@ -345,9 +302,10 @@ fi
 
 if [[ "$PTHREADS_BUILT" != "yes" ]]; then
   echo "Building pthreads-w32 ..."
-  cd /usr/src
-  tar zxf $PTHREAD_FILE
-  cd $PTHREAD_DIR
+  export PTHREADS_DIR="pthreads-w32-${PTHREADS_VER}-release"
+  cd $srcroot
+  tar zxf $PTHREADS_F
+  cd $PTHREADS_DIR
   make GC
   if (( $? != 0 )); then
     echo "ERROR: pthreads-32 build failed." >&2
@@ -367,9 +325,10 @@ fi
 
 if [[ "$ZLIB_BUILT" != "yes" ]]; then
   echo "Building zlib ..."
-  cd /usr/src
-  tar zxf $ZLIB_FILE
-  cd $ZLIB_DIR
+  cd $srcroot
+  export ZLIBSRC_DIR="zlib-${ZLIBSRC_VER}"
+  tar zxf $ZLIBSRC_F
+  cd $ZLIBSRC_DIR
   ./configure --prefix=/usr --enable-shared
   if (( $? != 0 )); then
     echo "ERROR: zlib configure failed." >&2
@@ -399,8 +358,9 @@ fi
 
 if [[ "$LIBEVENT_BUILT" != "yes" ]]; then
   echo "Building libevent ..."
-  cd /usr/src
-  tar zxf $LIBEVENT_FILE
+  cd $srcroot
+  export LIBEVENT_DIR="libevent-${LIBEVENT_VER}"
+  tar zxf $LIBEVENT_F
   cd $LIBEVENT_DIR
   ./configure --prefix=/usr --enable-static --disable-shared $DEF_CONF_BUILD
   if (( $? != 0 )); then
@@ -421,9 +381,9 @@ fi
 
 if [[ "$SDL_BUILT" != "yes" ]]; then
   echo "Building SDL library ..."
-  cd /usr/src
-  tar zxf $SDL_FILE
-  cd $SDL_DIR
+  cd $srcroot
+  tar zxf $SDL_F
+  cd "SDL-${SDL_VER}"
   ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: SDL configure failed." >&2
@@ -444,9 +404,9 @@ fi
 
 if [[ "$OPENVPN_BUILT" != "yes" ]]; then
   echo "Building openvpn tap-win32 driver ..."
-  cd /usr/src
-  tar zxf $OPENVPN_FILE
-  cd $OPENVPN_DIR
+  cd $srcroot
+  tar zxf $OVPN_F
+  cd "openvpn-${OVPN_VER}"
   if [ -f ../openvpn-tor-tap-win32-driver.patch ]; then
     echo "Patching OpenVPN sources ..."
     patch -p1 < ../openvpn-tor-tap-win32-driver.patch
@@ -494,7 +454,7 @@ fi
 
 if [[ "$WPCAP_BUILT" != "yes" ]]; then
   echo "Building WinPcap ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf $WPCAP_FILE
   cd $WPCAP_DIR
   wpbase=`pwd`
@@ -538,9 +498,9 @@ fi
 
 if [[ "$QEMU_BUILT" != "yes" ]]; then
   echo "Building qemu ..."
-  cd /usr/src
-  tar zxf $QEMU_FILE
-  cd $QEMU_DIR
+  cd $srcroot
+  tar zxf $QEMU_F
+  cd "qemu-${QEMU_VER}"
   if [ -f ../qemu-kernel-cmdline-from-stdin.patch ]; then
     echo "Patching Qemu sources ..."
     patch -p1 < ../qemu-kernel-cmdline-from-stdin.patch
@@ -584,10 +544,9 @@ fi
 
 if [[ "$KQEMU_BUILT" != "yes" ]]; then
   echo "Building kqemu accelerator ..."
-  cd /usr/src
-  KQEMU_DIR="kqemu-${KQEMU_VER}"
+  cd $srcroot
   tar zxf $KQEMU_F
-  cd $KQEMU_DIR
+  cd "kqemu-${KQEMU_VER}"
   if [ -f ../kqemu-gcc-asm.patch ]; then
     echo "Patching KQemu sources ..."
     patch -p1 < ../kqemu-gcc-asm.patch
@@ -608,7 +567,7 @@ fi
 
 if [[ "$W32CTL_BUILT" != "yes" ]]; then
   echo "Building torvm-w32 controller ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf torvm-w32.tgz
   cd torvm-w32
   make
@@ -625,9 +584,9 @@ fi
 
 if [[ "$GROFF_BUILT" != "yes" ]]; then
   echo "Building groff ..."
-  cd /usr/src
-  tar zxf $GROFF_FILE
-  cd $GROFF_DIR
+  cd $srcroot
+  tar zxf $GROFF_F
+  cd "groff-${GROFF_VER}"
   ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: groff configure failed." >&2
@@ -652,9 +611,9 @@ fi
 
 if [[ "$OPENSSL_BUILT" != "yes" ]]; then
   echo "Building openssl ..."
-  cd /usr/src
-  tar zxf $OPENSSL_FILE
-  cd $OPENSSL_DIR
+  cd $srcroot
+  tar zxf $OPENSSL_F
+  cd "openssl-${OPENSSL_VER}"
   # XXX there should be a way to do this without patching despite recursive make invocations.
   if [ -f ../openssl-0.9.8-mingw-shared.patch ]; then
     echo "Patching openssl for shared mingw builds"
@@ -695,7 +654,7 @@ fi
 
 if [[ "$TOR_BUILT" != "yes" ]]; then
   echo "Building Tor stand alone ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf $TOR_FILE
   cd $TOR_DIR
   if [ ! -f configure ]; then
@@ -771,7 +730,7 @@ fi
 
 if [[ "$PYCRYPTO_BUILT" != "yes" ]]; then
   echo "Building PyCrypto ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf pycrypto-latest.tar.gz
   cd pycrypto-latest
   python setup.py build
@@ -813,17 +772,17 @@ fi
 
 if [[ "$THANDY_BUILT" != "yes" ]]; then
   echo "Building Thandy ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf thandy-latest.tar.gz
   cd thandy-latest
-  if [ -f /usr/src/$BITTORRENT_FILE ]; then
+  if [ -f $srcroot/$BITTORRENT_F ]; then
     echo "Creating patched BitTorrent tree for Thandy use ..."
     mkdir tmp_extract
     (
       cd tmp_extract
-      tar zxf /usr/src/$BITTORRENT_FILE
+      tar zxf $srcroot/$BITTORRENT_F
       cd $BITTORRENT_DIR
-      patch -p1 < /usr/src/$BTPATCH_FILE
+      patch -p1 < $srcroot/$BTPATCH_FILE
     )
     mv tmp_extract/$BITTORRENT_DIR/BitTorrent lib/
     rm -rf tmp_extract
@@ -847,8 +806,8 @@ fi
 
 if [[ "$CMAKE_BUILT" != "yes" ]]; then
   echo "Building CMake ..."
-  cd /usr/src
-  tar zxf $CMAKE_FILE
+  cd $srcroot
+  tar zxf $CMAKE_F
   cd $CMAKE_DIR
   # cmake bootstrap does not detect msys correctly. give it some help...
   export SAVE_MSYSTEM="$MSYSTEM"
@@ -877,9 +836,9 @@ fi
 
 if [[ "$QT_BUILT" != "yes" ]]; then
   echo "Building Qt ..."
-  cd /usr/src
+  cd $srcroot
   mkdir /$sysdrive/Qt
-  tar jxf $QT_FILE
+  tar jxf $QT_F
   mv $QT_DIR /$sysdrive/Qt/$QT_VER
   cd /$sysdrive/Qt/$QT_VER
   if [ -f /src/qt-mingwssl.patch ]; then
@@ -925,9 +884,9 @@ fi
 
 if [[ "$GNUREGEX_BUILT" != "yes" ]]; then
   echo "Building GNU regex ..."
-  cd /usr/src
-  tar zxf $GNURX_FILE
-  cd $GNURX_DIR
+  cd $srcroot
+  tar zxf $GNURX_F
+  cd "mingw-libgnurx-${GNURX_VER}"
   ./configure --prefix=/usr $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: GNU regex configure failed."
@@ -948,9 +907,9 @@ fi
 
 if [[ "$POLIPO_BUILT" != "yes" ]]; then
   echo "Building polipo ..."
-  cd /usr/src
-  tar zxf $POLIPO_FILE
-  cd $POLIPO_DIR
+  cd $srcroot
+  tar zxf $POLIPO_F
+  cd "polipo-${POLIPO_VER}"
   if [ -f ../polipo-mingw.patch ]; then
     echo "Patching polipo sources ..."
     patch -p1 < ../polipo-mingw.patch
@@ -967,7 +926,7 @@ fi
 
 if [[ "$MARBLE_BUILT" != "yes" ]]; then
   echo "Building Marble widget for Qt ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf $MARBLE_FILE
   cd $MARBLE_DIR
   cmake $MARBLE_OPTS -G "MSYS Makefiles" .
@@ -990,7 +949,7 @@ fi
 
 if [[ "$VIDALIA_BUILT" != "yes" ]]; then
   echo "Building Vidalia ..."
-  cd /usr/src
+  cd $srcroot
   tar zxf $VIDALIA_FILE
   cd $VIDALIA_DIR
   if [ -f ../vidalia-torvm.patch ]; then
@@ -1088,7 +1047,7 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
   echo "Expanding package dir ..."
   cd /src
   tar zxf pkg.tgz
-  if [ -f /usr/src/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
+  if [ -f $srcroot/$VIDALIA_DIR/src/vidalia/vidalia.exe ]; then
     echo "Creating Vidalia MSI packages ..."
     cd /src/$VIDALIA_DIR
     for FILE in QtCore4.dll QtGui4.dll QtNetwork4.dll QtXml4.dll QtSvg4.dll; do

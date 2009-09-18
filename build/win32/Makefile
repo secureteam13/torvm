@@ -122,49 +122,60 @@ PERL_URL=http://downloads.sourceforge.net/mingw/$(PERL_F)?big_mirror=1
 PERL_SUM=65dd8765a8f7b22d15193e56ed06c309c29a01b02d877a14e071cff1f46454c8
 #perl-5.6.1-MSYS-1.0.11-1-src.tar.bz2
 
-GNURX_F=mingw-libgnurx-2.5.1-src.tar.gz
+GNURX_VER=2.5.1
+GNURX_F=mingw-libgnurx-$(GNURX_VER)-src.tar.gz
 GNURX_URL=http://downloads.sourceforge.net/mingw/$(GNURX_F)?big_mirror=1
 GNURX_SUM=7147b7f806ec3d007843b38e19f42a5b7c65894a57ffc297a76b0dcd5f675d76
 
-ZLIBSRC_F=zlib-1.2.3.tar.gz
-ZLIBSRC_URL=http://www.zlib.net/zlib-1.2.3.tar.gz
+ZLIBSRC_VER=1.2.3
+ZLIBSRC_F=zlib-$(ZLIBSRC_VER).tar.gz
+ZLIBSRC_URL=http://www.zlib.net/$(ZLIBSRC_F)
 ZLIBSRC_SUM=1795c7d067a43174113fdf03447532f373e1c6c57c08d61d9e4e9be5e244b05e
 
-PTHREADS_F=pthreads-w32-2-8-0-release.tar.gz
+PTHREADS_VER=2-8-0
+PTHREADS_F=pthreads-w32-$(PTHREADS_VER)-release.tar.gz
 PTHREADS_URL=ftp://sourceware.org/pub/pthreads-win32/$(PTHREADS_F)
 PTHREADS_SUM=ff7a2874b04581ed344f7d3bb0548d7798891216eebcee830887b37c85ab48fd
 
-LIBEVENT_F=libevent-2.0.1-alpha.tar.gz
+LIBEVENT_VER=2.0.1-alpha
+LIBEVENT_F=libevent-$(LIBEVENT_VER).tar.gz
 LIBEVENT_URL=http://www.monkey.org/~provos/$(LIBEVENT_F)
 LIBEVENT_SUM=7284eddec53bb731fb9c49aa6c6071b03476d98410d25b59810fbcc610d4a469
 
-GROFF_F=groff-1.19.2.tar.gz
+GROFF_VER=1.19.2
+GROFF_F=groff-$(GROFF_VER).tar.gz
 GROFF_URL=http://ftp.gnu.org/gnu/groff/$(GROFF_F)
 GROFF_SUM=d864fbd0bf6dea24e4f71736da9902a1cae86d0a1a893b5fe17118927257ec3e
 
-CMAKE_F=cmake-2.6.2.tar.gz
+CMAKE_VER=2.6.2
+CMAKE_F=cmake-$(CMAKE_VER).tar.gz
 CMAKE_URL=http://www.cmake.org/files/v2.6/$(CMAKE_F)
 CMAKE_SUM=b3f5a9dfa97fb82cb1b7d78a62d949f93c8d4317af36674f337d27066fa6b7e9
 
-SSLSRC_F=openssl-0.9.8k.tar.gz
+SSLSRC_VER=0.9.8k
+SSLSRC_F=openssl-$(SSLSRC_VER).tar.gz
 SSLSRC_URL=http://www.openssl.org/source/$(SSLSRC_F)
 SSLSRC_SUM=7e7cd4f3974199b729e6e3a0af08bd4279fde0370a1120c1a3b351ab090c6101
 
-PYTHON_F=Python-3.0.1.tar.bz2
+PYTHON_VER=3.0.1
+PYTHON_F=Python-$(PYTHON_VER).tar.bz2
 PYTHON_URL=http://www.python.org/ftp/python/3.0.1/$(PYTHON_F)
 PYTHON_SUM=91afb6ac16d3d22bc6bfbc80726dc85ede32bf838f660cc67016c7d0a7079add
 
-PY2EXE_F=py2exe-0.6.9.zip
+PY2EXE_VER=0.6.9
+PY2EXE_F=py2exe-$(PY2EXE_VER).zip
 PY2EXE_TGZ=py2exe.tar.gz
 PY2EXE_URL=http://downloads.sourceforge.net/py2exe/$(PY2EXE_F)?big_mirror=1
 PY2EXE_SUM=6bd383312e7d33eef2e43a5f236f9445e4f3e0f6b16333c6f183ed445c44ddbd
 
-WIX_F=wix3.0.4805.0-binaries.zip
+WIX_VER=3.0.4805.0
+WIX_F=wix$(WIX_VER)-binaries.zip
 WIX_TGZ=wix.tar.gz
 WIX_URL=http://downloads.sourceforge.net/wix/$(WIX_F)?big_mirror=1
 WIX_SUM=ffbe664c97f5abad8aeb806bc9315ddcfc252696dfaa4847f72efe026eb226c5
 
-WIXSRC_F=wix3.0.4805.0-sources.zip
+WIXSRC_VER=3.0.4805.0
+WIXSRC_F=wix$(WIXSRC_VER)-sources.zip
 WIXSRC_TGZ=wixsrc.tar.gz
 WIXSRC_URL=http://downloads.sourceforge.net/wix/$(WIXSRC_F)?big_mirror=1
 WIXSRC_SUM=18175aa9265d13b9b3a1c24c8892de34fda5206a519db27007ea001a18034adc
@@ -183,7 +194,8 @@ SEVNZIP_F=7z464.msi
 SEVNZIP_URL=http://downloads.sourceforge.net/sevenzip/$(SEVNZIP_F)?big_mirror=1
 SEVNZIP_SUM=1e5b8909ccd3dc09977a1d95a7dfb239d7e30bba6d887d58773f6ddeebba9a05
 
-SDL_F=SDL-1.2.13.tar.gz
+SDL_VER=1.2.13
+SDL_F=SDL-$(SDL_VER).tar.gz
 SDL_URL=http://www.libsdl.org/release/$(SDL_F)
 SDL_SUM=94f99df1d60f296b57f4740650a71b6425da654044ca30f8f0ce34934429e132
 
@@ -202,7 +214,8 @@ KQEMU_F=kqemu-$(KQEMU_VER).tar.gz
 KQEMU_URL=http://www.qemu.org/$(KQEMU_F)
 KQEMU_SUM=bac3e84eae1c867b06cd06ed2bcf563ba8304bd4e5a900880c2abe61b9aab491
 
-OVPN_F=openvpn-2.1_rc15.tar.gz
+OVPN_VER=2.1_rc15
+OVPN_F=openvpn-$(OVPN_VER).tar.gz
 OVPN_URL=http://openvpn.net/release/$(OVPN_F)
 OVPN_SUM=66cfe347da6ab29ae39c80527714079cdb5699fdf453f7e031dd2ec0172d13a5
 
@@ -215,7 +228,8 @@ QT_F=qt-all-opensource-src-$(QT_VER).tar.bz2
 QT_URL=ftp://ftp.qtsoftware.com/qt/source/$(QT_F)
 QT_SUM=fffd80292a3e5353e2a032167551dd56752624c7fa188df97a2ba19e0e33a295
 
-POLIPO_F=polipo-20080907.tar.gz
+POLIPO_VER=20080907
+POLIPO_F=polipo-$(POLIPO_VER).tar.gz
 POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
 POLIPO_SUM=c4c8b6f4d32e6d17e71160f2d4683a3ac444c81de321eeb1394a5575d973a200
 
@@ -278,7 +292,9 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
-ALLPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH ZLIBSRC PTHREADS LIBEVENT AMAKE ACONF PERL GROFF CMAKE QT NSIS SSLSRC PYTHON PY2EXE WIX WIXSRC GNURX POLIPO SDL WPCAPSRC QEMU KQEMU TORBUTTON_XPI OVPN GEOIP BITTORRENT BTPATCH
+TOOLSPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH AMAKE ACONF PERL GROFF NSIS WIX WIXSRC TORBUTTON_XPI GEOIP
+SRCPKGNAMES=ZLIBSRC PTHREADS LIBEVENT CMAKE QT SSLSRC PYTHON PY2EXE GNURX POLIPO SDL WPCAPSRC QEMU KQEMU OVPN BITTORRENT BTPATCH
+ALLPKGNAMES=$(TOOLSPKGNAMES) $(SRCPKGNAMES)
 
 # adjust if we're dealing with non source, zip or tar archives for a package
 SEVNZIP_OPT_DL=
@@ -302,12 +318,10 @@ $(foreach pkgname,$(ALLPKGNAMES),$(eval $(call DOWNLOAD_exp,$(pkgname))))
 PKGENVFILE=pkgenv.sh
 PKGENVSETUP:=echo
 define PKGENV_exp
-_CPKG_F:=$$($(1)_F)
-_CPKG_VER:=$$($(1)_VER)
-PKGENVSETUP:=$(PKGENVSETUP) ; echo $(1)_F=$(_CPKG_F) ; echo $(1)_VER=$(_CPKG_VER)
+PKGENVSETUP:=$(PKGENVSETUP) ; echo export $(1)_F=$$($(1)_F) ; echo export $(1)_VER=$$($(1)_VER)
 endef
 
-$(foreach pkgname,$(ALLPKGNAMES),$(eval $(call PKGENV_exp,$(pkgname))))
+$(foreach pkgname,$(SRCPKGNAMES),$(eval $(call PKGENV_exp,$(pkgname))))
 
 # now for primary targets...
 downloads: $(ALLPKGNAMES)
