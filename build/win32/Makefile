@@ -238,8 +238,8 @@ TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
 TORBUTTON_XPI_URL=http://releases.mozilla.org/pub/mozilla.org/addons/2275/$(TORBUTTON_XPI_F)
 TORBUTTON_XPI_SUM=d08fa9c1efc0203b5cf9c3fbc551dc158963821b45f1e9fe5763427332e00192
 
-BITTORRENT_VER=3.4.2.orig
-BITTORRENT_F=bittorrent_$(BITTORRENT_VER).tar.gz
+BITTORRENT_VER=3.4.2
+BITTORRENT_F=bittorrent_$(BITTORRENT_VER).orig.tar.gz
 # gah, sometimes it is pub/debian/... and others debian/... ???
 BITTORRENT_URL=ftp://cdn.debian.net/debian/pool/main/b/bittorrent/$(BITTORRENT_F)
 BITTORRENT_SUM=5bc3fc2372b0765d626a01aa60575b297b7d90629db019e885cfd053bd949fc5

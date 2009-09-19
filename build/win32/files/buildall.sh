@@ -3,20 +3,23 @@
 # and also transfer over the build log and shutdown, if needed.
 if [[ "$1" != "dobuild" ]]; then
   # only set various environment settings on the first pass
+  if [ -z $srcroot ]; then
+    export srcroot="/usr/src" 
+  fi
   export PATH=$PATH:/usr/local/bin:/wix:/lib:/usr/local/lib:/usr/libexec:$PATH
   export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib:/mingw/lib:$LD_LIBRARY_PATH
   export CC=gcc
   export DEF_CONF_BUILD="--build=i686-pc-mingw32"
 
-  if [ -f /src/pkgenv.sh ]; then
-    source /src/pkgenv.sh
+  if [ -f $srcroot/pkgenv.sh ]; then
+    source $srcroot/pkgenv.sh
   fi
 
-  export KERNEL_IMAGE=/src/add/vmlinuz
-  export VMHDD_IMAGE=/src/add/hdd.img
-  export GEOIP_IMAGE=/src/add/geoip.iso
+  export KERNEL_IMAGE=$srcroot/add/vmlinuz
+  export VMHDD_IMAGE=$srcroot/add/hdd.img
+  export GEOIP_IMAGE=$srcroot/add/geoip.iso
   export TORVMUSER_IMAGE=torvmuser.bmp
-  export KERNEL_LICENSE_DOCS=/src/add/kernel-license-docs.tgz
+  export KERNEL_LICENSE_DOCS=$srcroot/add/kernel-license-docs.tgz
   
   # set sysdrive, ddir, and brootdir in parent env if needed.
   if [[ "$sysdrive" == "" ]]; then
@@ -58,7 +61,7 @@ if [[ "$1" != "dobuild" ]]; then
   # the build state file is solely used to toggle targets on or off
   # intended to be used when developing or automated via buildbot, etc.
   if [[ "$bstatefile" == "" ]]; then
-    export bstatefile="/src/build.state"
+    export bstatefile="$srcroot/build.state"
   fi
   if [ -f $bstatefile ]; then
     source $bstatefile
@@ -67,7 +70,6 @@ if [[ "$1" != "dobuild" ]]; then
     chmod +x $bstatefile
   fi
  
-  export srcroot="/usr/src" 
   export bdlibdir="${ddir}/lib"
   export bindir="${ddir}/bin"
   export statedir="${ddir}/state"
@@ -87,12 +89,12 @@ if [[ "$1" != "dobuild" ]]; then
   
   export WPCAP_DIR="WpcapSrc_${WPCAPSRC_VER}"
   export WPCAP_FILE="${WPCAP_DIR}.tar.gz"
-  export WPCAP_INCLUDE="-I/src/${WPCAP_DIR}/wpcap/libpcap -I/src/${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
-  export WPCAP_LDFLAGS="-L/src/${WPCAP_DIR}/wpcap/PRJ -L/src/${WPCAP_DIR}/packetNtx/Dll/Project"
+  export WPCAP_INCLUDE="-I${srcroot}/${WPCAP_DIR}/wpcap/libpcap -I${srcroot}/${WPCAP_DIR}/wpcap/libpcap/Win32/Include"
+  export WPCAP_LDFLAGS="-L${srcroot}/${WPCAP_DIR}/wpcap/PRJ -L${srcroot}/${WPCAP_DIR}/packetNtx/Dll/Project"
 
   export CMAKE_DIR="cmake-${CMAKE_VER}"
   export CMAKEBIN="/$sysdrive/Program Files/CMake/bin"
-  export PATH="${PATH}:${CMAKEBIN}:$srcroot/$CMAKE_DIR/bin"
+  export PATH="${PATH}:${CMAKEBIN}:${srcroot}/${CMAKE_DIR}/bin"
   
   export QT_DIR="qt-all-opensource-src-${QT_VER}"
   export QT_ROOT="/$sysdrive/Qt/${QT_VER}"
@@ -113,7 +115,7 @@ if [[ "$1" != "dobuild" ]]; then
   export VIDALIA_DIR=vidalia-latest
   # XXX need to resolve why this wont build against the installed marble, only the build tree
   export VIDALIA_OPTS="-DCMAKE_BUILD_TYPE=release -DUSE_AUTOUPDATE=1"
-  export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=/src/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=/src/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=/src/${MARBLE_DIR}/src/plugins"
+  export VIDALIA_MARBLE_OPTS="-DUSE_MARBLE=1 -DMARBLE_LIBRARY_DIR=${srcroot}/${MARBLE_DIR}/src/lib -DMARBLE_DATA_DIR=${srcroot}/${MARBLE_DIR}/data -DMARBLE_INCLUDE_DIR=${MARBLE_DEST}/include/marble -DMARBLE_PLUGIN_DIR=${srcroot}/${MARBLE_DIR}/src/plugins"
   
   export TORBUTTON_FILE=torbutton.xpi
   
@@ -123,7 +125,6 @@ if [[ "$1" != "dobuild" ]]; then
   export WIXSRC_DIR=wixsrc
   export WIXSRC_FILE=wixsrc.tar.gz
 
-  export BITTORRENT_DIR="BitTorrent-${BITTORRENT_VER}"
   export BTPATCH_FILE=bittorrent_3.4.2-11.1.diff
   
   if [ -d "$VS80COMNTOOLS" ]; then
@@ -160,7 +161,7 @@ if [[ "$1" != "dobuild" ]]; then
       export bld_dsub="${BUILD_SCP_DIR}"
     fi
   fi
-  cd /usr/src
+  cd $srcroot
   ./buildall.sh dobuild 2>&1 | tee build.log
   if (( $? != 0 )); then
     echo "BUILD_FAILED" >> build.log
@@ -204,7 +205,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
     fi
   done
 
-  if [ -d $srcroot ]; then
+  if [ -d /usr/usr ]; then
     # ahh, gotta love the msys /usr <-> / equivalence hack.
     cd /usr/usr
     if [ -d local ]; then
@@ -226,7 +227,7 @@ if [[ "$MSYS_SETUP" != "yes" ]]; then
 
   # if WiX sources available extract into expected location for
   # localization support.
-  cd /src
+  cd $srcroot
   if [ -d /$WIXSRC_DIR ]; then
     mv /$WIXSRC_DIR ./
   fi
@@ -326,9 +327,8 @@ fi
 if [[ "$ZLIB_BUILT" != "yes" ]]; then
   echo "Building zlib ..."
   cd $srcroot
-  export ZLIBSRC_DIR="zlib-${ZLIBSRC_VER}"
   tar zxf $ZLIBSRC_F
-  cd $ZLIBSRC_DIR
+  cd "zlib-${ZLIBSRC_VER}"
   ./configure --prefix=/usr --enable-shared
   if (( $? != 0 )); then
     echo "ERROR: zlib configure failed." >&2
@@ -359,9 +359,8 @@ fi
 if [[ "$LIBEVENT_BUILT" != "yes" ]]; then
   echo "Building libevent ..."
   cd $srcroot
-  export LIBEVENT_DIR="libevent-${LIBEVENT_VER}"
   tar zxf $LIBEVENT_F
-  cd $LIBEVENT_DIR
+  cd "libevent-${LIBEVENT_VER}"
   ./configure --prefix=/usr --enable-static --disable-shared $DEF_CONF_BUILD
   if (( $? != 0 )); then
     echo "ERROR: libevent configure failed." >&2
@@ -777,6 +776,7 @@ if [[ "$THANDY_BUILT" != "yes" ]]; then
   tar zxf thandy-latest.tar.gz
   cd thandy-latest
   if [ -f $srcroot/$BITTORRENT_F ]; then
+    export BITTORRENT_DIR="BitTorrent-${BITTORRENT_VER}"
     echo "Creating patched BitTorrent tree for Thandy use ..."
     mkdir tmp_extract
     (
@@ -1057,10 +1057,10 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     cp /bin/mingwm10.dll bin/
     cp $srcroot/openssl-${SSLSRC_VER}/ssleay32-0.9.8.dll bin/
     cp $srcroot/openssl-${SSLSRC_VER}/cryptoeay32-0.9.8.dll bin/
-    cp $srcroot/zlib-${ZLIB_VER}/*.dll bin/
+    cp $srcroot/zlib-${ZLIBSRC_VER}/*.dll bin/
     cp /bin/pthreadGC2.dll bin/
     cp /bin/libgnurx-0.dll bin/
-    cp $srcroot/polipo-${POLIPO_DIR}/polipo.exe bin/
+    cp $srcroot/polipo-${POLIPO_VER}/polipo.exe bin/
     cp pkg/win32/polipo.conf bin/
     if [ -d $MARBLE_DEST ]; then
       cp $MARBLE_DEST/libmarblewidget.dll bin/
