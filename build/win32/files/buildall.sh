@@ -554,6 +554,7 @@ if [[ "$KQEMU_BUILT" != "yes" ]]; then
       echo "ERROR: KQemu patch failed." >&2
     fi
   fi
+  ./configure
   make
   if (( $? != 0 )); then
     echo "ERROR: kqemu build failed." >&2
@@ -612,8 +613,8 @@ fi
 if [[ "$OPENSSL_BUILT" != "yes" ]]; then
   echo "Building openssl ..."
   cd $srcroot
-  tar zxf $OPENSSL_F
-  cd "openssl-${OPENSSL_VER}"
+  tar zxf $SSLSRC_F
+  cd "openssl-${SSLSRC_VER}"
   # XXX there should be a way to do this without patching despite recursive make invocations.
   if [ -f ../openssl-0.9.8-mingw-shared.patch ]; then
     echo "Patching openssl for shared mingw builds"
@@ -808,7 +809,7 @@ if [[ "$CMAKE_BUILT" != "yes" ]]; then
   echo "Building CMake ..."
   cd $srcroot
   tar zxf $CMAKE_F
-  cd $CMAKE_DIR
+  cd "cmake-${CMAKE_VER}"
   # cmake bootstrap does not detect msys correctly. give it some help...
   export SAVE_MSYSTEM="$MSYSTEM"
   export MSYSTEM=MINGW32
@@ -1054,12 +1055,12 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       cp /$sysdrive/Qt/$QT_VER/bin/$FILE bin/
     done
     cp /bin/mingwm10.dll bin/
-    cp /src/$OPENSSL_DIR/ssleay32-0.9.8.dll bin/
-    cp /src/$OPENSSL_DIR/cryptoeay32-0.9.8.dll bin/
-    cp /src/$ZLIB_DIR/*.dll bin/
+    cp $srcroot/openssl-${SSLSRC_VER}/ssleay32-0.9.8.dll bin/
+    cp $srcroot/openssl-${SSLSRC_VER}/cryptoeay32-0.9.8.dll bin/
+    cp $srcroot/zlib-${ZLIB_VER}/*.dll bin/
     cp /bin/pthreadGC2.dll bin/
     cp /bin/libgnurx-0.dll bin/
-    cp /src/$POLIPO_DIR/polipo.exe bin/
+    cp $srcroot/polipo-${POLIPO_DIR}/polipo.exe bin/
     cp pkg/win32/polipo.conf bin/
     if [ -d $MARBLE_DEST ]; then
       cp $MARBLE_DEST/libmarblewidget.dll bin/
@@ -1212,28 +1213,28 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
       fi
     fi
   fi
-  cd /src/pkg
+  cd $srcroot/pkg
   echo "Copying various package dependencies into place ..."
   cp $WIXSRC_WXLDIR/*.wxl ./
-  cp /src/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
-  cp /src/$VIDALIA_DIR/pkg/win32/default-*.bmp ./
-  cp /src/$VIDALIA_DIR/pkg/win32/*.vbs ./
-  cp /src/$VIDALIA_DIR/pkg/win32/*.wxs ./
-  cp /src/$VIDALIA_DIR/pkg/win32/*.wxl ./
+  cp $srcroot/$VIDALIA_DIR/src/tools/wixtool/wixtool.exe ./
+  cp $srcroot/$VIDALIA_DIR/pkg/win32/default-*.bmp ./
+  cp $srcroot/$VIDALIA_DIR/pkg/win32/*.vbs ./
+  cp $srcroot/$VIDALIA_DIR/pkg/win32/*.wxs ./
+  cp $srcroot/$VIDALIA_DIR/pkg/win32/*.wxl ./
   cp ../torvm-w32/tor-icon-32.ico ./torvm.ico
   cp ../torvm-w32/tor-icon-32.ico ./tor.ico
-  cp /src/add/uninstall.bat ./Uninstall_Tor.bat
+  cp $srcroot/add/uninstall.bat ./Uninstall_Tor.bat
   unix2dos ./Uninstall_Tor.bat
   # DONT STRIP PY2EXEs!
   cp $thandir/Thandy.exe bin/
-  cp /src/$TOR_DIR/bin/*.exe bin/
-  cp /src/$TOR_DIR/contrib/*.ico ./
+  cp $srcroot/$TOR_DIR/bin/*.exe bin/
+  cp $srcroot/$TOR_DIR/contrib/*.ico ./
   # XXX: disabled for now; we do geoip in Vidalia and this is large.
-  # cp /src/$TOR_DIR/share/tor/geoip ./
+  # cp $srcroot/$TOR_DIR/share/tor/geoip ./
   echo "# The Tor VM kernel builds do not yet ship with a geoip data file" > geoip
-  cp /src/$TOR_DIR/src/config/torrc.sample ./
+  cp $srcroot/$TOR_DIR/src/config/torrc.sample ./
   for FNAME in README Usage.html Authors ChangeLog LICENSE; do
-    cp /src/$TOR_DIR/$FNAME ./
+    cp $srcroot/$TOR_DIR/$FNAME ./
   done
   cp -a $ddir ./
   # XXX replace this with Matt's torbutton NSIS magic
