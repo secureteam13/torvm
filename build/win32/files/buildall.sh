@@ -1348,10 +1348,9 @@ if [[ "$PACKAGES_BUILT" != "yes" ]]; then
     cp $GEOIP_IMAGE lib/
     heat.exe dir lib -gg -ke -sfrag -nologo -out torgeoip.wxs -template:product
     tail +4c torgeoip.wxs > torgeoip.wxs.tmp; dos2unix torgeoip.wxs.tmp; cat torgeoip.wxs.tmp > torgeoip.wxs; rm -f torgeoip.wxs.tmp
-    wixtool.exe splice -i geoip.wxs -o geoip-tmpdir.wxs Directory:ProgramsLibDir=torgeoip.wxs:Directory:TARGETDIR
-    wixtool.exe splice -i geoip-tmpdir.wxs -o geoip-tmpall.wxs Feature:MainApplication=torgeoip.wxs:Feature:ProductFeature
-    wixtool.exe userlocal -i geoip-tmpall.wxs -o geoip-all.wxs "Software\\Tor GeoIP Data:MainApplication"
-    rm -f geoip-tmpdir.wxs geoip-tmpall.wxs
+    wixtool.exe splice -i geoip.wxs -o geoip-tmpdir.wxs Directory:ProgramsInstDir=torgeoip.wxs:Directory:TARGETDIR
+    wixtool.exe splice -i geoip-tmpdir.wxs -o geoip-all.wxs Feature:MainApplication=torgeoip.wxs:Feature:ProductFeature
+    rm -f geoip-tmpdir.wxs
     candle.exe $CANDLE_OPTS geoip-all.wxs
     WIX_CAB_CACHE=_geoip.cabcache
     WIX_LINKOUT=_geoip.wixout

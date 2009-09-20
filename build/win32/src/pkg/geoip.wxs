@@ -52,8 +52,6 @@
               <RegistryValue Name="Version" Value="$(var.ThisProductVersion)" Type="string" KeyPath="yes" />
             </RegistryKey>
           </Component>
-          <Directory Id="ProgramsLibDir" Name="lib">
-          </Directory>
         </Directory>
       </Directory>
     </Directory>
