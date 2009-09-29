@@ -314,7 +314,7 @@ diff -Naur a/package/tor/files/prio.sh b/package/tor/files/prio.sh
 +
 diff -Naur a/package/tor/files/tor.init b/package/tor/files/tor.init
 --- a/package/tor/files/tor.init	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/tor.init	2009-09-13 04:52:02.896241715 +0000
++++ b/package/tor/files/tor.init	2009-09-20 12:24:45.820231100 +0000
 @@ -0,0 +1,144 @@
 +#!/bin/sh 
 +# make sure we check the system bin dirs
@@ -488,8 +488,8 @@ diff -Naur a/package/tor/files/torrc b/package/tor/files/torrc
 +TransListenAddress 0.0.0.0
 diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 --- a/package/tor/files/torvminit	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/torvminit	2009-09-13 04:44:54.320990051 +0000
-@@ -0,0 +1,293 @@
++++ b/package/tor/files/torvminit	2009-09-20 12:23:57.918088545 +0000
+@@ -0,0 +1,294 @@
 +#!/bin/sh
 +# Copyright (C) 2008-2009  The Tor Project, Inc.
 +# See LICENSE file for rights and terms.
@@ -518,7 +518,6 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +ARGS="_ $ARGS _"
 +
 +syslogd >/dev/null 2>&1
-+klogd -c 1 >/dev/null 2>&1
 +
 +clear;echo
 +d "Initializing ..."
@@ -662,6 +661,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +
 +echo $ARGS | grep ' DEBUGINIT ' >/dev/null 2>&1
 +if [ $? -eq 0 ]; then
++  klogd -c 1 >/dev/null 2>&1
++  vmr_logdrop
 +  echo 'tty1::askfirst:/bin/ash --login' >> /etc/inittab
 +  echo 'tty2::askfirst:/bin/ash --login' >> /etc/inittab
 +  echo 'tty3::askfirst:/bin/ash --login' >> /etc/inittab
@@ -691,9 +692,9 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +  ifconfig eth0 $IP netmask $MASK up
 +  ifconfig eth0 mtu $MTU
 +  route add default gw $GW
-+  vmr_fwdsetup eth0
++  vmr_fwdsetup eth0 
 +  if [ ! -z $PRIVINTF ]; then
-+    vmr_fwdadd $PRIVINTF
++    vmr_fwdadd $PRIVINTF $PRIVIP
 +  fi
 +  echo $ARGS | grep ' ISDHCP ' >/dev/null 2>&1
 +  if [ $? -eq 0 ]; then
@@ -713,7 +714,7 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +  ifconfig eth0 mtu $MTU
 +  vmr_fwdsetup eth0
 +  if [ ! -z $PRIVINTF ]; then
-+    vmr_fwdadd $PRIVINTF
++    vmr_fwdadd $PRIVINTF $PRIVIP
 +  fi
 +  vmr_opendhcp eth0
 +
@@ -785,8 +786,8 @@ diff -Naur a/package/tor/files/torvminit b/package/tor/files/torvminit
 +fi
 diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 --- a/package/tor/files/vmrouter.sh	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/files/vmrouter.sh	2009-09-13 02:12:57.544230377 +0000
-@@ -0,0 +1,206 @@
++++ b/package/tor/files/vmrouter.sh	2009-09-20 12:20:24.704230793 +0000
+@@ -0,0 +1,210 @@
 +#!/bin/sh
 +# Utility script for Tor VM routing
 +# Source or run directly.
@@ -880,7 +881,9 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  iptables -t nat -A PREROUTING -j $cli_prenat_tbl >>$LOG_TO 2>&1
 +  iptables -t nat -N $cli_postnat_tbl >>$LOG_TO 2>&1
 +  iptables -t nat -A POSTROUTING -j $cli_postnat_tbl >>$LOG_TO 2>&1
++}
 +
++vmr_logdrop() {
 +  # log default drop targets
 +  iptables -t filter -A INPUT -j LOG >>$LOG_TO 2>&1
 +  iptables -t filter -A FORWARD -j LOG >>$LOG_TO 2>&1
@@ -913,6 +916,7 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
++  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -d "$2" -j ACCEPT >>$LOG_TO 2>&1
 +  iptables -t nat -A $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
 +  iptables -t nat -A $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT >>$LOG_TO 2>&1
 +  iptables -t nat -A $cli_prenat_tbl -i "$1" -p udp -j DROP >>$LOG_TO 2>&1
@@ -929,6 +933,7 @@ diff -Naur a/package/tor/files/vmrouter.sh b/package/tor/files/vmrouter.sh
 +  if [ -z $1 ]; then
 +    return $FAIL
 +  fi
++  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -d "$2" -j ACCEPT >>$LOG_TO 2>&1
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -p tcp -j REDIRECT --to $TOR_TRANSPORT >>$LOG_TO 2>&1
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -p udp --dport 53 -j REDIRECT --to $TOR_DNSPORT >>$LOG_TO 2>&1
 +  iptables -t nat -D $cli_prenat_tbl -i "$1" -p udp -j DROP >>$LOG_TO 2>&1

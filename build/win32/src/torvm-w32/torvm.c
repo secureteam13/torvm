@@ -1152,18 +1152,38 @@ int loadnetinfo(struct s_rconnelem **connlist)
         if (getmacaddr (ce->guid, &(ce->macaddr))) {
           linfo ("Interface %s => %s  mac(%s)", name_data, enum_name, ce->macaddr);
         }
+        snprintf(tcpip_string,
+                 sizeof(tcpip_string),
+                 "%s\\%s",
+                 TCPIP_INTF_KEY, enum_name);
+        status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                              tcpip_string,
+                              0,
+                              KEY_READ,   
+                              &tkey);
+        len = sizeof (name_data);
+        status = RegQueryValueEx(tkey,
+                                 "DhcpDNS",
+                                 NULL,
+                                 &name_type,
+                                 name_data,
+                                 &len);
+        if (status == ERROR_SUCCESS) {
+          ce->dns1 = strdup(name_data);
+        }
+        len = sizeof (name_data);
+        status = RegQueryValueEx(tkey,
+                                 "DhcpWINS",
+                                 NULL,
+                                 &name_type,
+                                 name_data,
+                                 &len);
+        if (status == ERROR_SUCCESS) {
+          ce->dns2 = strdup(name_data);
+        } 
         if (isconnected (ce->guid)) {
           linfo ("Interface %s (%s) is currently connected.", ce->name, ce->macaddr);
           ce->isactive = TRUE;
-          snprintf(tcpip_string,
-                   sizeof(tcpip_string),
-                   "%s\\%s",
-                   TCPIP_INTF_KEY, enum_name);
-          status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                                tcpip_string,
-                                0,
-                                KEY_READ,   
-                                &tkey);
           if (status == ERROR_SUCCESS) {
             len = sizeof (BOOL);
             status = RegQueryValueEx(tkey,
@@ -1627,8 +1647,7 @@ BOOL buildcmdline (struct s_rconnelem *  brif,
   return TRUE;
 }
 
-BOOL spawnprocess (PROCESS_INFORMATION * pi,
-                   const TCHAR *cmdline)
+BOOL spawnvmprocess (PROCESS_INFORMATION * pi)
 {
   STARTUPINFO si;
   SECURITY_ATTRIBUTES sattr;
@@ -1686,7 +1705,8 @@ DWORD WINAPI runvidalia (LPVOID arg)
   ZeroMemory( &si, sizeof(si) );
   si.cb = sizeof(si);
   ZeroMemory( &pi, sizeof(pi) );
-  
+ 
+  ldebug ("Entering runvidalia thrmain");
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "defvidalia.conf", &vcfgtmp)) {
     lerror ("Unable to build path for default vidalia config file."); 
     goto cleanup;
@@ -1803,6 +1823,7 @@ DWORD WINAPI runpolipo (LPVOID arg)
   si.cb = sizeof(si);
   ZeroMemory( &pi, sizeof(pi) );
 
+  ldebug ("Entering runpolipo thrmain");
   if (!buildsyspath(SYSDIR_LCLPROGRAMS, "Vidalia", &dir)) {
     lerror ("Unable to build path for Vidalia programs dir."); 
     goto cleanup;
@@ -1904,6 +1925,86 @@ DWORD WINAPI runpolipo (LPVOID arg)
   return retval;
 }
 
+/* true if same, false if differ in any ip routing relevant manner */
+BOOL equivconns (struct s_rconnelem *a,
+                 struct s_rconnelem *b)
+{
+  if (strcmp(a->guid, b->guid) == 0) {
+    /* Check if any of IP, netmask, gateway, dhcpserver, dns1, or dns2 differ. */
+    if ( strcmp(a->ipaddr, b->ipaddr) ||
+         strcmp(a->netmask, b->netmask) ||
+         strcmp(a->gateway, b->gateway) ||
+         strcmp(a->dhcpsvr, b->dhcpsvr) ||
+         strcmp(a->dns1, b->dns1) ||
+         strcmp(a->dns2, b->dns2) ) {
+      return FALSE;
+    }
+    return TRUE;
+  }
+  return FALSE;
+}
+
+DWORD WINAPI runnetmon (LPVOID arg)
+{
+  t_ctx *ctx = (t_ctx *)arg;
+  DWORD retval = 0;
+  OVERLAPPED overlap;
+  DWORD errorval;
+  DWORD delay = 1000;
+  DWORD numintf;
+  HANDLE hand = NULL;
+  struct s_rconnelem *connlist = NULL;
+  struct s_rconnelem *ce = NULL;
+  struct s_rconnelem *tapconn = NULL;
+  struct s_rconnelem *brconn = NULL;
+  tapconn = ctx->tapconn;
+  brconn = ctx->brconn;
+
+  ldebug ("Entering runnetmon thrmain");
+
+  overlap.hEvent = WSACreateEvent();
+  while (ctx->running) {
+    errorval = NotifyAddrChange(&hand, &overlap);
+    if (errorval != NO_ERROR) {
+      if (WSAGetLastError() != WSA_IO_PENDING) {
+        ldebug("NotifyAddrChange error...%d\n", WSAGetLastError());                       
+      }
+      Sleep(delay);
+    }
+    else {
+      if ( WaitForSingleObject(overlap.hEvent, delay) == WAIT_OBJECT_0 ) {
+        ldebug("IP Address table changed");
+        ce = NULL;
+        numintf = loadnetinfo(&connlist);
+        if (numintf > 0) {
+          ce = connlist;
+          while (ce && ce->istortap != TRUE) {
+            if (strcmp(ce->guid, tapconn->guid) == 0) {
+              if (equivconns(ce, tapconn) == FALSE) {
+                linfo("Tap connection modified, resetting to correct values.");
+                configtap();
+                cleararpcache();
+                flushdns();
+              }
+            }
+            if (strcmp(ce->guid, brconn->guid) == 0) {
+              if (equivconns(ce, brconn) == FALSE) {
+                linfo("Bridge connection modified, resetting to correct values.");
+                configbridge();
+                cleararpcache();
+                flushdns();
+              }
+            }
+            ce = ce->next;
+          }
+        }
+      }
+    }
+  }
+  
+  return retval;
+}
+
 BOOL launchtorvm (PROCESS_INFORMATION * pi,
                   char *  bridgeintf,
                   char *  macaddr,
@@ -1919,7 +2020,7 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   LPTSTR dir = NULL;
   LPTSTR iso = NULL;
   LPTSTR isoarg = NULL;
-  LPTSTR drvtype = "virtio"; /* ide, virtio, scsi, etc. */
+  LPTSTR drvtype = "ide"; /* ide, virtio, scsi, etc. */
   /* If Tor VM Qemu instance is not below normal prio, performance of host suffers. */
   /* DWORD opts = CREATE_NEW_PROCESS_GROUP | BELOW_NORMAL_PRIORITY_CLASS; */
   /* DWORD opts = CREATE_NEW_PROCESS_GROUP | HIGH_PRIORITY_CLASS; */
@@ -1937,25 +2038,28 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     lerror ("Unable to build path for qemu program.");
     return FALSE;
   }
+/*
   if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "geoip.iso", &iso)) {
     lerror ("Unable to build path for GeoIP data iso.");
     iso = NULL;
   }
-
+*/
   ZeroMemory( &si, sizeof(si) );
   ZeroMemory( &sattr, sizeof(sattr) );
   ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
   si.cb = sizeof(si);
-/*  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
   sattr.bInheritHandle = TRUE;
-  sattr.lpSecurityDescriptor = NULL; */
+  sattr.lpSecurityDescriptor = NULL;
   cmd = malloc(CMDMAX);
+/*
   if (iso) {
     isoarg = malloc(CMDMAX);
     snprintf (isoarg, CMDMAX -1,
               "-hdc \"%s\" ",
               iso);
   }
+*/
   ldebug ("Qemu invocation with cmdline: %s and iso path: %s", cmdline, iso ? iso : "");
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
@@ -1982,10 +2086,16 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   }
   ldebug ("Launching Qemu with cmd: %s", cmd);
 
-/*
   pipesz = strlen(cmdline);
   CreatePipe(&stdin_rd, &stdin_wr, &sattr, pipesz);
-  SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0);
+  SetHandleInformation(stdin_rd, HANDLE_FLAG_INHERIT, 1);
+  SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 1);
+  si.hStdInput = stdin_rd;
+  stdout_h = GetStdHandle(STD_OUTPUT_HANDLE);
+  SetHandleInformation(stdout_h, HANDLE_FLAG_INHERIT, 1);
+  si.hStdError = stdout_h;
+  si.hStdOutput = stdout_h;
+  si.dwFlags |= STARTF_USESTDHANDLES;
 
   if (! WriteFile(stdin_wr, cmdline, strlen(cmdline), &numwritten, NULL)) {
     lerror ("Failed to write kernel command line to stdin handle.  Error code: %d", GetLastError());
@@ -1994,13 +2104,6 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     ldebug ("Wrote %d bytes of cmdline len %d to qemu stdin pipe.", numwritten, strlen(cmdline));
   }
 
-  stdout_h = GetStdHandle(STD_OUTPUT_HANDLE);
-
-  si.hStdError = stdout_h;
-  si.hStdOutput = stdout_h;
-  si.hStdInput = stdin_rd;
-  si.dwFlags |= STARTF_USESTDHANDLES;
-*/
   if( !CreateProcess(NULL,
                      cmd,
                      NULL,
@@ -2524,6 +2627,9 @@ int main(int argc, char **argv)
     while (tapconn && tapconn->istortap != TRUE) {
       tapconn = tapconn->next;
     }
+    if (tapconn->istortap) {
+      ctx->tapconn = tapconn;
+    }
 
     dispmsg(" - Configuring network settings");
     if (!installtornpf()) {
@@ -2568,6 +2674,7 @@ int main(int argc, char **argv)
       lerror ("Unable to find network interface with a default route.");
       goto shutdown;
     }
+    ctx->brconn = ce;
   }
 
   if (!ctx->vmnop) {
@@ -2581,7 +2688,7 @@ int main(int argc, char **argv)
   dispmsg(" - Launching QEMU virtual machine");
   PROCESS_INFORMATION pi;
   if (ctx->vmnop) {
-    if (! spawnprocess(&pi, "qemu.exe")) {
+    if (! spawnvmprocess(&pi)) {
       lerror ("Unable to launch default Qemu instance.");
     }
     /* This mode does nothing but run Qemu with the kernel and virtual disk.
@@ -2600,7 +2707,8 @@ int main(int argc, char **argv)
 
   /* need to delay long enough to allow qemu to start and open tap device */
   if (tapconn) {
-    while ( taptimeout-- && isrunning(&pi) && (! isconnected(tapconn->guid)) ) {
+    while ( (taptimeout > 0) && isrunning(&pi) && (! isconnected(tapconn->guid)) ) {
+      taptimeout--;
       ldebug ("Waiting for tap adapter to be connected...");
       Sleep (1000);
     }
@@ -2615,6 +2723,9 @@ int main(int argc, char **argv)
     lerror ("Network tap device failed to connect to Tor VM.");
     dispmsg ("Network tap device failed to connect to Tor VM.");
     goto shutdown;
+  }
+  if (!createthr(&runnetmon, ctx, FALSE)) {
+    lerror("Failed to start netmon thread.");
   }
   /* XXX: Why does the tap device hang here on a bad start? */
   if (! configtap()) {
@@ -2638,7 +2749,7 @@ int main(int argc, char **argv)
   if (ctx->bundle) {
     dispmsg(" - Waiting for Tor control port to open");
     /* try to confirm control port is up before launching vidalia... */
-    int i = 10;
+    int i = 30;
     while ( (!tryconnect(TOR_TAP_VMIP, 9051)) && (i > 0) ) {
       ldebug("Control port connect attempt failed, trying again... [%d left]", i);
       Sleep(1000);

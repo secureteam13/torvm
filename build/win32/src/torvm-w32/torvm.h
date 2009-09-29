@@ -25,6 +25,8 @@ typedef struct s_rconnelem {
   LPTSTR  dhcpsvr;
   LPTSTR  svrmacaddr;
   LPTSTR  dhcpname;
+  LPTSTR  dns1;
+  LPTSTR  dns2;
   LPTSTR  driver;
   struct s_rconnelem * next;
 } t_rconnelem;
@@ -39,6 +41,8 @@ typedef struct s_ctx {
   HANDLE        insthnd;
   LPTSTR        netcfgfile;
   LPTSTR        fwcfgfile;
+  struct s_rconnelem * tapconn;
+  struct s_rconnelem * brconn;
 } t_ctx;
 
 #define TORVM_INSTNAME "{1c6870d3-235d-4fb7-828d-25d7f05e2e76}"

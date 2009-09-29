@@ -266,10 +266,6 @@ TORSRC_TGZ=$(TORSRC_NAME).tar.gz
 TORSRC_GIT=git://git.torproject.org/git/tor
 TORSRC_VER=5308eceef3e7287f77d7b10065c9f8341c5dd75b
 
-GEOIP_F=ip-to-country.csv.zip
-GEOIP_URL=http://ip-to-country.webhosting.info/downloads/$(GEOIP_F)
-GEOIP_SUM=cb5234a10504ba2b243fb5b8f59693245ca952d42883cb3191c3287839cc1c1f
-
 TORBUTTON_NAME=torbutton-latest
 TORBUTTON_TGZ=$(TORBUTTON_NAME).tar.gz
 TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
@@ -292,7 +288,7 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
-TOOLSPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH AMAKE ACONF PERL NSIS WIX WIXSRC TORBUTTON_XPI GEOIP
+TOOLSPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH AMAKE ACONF PERL NSIS WIX WIXSRC TORBUTTON_XPI
 SRCPKGNAMES=ZLIBSRC PTHREADS LIBEVENT CMAKE QT SSLSRC GROFF PYTHON PY2EXE GNURX POLIPO SDL WPCAPSRC QEMU KQEMU OVPN BITTORRENT BTPATCH
 ALLPKGNAMES=$(TOOLSPKGNAMES) $(SRCPKGNAMES)
 
@@ -439,11 +435,9 @@ extract: downloads coderepodls
 		( cd $(TORBUTTON_NAME); $(SHELL) makexpi.sh ; ); \
 		mv $(TORBUTTON_NAME)/pkg/*.xpi $(ISODIR)/dl/src/torbutton.xpi ; rm -rf $(TORBUTTON_NAME); \
 	fi; \
-	if [ -f $(WDLDIR)/$(GEOIP_F) ]; then \
-		echo "--- Creating Tor GEOIP file from $(GEOIP_F) source ..."; \
-		$(UNZIP) $(WDLDIR)/$(GEOIP_F) -d tmp; cat tmp/*.csv | cut -d, -f1-3 | sed 's/"//g' > $(ISODIR)/add/GEOIP.TXT; \
-		mkisofs -hide-rr-moved -pad -l -o $(ISODIR)/add/geoip.iso -J $(ISODIR)/add/GEOIP.TXT ; rm -rf tmp; \
-	fi; \
+	echo "--- Creating Tor GEOIP file Tor source ..."; \
+	cat $(SDLDIR)/$(TORSRC_NAME)/src/config/geoip > $(ISODIR)/add/GEOIP.TXT; \
+	mkisofs -hide-rr-moved -pad -l -o $(ISODIR)/add/geoip.iso -J $(ISODIR)/add/GEOIP.TXT ; \
 	echo "--- Creating source archives from win32 tree ..."; \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/torvm-w32.tgz torvm-w32 ); \
 	( cd src && tar zcf ../$(ISODIR)/dl/src/pkg.tgz pkg ); \
