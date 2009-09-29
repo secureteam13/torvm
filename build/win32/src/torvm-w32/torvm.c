@@ -356,7 +356,7 @@ BOOL installtap(void)
     return FALSE;
   }
 
-  cmdlen = strlen(devcon) + 64;
+  cmdlen = CMDMAX;
   cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap install pwd: %s, cmd: %s", dir, cmd);
@@ -392,7 +392,7 @@ BOOL uninstalltap(void)
     return FALSE;
   }
 
-  cmdlen = strlen(devcon) + 64;
+  cmdlen = CMDMAX;
   cmd = malloc(cmdlen);
   snprintf (cmd, cmdlen, "\"%s\" install tortap91.inf TORTAP91", devcon);
   ldebug ("Tap un-install pwd: %s, cmd: %s", dir, cmd);
@@ -883,14 +883,39 @@ BOOL flushdns(void)
   return TRUE;
 }
 
+BOOL downintf(t_rconnelem *conn)
+{
+  LPTSTR cmd;
+  cmd = malloc(CMDMAX);
+  if (conn->dns1) {
+    snprintf (cmd, CMDMAX-1,
+              "\"netsh.exe\" interface ip delete dns \"%s\" all",
+              conn->name);
+    runcommand(cmd,NULL);
+  }
+  if (conn->dns2) {
+    snprintf (cmd, CMDMAX-1,
+              "\"netsh.exe\" interface ip delete wins \"%s\" all",
+              conn->name);
+    runcommand(cmd,NULL);
+  }
+  if (conn->ipaddr) {
+    snprintf (cmd, CMDMAX-1,
+              "\"netsh.exe\" interface ip delete address \"%s\" %s all",
+              conn->name,  
+              conn->ipaddr);
+    runcommand(cmd,NULL);
+  }
+}
+
 BOOL configtap(void)
 {
-  const DWORD cmdlen = 1024;
+  const DWORD cmdlen = CMDMAX;
   LPTSTR cmd;
   LPTSTR netsh = "netsh.exe";
   cmd = malloc(cmdlen);
 
-  snprintf (cmd, cmdlen,
+  snprintf (cmd, cmdlen-1,
             "\"%s\" interface ip set address \"%s\" static %s %s %s 1",
             netsh,
             TOR_TAP_NAME,
@@ -902,7 +927,7 @@ BOOL configtap(void)
     free (cmd);
     return FALSE;
   }
-  snprintf (cmd, cmdlen,
+  snprintf (cmd, cmdlen-1,
             "\"%s\" interface ip set dns  \"%s\" static %s",
             netsh,
             TOR_TAP_NAME,
@@ -912,7 +937,7 @@ BOOL configtap(void)
     free (cmd);
     return FALSE;
   }
-  snprintf (cmd, cmdlen,
+  snprintf (cmd, cmdlen-1,
             "\"%s\" interface ip add dns  \"%s\" %s",
             netsh,
             TOR_TAP_NAME,
@@ -1013,7 +1038,7 @@ BOOL checkvirtdisk(void) {
   return TRUE;
 }
 
-int loadnetinfo(struct s_rconnelem **connlist)
+int loadnetinfo(t_rconnelem **connlist)
 {
   LONG status;
   HKEY key;
@@ -1022,8 +1047,8 @@ int loadnetinfo(struct s_rconnelem **connlist)
   DWORD retval;
   int i, j;
   int numconn = 0;
-  struct s_rconnelem *  ce = NULL;
-  struct s_rconnelem *  ne = NULL;
+  t_rconnelem *  ce = NULL;
+  t_rconnelem *  ne = NULL;
   const char name_string[] = "Name";
   ULONG arpentsz = 128 * sizeof(MIB_IPNETROW);
   PMIB_IPNETTABLE pmib = NULL;
@@ -1138,12 +1163,12 @@ int loadnetinfo(struct s_rconnelem **connlist)
         /* add this connection info to the list */
         numconn++;
         if (ce == NULL) {
-          *connlist = ce = malloc(sizeof(struct s_rconnelem));
-          memset(ce, 0, sizeof(struct s_rconnelem));
+          *connlist = ce = malloc(sizeof(t_rconnelem));
+          memset(ce, 0, sizeof(t_rconnelem));
         }
         else {
-          ne = malloc(sizeof(struct s_rconnelem));
-          memset(ne, 0, sizeof(struct s_rconnelem));
+          ne = malloc(sizeof(t_rconnelem));
+          memset(ne, 0, sizeof(t_rconnelem));
           ce->next = ne;
           ce = ne;
         }
@@ -1535,11 +1560,11 @@ int loadnetinfo(struct s_rconnelem **connlist)
   return numconn;
 }
 
-BOOL buildcmdline (struct s_rconnelem *  brif,
-                   BOOL                  bundle,
-                   BOOL                  usedebug,
-                   BOOL                  noinit,
-                   char **               cmdline)
+BOOL buildcmdline (t_rconnelem *  brif,
+                   BOOL           bundle,
+                   BOOL           usedebug,
+                   BOOL           noinit,
+                   char **        cmdline)
 {
   const DWORD  cmdlen = CMDMAX;
   BYTE * rndstr = NULL;
@@ -1926,17 +1951,23 @@ DWORD WINAPI runpolipo (LPVOID arg)
 }
 
 /* true if same, false if differ in any ip routing relevant manner */
-BOOL equivconns (struct s_rconnelem *a,
-                 struct s_rconnelem *b)
+BOOL equivconns (t_rconnelem *a,
+                 t_rconnelem *b)
 {
   if (strcmp(a->guid, b->guid) == 0) {
     /* Check if any of IP, netmask, gateway, dhcpserver, dns1, or dns2 differ. */
-    if ( strcmp(a->ipaddr, b->ipaddr) ||
-         strcmp(a->netmask, b->netmask) ||
-         strcmp(a->gateway, b->gateway) ||
-         strcmp(a->dhcpsvr, b->dhcpsvr) ||
-         strcmp(a->dns1, b->dns1) ||
-         strcmp(a->dns2, b->dns2) ) {
+    if ( (a->ipaddr && b->ipaddr && strcmp(a->ipaddr, b->ipaddr)) ||
+         (a->netmask && b->netmask && strcmp(a->netmask, b->netmask)) ||
+         (a->gateway && b->gateway && strcmp(a->gateway, b->gateway)) ||
+         (a->dhcpsvr && b->dhcpsvr && strcmp(a->dhcpsvr, b->dhcpsvr)) ||
+         (a->dns1 && b->dns1 && strcmp(a->dns1, b->dns1)) ||
+         (a->dns2 && b->dns2 && strcmp(a->dns2, b->dns2)) ||
+         ((!a->ipaddr || !b->ipaddr) && (a->ipaddr != b->ipaddr)) ||
+         ((!a->netmask || !b->netmask) && (a->netmask != b->netmask)) ||
+         ((!a->gateway || !b->gateway) && (a->gateway != b->gateway)) ||
+         ((!a->dhcpsvr || !b->dhcpsvr) && (a->dhcpsvr != b->dhcpsvr)) ||
+         ((!a->dns1 || !b->dns1) && (a->dns1 != b->dns1)) ||
+         ((!a->dns2 || !b->dns2) && (a->dns2 != b->dns2)) ) {
       return FALSE;
     }
     return TRUE;
@@ -1953,10 +1984,10 @@ DWORD WINAPI runnetmon (LPVOID arg)
   DWORD delay = 1000;
   DWORD numintf;
   HANDLE hand = NULL;
-  struct s_rconnelem *connlist = NULL;
-  struct s_rconnelem *ce = NULL;
-  struct s_rconnelem *tapconn = NULL;
-  struct s_rconnelem *brconn = NULL;
+  t_rconnelem *connlist = NULL;
+  t_rconnelem *ce = NULL;
+  t_rconnelem *tapconn = NULL;
+  t_rconnelem *brconn = NULL;
   tapconn = ctx->tapconn;
   brconn = ctx->brconn;
 
@@ -1978,7 +2009,7 @@ DWORD WINAPI runnetmon (LPVOID arg)
         numintf = loadnetinfo(&connlist);
         if (numintf > 0) {
           ce = connlist;
-          while (ce && ce->istortap != TRUE) {
+          while (ce) {
             if (strcmp(ce->guid, tapconn->guid) == 0) {
               if (equivconns(ce, tapconn) == FALSE) {
                 linfo("Tap connection modified, resetting to correct values.");
@@ -1987,13 +2018,16 @@ DWORD WINAPI runnetmon (LPVOID arg)
                 flushdns();
               }
             }
-            if (strcmp(ce->guid, brconn->guid) == 0) {
+            else if (strcmp(ce->guid, brconn->guid) == 0) {
               if (equivconns(ce, brconn) == FALSE) {
                 linfo("Bridge connection modified, resetting to correct values.");
                 configbridge();
                 cleararpcache();
                 flushdns();
               }
+            }
+            else {
+              downintf(ce);
             }
             ce = ce->next;
           }
@@ -2005,11 +2039,12 @@ DWORD WINAPI runnetmon (LPVOID arg)
   return retval;
 }
 
-BOOL launchtorvm (PROCESS_INFORMATION * pi,
-                  char *  bridgeintf,
-                  char *  macaddr,
-                  char *  tapname,
-                  char *  cmdline)
+BOOL launchtorvm (t_ctx * ctx,
+                  PROCESS_INFORMATION * pi,
+                  char * bridgeintf,
+                  char * macaddr,
+                  char * tapname,
+                  char * cmdline)
 {
   STARTUPINFO si;
   HANDLE stdin_rd = NULL;
@@ -2038,12 +2073,12 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     lerror ("Unable to build path for qemu program.");
     return FALSE;
   }
-/*
-  if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "geoip.iso", &iso)) {
-    lerror ("Unable to build path for GeoIP data iso.");
-    iso = NULL;
+  if (ctx->usegeoip) {
+    if (!buildfpath(PATH_FQ, VMDIR_LIB, NULL, "geoip.iso", &iso)) {
+      lerror ("Unable to build path for GeoIP data iso.");
+      iso = NULL;
+    }
   }
-*/
   ZeroMemory( &si, sizeof(si) );
   ZeroMemory( &sattr, sizeof(sattr) );
   ZeroMemory( pi, sizeof(PROCESS_INFORMATION) );
@@ -2052,14 +2087,13 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL;
   cmd = malloc(CMDMAX);
-/*
   if (iso) {
     isoarg = malloc(CMDMAX);
     snprintf (isoarg, CMDMAX -1,
               "-hdc \"%s\" ",
               iso);
   }
-*/
+
   ldebug ("Qemu invocation with cmdline: %s and iso path: %s", cmdline, iso ? iso : "");
   if (tapname) {
     snprintf (cmd, CMDMAX -1,
@@ -2121,11 +2155,11 @@ BOOL launchtorvm (PROCESS_INFORMATION * pi,
     free(iso);
     free(isoarg);
   }
-/*
+
   FlushFileBuffers (stdin_wr);
   CloseHandle(stdin_rd);
   CloseHandle(stdin_wr);
-*/
+
   return TRUE;
 }
 
@@ -2391,6 +2425,7 @@ static struct option torvm_options[] =
   { "verbose" , no_argument , NULL, 'v' },
   { "update" , no_argument , NULL, 'u' },
   { "bundle" , no_argument , NULL, 'b' },
+  { "usegeoip" , no_argument , NULL, 'g' },
   { "service" , no_argument , NULL, 's' },
   { "replace" , no_argument , NULL, 'r' },
   { "clean" , no_argument , NULL, 'c' },
@@ -2411,6 +2446,7 @@ void usage(void)
     "  --verbose\n"
     "  --update\n"
     "  --bundle\n"
+    "  --usegeoip\n"
     "  --service\n"
     "  --replace\n"
     "  --clean\n"
@@ -2425,9 +2461,9 @@ int main(int argc, char **argv)
   t_ctx *ctx = NULL;
   const char *cmd;
   int numintf;
-  struct s_rconnelem *connlist = NULL;
-  struct s_rconnelem *ce = NULL;
-  struct s_rconnelem *tapconn = NULL;
+  t_rconnelem *connlist = NULL;
+  t_rconnelem *ce = NULL;
+  t_rconnelem *tapconn = NULL;
   BOOL clean = FALSE;
   BOOL foundit = FALSE;
   char *cmdline = NULL;
@@ -2445,7 +2481,7 @@ int main(int argc, char **argv)
   memset(ctx, 0, sizeof(t_ctx));
 
   while (1) {
-    c = getopt_long(argc, argv, "avubshrcXZ", torvm_options, &optidx);
+    c = getopt_long(argc, argv, "avubghrcXZ", torvm_options, &optidx);
     if (c == -1)
       break;
 
@@ -2460,6 +2496,10 @@ int main(int argc, char **argv)
 
         case 'b':
           ctx->bundle = TRUE;
+          break;
+
+        case 'g':
+          ctx->usegeoip = TRUE;
           break;
 
         case 's':
@@ -2606,6 +2646,10 @@ int main(int argc, char **argv)
         ce = ce->next;
       }
     }
+    else {
+      lerror ("Unable to find any usable network interfaces.");
+      goto shutdown;
+    }
 
     /* disable removing the tap automatically until reload issues resolved.
      * uninstalltap(); */
@@ -2630,6 +2674,21 @@ int main(int argc, char **argv)
     if (tapconn->istortap) {
       ctx->tapconn = tapconn;
     }
+    ce = connlist;
+    while (!foundit && ce) {
+      if (ce->isdefgw) {
+        foundit = TRUE;
+      }
+      else {
+        ce = ce->next;
+      }
+    }
+    if (ce == NULL) {
+      lerror ("Unable to find network interface with a default route.");
+      goto shutdown;
+    }
+    ctx->brconn = ce;
+
 
     dispmsg(" - Configuring network settings");
     if (!installtornpf()) {
@@ -2637,6 +2696,13 @@ int main(int argc, char **argv)
       goto shutdown;
     }
 
+    ce = connlist;
+    while (ce) {
+      if (strcmp(ce->guid, ctx->tapconn->guid) && strcmp(ce->guid, ctx->brconn->guid)) {
+        downintf(ce);
+      }
+      ce = ce->next;
+    }
     if (! configbridge()) {
       lerror ("Unable to configure blackhole route for bridged interface.");
     }
@@ -2653,28 +2719,6 @@ int main(int argc, char **argv)
   /* all invocations past this point need a virtual disk at minimum */
   if (! checkvirtdisk()) {
     lerror ("Unable to confirm usable virtual disk is present.");
-  }
-
-  if (!ctx->vmnop) {
-    if (numintf <= 0) {
-      lerror ("Unable to find any usable network interfaces.");
-      goto shutdown;
-    }
-
-    ce = connlist;
-    while (!foundit && ce) {
-      if (ce->isdefgw) {
-        foundit = TRUE;
-      }
-      else {
-        ce = ce->next;
-      }
-    }
-    if (ce == NULL) {
-      lerror ("Unable to find network interface with a default route.");
-      goto shutdown;
-    }
-    ctx->brconn = ce;
   }
 
   if (!ctx->vmnop) {
@@ -2696,7 +2740,8 @@ int main(int argc, char **argv)
      */
     exit (0);
   }
-  if (! launchtorvm(&pi,
+  if (! launchtorvm(ctx,
+                    &pi,
                     ce->guid,
                     ce->macaddr,
                     TOR_TAP_NAME,
