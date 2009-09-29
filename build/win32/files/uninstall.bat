@@ -1,5 +1,5 @@
 @ECHO OFF
-ECHO "Removing installed https://www.torproject.org software."
+ECHO Removing installed https://www.torproject.org software.
 IF EXIST "%USERPROFILE%\Local Settings\Application Data\Thandy\TorVM Updates" (
   cd "%USERPROFILE%\Local Settings\Application Data\Thandy\TorVM Updates"
   for %%f in (*.msi) do ECHO Removing %%f

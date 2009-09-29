@@ -1186,29 +1186,37 @@ int loadnetinfo(t_rconnelem **connlist)
                               0,
                               KEY_READ,   
                               &tkey);
-        len = sizeof (name_data);
-        status = RegQueryValueEx(tkey,
-                                 "DhcpDNS",
-                                 NULL,
-                                 &name_type,
-                                 name_data,
-                                 &len);
         if (status == ERROR_SUCCESS) {
-          ce->dns1 = strdup(name_data);
-        }
-        len = sizeof (name_data);
-        status = RegQueryValueEx(tkey,
-                                 "DhcpWINS",
-                                 NULL,
-                                 &name_type,
-                                 name_data,
-                                 &len);
-        if (status == ERROR_SUCCESS) {
-          ce->dns2 = strdup(name_data);
+          len = sizeof (name_data);
+          status = RegQueryValueEx(tkey,
+                                   "DhcpDNS",
+                                   NULL,
+                                   &name_type,
+                                   name_data,
+                                   &len);
+          if (status == ERROR_SUCCESS) {
+            ce->dns1 = strdup(name_data);
+          }
+          len = sizeof (name_data);
+          status = RegQueryValueEx(tkey,
+                                   "DhcpWINS",
+                                   NULL,
+                                   &name_type,
+                                   name_data,
+                                   &len);
+          if (status == ERROR_SUCCESS) {
+            ce->dns2 = strdup(name_data);
+          } 
+          RegCloseKey (tkey);
         } 
         if (isconnected (ce->guid)) {
           linfo ("Interface %s (%s) is currently connected.", ce->name, ce->macaddr);
           ce->isactive = TRUE;
+          status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                                tcpip_string,
+                                0,
+                                KEY_READ,   
+                                &tkey);
           if (status == ERROR_SUCCESS) {
             len = sizeof (BOOL);
             status = RegQueryValueEx(tkey,
