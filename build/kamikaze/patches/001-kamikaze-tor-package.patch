@@ -1,6 +1,6 @@
 diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 --- a/package/tor/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ b/package/tor/Makefile	2009-08-27 04:51:44.182060149 +0000
++++ b/package/tor/Makefile	2009-10-15 07:54:19.441778659 +0000
 @@ -0,0 +1,114 @@
 +#
 +# Copyright (C) 2008 OpenWrt.org
@@ -14,13 +14,13 @@ diff -Naur a/package/tor/Makefile b/package/tor/Makefile
 +include $(INCLUDE_DIR)/kernel.mk
 +
 +PKG_NAME:=tor
-+PKG_VERSION:=0.2.2.1-alpha
++PKG_VERSION:=0.2.2.5-alpha
 +
 +PKG_RELEASE:=1
 +
 +PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 +PKG_SOURCE_URL:=http://www.torproject.org/dist/
-+PKG_MD5SUM:=bf7611974dbc546a5368e2926eea4d52
++PKG_MD5SUM:=6cec2090ceb3afdc5b329eb2b009a7d0
 +
 +include $(INCLUDE_DIR)/package.mk
 +

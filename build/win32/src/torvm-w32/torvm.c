@@ -2018,6 +2018,8 @@ DWORD WINAPI runnetmon (LPVOID arg)
         if (numintf > 0) {
           ce = connlist;
           while (ce) {
+/* For now just check if a non-tor vm device is modified */
+#if 0
             if (strcmp(ce->guid, tapconn->guid) == 0) {
               if (equivconns(ce, tapconn) == FALSE) {
                 linfo("Tap connection modified, resetting to correct values.");
@@ -2034,8 +2036,14 @@ DWORD WINAPI runnetmon (LPVOID arg)
                 flushdns();
               }
             }
-            else {
+#endif
+            if ( (strcmp(ce->guid, tapconn->guid) != 0) &&
+                 (strcmp(ce->guid, brconn->guid) != 0) ) {
+              linfo("Connection modified, downing interface and resetting to correct values.");
               downintf(ce);
+              configbridge();
+              cleararpcache();
+              flushdns();
             }
             ce = ce->next;
           }
@@ -2095,7 +2103,7 @@ BOOL launchtorvm (t_ctx * ctx,
   sattr.bInheritHandle = TRUE;
   sattr.lpSecurityDescriptor = NULL;
   cmd = malloc(CMDMAX);
-  if (iso) {
+  if (iso && exists(iso)) {
     isoarg = malloc(CMDMAX);
     snprintf (isoarg, CMDMAX -1,
               "-hdc \"%s\" ",
@@ -2725,12 +2733,13 @@ int main(int argc, char **argv)
   }
 
   /* all invocations past this point need a virtual disk at minimum */
+  linfo("Checking virtual disk.");
   if (! checkvirtdisk()) {
     lerror ("Unable to confirm usable virtual disk is present.");
   }
 
   if (!ctx->vmnop) {
-    if (! buildcmdline(ce, ctx->bundle, ctx->indebug, ctx->noinit, &cmdline)) {
+    if (! buildcmdline(ctx->brconn, ctx->bundle, ctx->indebug, ctx->noinit, &cmdline)) {
       lerror ("Unable to generate command line for kernel.");
       goto shutdown;
     }
