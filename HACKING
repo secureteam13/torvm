@@ -1,6 +1,5 @@
 
-                    Transparent Tor Proxy Virtual Machine
-
+ TorVM - Transparent Tor Proxy Virtual Machine for Windows
 
 See the doc/ directory for design and implementation details and the LICENSE
 file for rights and terms.
@@ -8,7 +7,6 @@ file for rights and terms.
 To build you will need a *nix environment and a Windows XP or later operating
 system for Qemu and libraries.  Various build configuration options and other
 basic features are not yet avilable; edit the Makefile to adjust manually.
-
 
 
 NOTE: Some subversion repositories are accessed via SSL with keys that may need
@@ -25,7 +23,6 @@ issue the following commands as the build user and approve the keys if needed:
     # Fingerprint: 2d:ef:71:c5:5a:00:a5:26:e8:ad:0d:e9:d0:fb:8a:54:3a:6d:2d:61
 
 
-
 Run 'make' to build the VM kernel image and Windows build ISO image.  Once the
 Windows build is done a complete Tor virtual machine package should be zipped
 up ready for distribution in the C:\Tor_VM folder.  You will need to have the
@@ -33,7 +30,6 @@ Windows Driver Development Kit installed for the WinPcap and TAP-Win32 driver
 compilation.  You can download the DDK installer ISO at:
 
     http://download.microsoft.com/download/9/0/f/90f019ac-8243-48d3-91cf-81fc4093ecfd/1830_usa_ddk.iso
-
 
 
 Some files and paths of interest:
@@ -66,7 +62,6 @@ Some files and paths of interest:
 > experimentation only!
 
 
-
 Fully automated builds are supported with some minor modifications to both the
 Linux build host and the win32 build VM.  There are three steps to this setup:
 
@@ -94,4 +89,3 @@ completed build files copied back out to the host.  For example:
 When the build completes a Tor_VM_<timestamp> directory will be created in the
 requested location.  The timestamp is an integer value representing the UNIX
 epoch in seconds.
-
