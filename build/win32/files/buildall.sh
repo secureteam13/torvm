@@ -911,11 +911,7 @@ if [[ "$POLIPO_BUILT" != "yes" ]]; then
   cd $srcroot
   tar zxf $POLIPO_FILE
   cd $POLIPO_DIR
-  if [ -f ../polipo-mingw.patch ]; then
-    echo "Patching polipo sources ..."
-    patch -p1 < ../polipo-mingw.patch
-  fi
-  make
+  make EXE=.exe EXTRA_DEFINES=-DHAVE_REGEX LDLIBS="${LDLIBS} -lwsock32 -lregex"
   if (( $? != 0 )); then
     echo "ERROR: polipo build failed."
   fi
