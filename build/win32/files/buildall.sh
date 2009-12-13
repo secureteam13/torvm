@@ -909,8 +909,8 @@ fi
 if [[ "$POLIPO_BUILT" != "yes" ]]; then
   echo "Building polipo ..."
   cd $srcroot
-  tar zxf $POLIPO_F
-  cd "polipo-${POLIPO_VER}"
+  tar zxf $POLIPO_FILE
+  cd $POLIPO_DIR
   if [ -f ../polipo-mingw.patch ]; then
     echo "Patching polipo sources ..."
     patch -p1 < ../polipo-mingw.patch

@@ -228,10 +228,10 @@ QT_F=qt-all-opensource-src-$(QT_VER).tar.bz2
 QT_URL=ftp://ftp.qtsoftware.com/qt/source/$(QT_F)
 QT_SUM=fffd80292a3e5353e2a032167551dd56752624c7fa188df97a2ba19e0e33a295
 
-POLIPO_VER=20080907
-POLIPO_F=polipo-$(POLIPO_VER).tar.gz
-POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
-POLIPO_SUM=c4c8b6f4d32e6d17e71160f2d4683a3ac444c81de321eeb1394a5575d973a200
+#POLIPO_VER=20080907
+#POLIPO_F=polipo-$(POLIPO_VER).tar.gz
+#POLIPO_URL=http://www.pps.jussieu.fr/~jch/software/files/polipo/$(POLIPO_F)
+#POLIPO_SUM=c4c8b6f4d32e6d17e71160f2d4683a3ac444c81de321eeb1394a5575d973a200
 
 TORBUTTON_XPI_VER=1.2.2
 TORBUTTON_XPI_F=torbutton-$(TORBUTTON_XPI_VER)-fx.xpi
@@ -272,6 +272,11 @@ TORBUTTON_SVN=https://tor-svn.freehaven.net/svn/torbutton/
 TORBUTTON_BR=trunk
 TORBUTTON_VER=20331
 
+POLIPOGIT_NAME=polipo-latest
+POLIPOGIT_TGZ=$(POLIPOGIT_NAME).tar.gz
+POLIPOGIT_GIT=git://git.torproject.org/git/polipo
+POLIPOGIT_VER=12f9f0d353322b6e0194722e5284666f8158e11a
+
 PYCRYPTO_NAME=pycrypto-latest
 PYCRYPTO_TGZ=$(PYCRYPTO_NAME).tar.gz
 PYCRYPTO_GIT=git://git.pycrypto.org:9419/crypto/pycrypto-2.x.git
@@ -288,8 +293,9 @@ OK:=echo -n
 
 CACHE_URL_BASE=http://data.peertech.org/pkgcache
 
+REPONAMES=PYCRYPTO THANDY POLIPOGIT TORBUTTON TORSRC VIDALIA MARBLE
 TOOLSPKGNAMES=ZLIB GZIP BZIP2 LIBARCH BINUTILS GCCORE GPP MINGWRUN MINGWUTIL MAKE W32API MSYSCORE LIBTOOL MINIRES MSYSZLIB MSYSCRYPT MSYSSSL MSYSSSH AMAKE ACONF PERL NSIS WIX WIXSRC TORBUTTON_XPI
-SRCPKGNAMES=ZLIBSRC PTHREADS LIBEVENT CMAKE QT SSLSRC GROFF PYTHON PY2EXE GNURX POLIPO SDL WPCAPSRC QEMU KQEMU OVPN BITTORRENT BTPATCH
+SRCPKGNAMES=ZLIBSRC PTHREADS LIBEVENT CMAKE QT SSLSRC GROFF PYTHON PY2EXE GNURX SDL WPCAPSRC QEMU KQEMU OVPN BITTORRENT BTPATCH
 ALLPKGNAMES=$(TOOLSPKGNAMES) $(SRCPKGNAMES)
 
 # adjust if we're dealing with non source, zip or tar archives for a package
@@ -319,6 +325,12 @@ endef
 
 $(foreach pkgname,$(SRCPKGNAMES),$(eval $(call PKGENV_exp,$(pkgname))))
 
+define REPOENV_exp
+PKGENVSETUP:=$(PKGENVSETUP) ; echo export $(1)_FILE=$$($(1)_TGZ) ; echo export $(1)_DIR=$$($(1)_NAME)
+endef
+
+$(foreach reponame,$(REPONAMES),$(eval $(call REPOENV_exp,$(reponame))))
+
 # now for primary targets...
 downloads: $(ALLPKGNAMES)
 
@@ -331,6 +343,7 @@ coderepodls:
 	@( cd $(SDLDIR); if [ -d $(VIDALIA_NAME) ]; then cd $(VIDALIA_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(VIDALIA_SVN)$(VIDALIA_BR)" $(VIDALIA_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(MARBLE_NAME) ]; then cd $(MARBLE_NAME); $(SVNCMD) up; $(OK); else $(SVNCMD) co "$(MARBLE_SVN)$(MARBLE_BR)" $(MARBLE_NAME) ; fi )
 	@( cd $(SDLDIR); if [ -d $(THANDY_NAME) ]; then cd $(THANDY_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(THANDY_GIT) $(THANDY_NAME); fi ) 
+	@( cd $(SDLDIR); if [ -d $(POLIPOGIT_NAME) ]; then cd $(POLIPOGIT_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(POLIPOGIT_GIT) $(POLIPOGIT_NAME); fi ) 
 	@( cd $(SDLDIR); if [ -d $(PYCRYPTO_NAME) ]; then cd $(PYCRYPTO_NAME); $(GITCMD) pull; $(OK); else $(GITCMD) clone $(PYCRYPTO_GIT) $(PYCRYPTO_NAME); fi ) 
 
 extract: downloads coderepodls
@@ -388,7 +401,6 @@ extract: downloads coderepodls
 	mv $(ISODIR)/dl/$(CMAKE_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SSLSRC_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(GNURX_F) $(ISODIR)/dl/src/; \
-	mv $(ISODIR)/dl/$(POLIPO_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(SDL_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(OVPN_F) $(ISODIR)/dl/src/; \
 	mv $(ISODIR)/dl/$(ZLIBSRC_F) $(ISODIR)/dl/src/; \
@@ -414,6 +426,10 @@ extract: downloads coderepodls
 	echo "--- Exporting Marble revision $(MARBLE_VER) from local mirror ..."; \
 	rm -rf $(MARBLE_NAME); $(SVNCMD) export --revision $(MARBLE_VER) $(SDLDIR)/$(MARBLE_NAME) $(MARBLE_NAME) ; \
 	tar zcf $(ISODIR)/dl/src/$(MARBLE_TGZ) $(MARBLE_NAME); rm -rf $(MARBLE_NAME); \
+	echo "--- Exporting Polipo version $(POLIPOGIT_VER) from local mirror ..."; \
+	rm -rf $(POLIPOGIT_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(POLIPOGIT_NAME) $(POLIPOGIT_NAME) ; \
+	( cd $(POLIPOGIT_NAME); $(GITCMD) checkout $(POLIPOGIT_VER); ); \
+	tar zcf $(ISODIR)/dl/src/$(POLIPOGIT_TGZ) $(POLIPOGIT_NAME); rm -rf $(POLIPOGIT_NAME); \
 	echo "--- Exporting Thandy version $(THANDY_VER) from local mirror ..."; \
 	rm -rf $(THANDY_NAME); $(GITCMD) clone $(LOCALGITOPTS) $(SDLDIR)/$(THANDY_NAME) $(THANDY_NAME) ; \
 	( cd $(THANDY_NAME); $(GITCMD) checkout $(THANDY_VER); ); \
