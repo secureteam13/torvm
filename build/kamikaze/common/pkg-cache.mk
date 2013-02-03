@@ -2,8 +2,10 @@
 # for now just support a single cache source.
 # sourceforge and some other upstreams simply too unreliable / block frequent dls
 #
-DLCMD=build/win32/scripts/download.sh
-CACHE_URL_BASE=http://data.peertech.org/pkgcache
+DLCMD=build/kamikaze/scripts/download.sh
+#FIXME: it's dead, we should use github downloads or smth
+#CACHE_URL_BASE=http://data.peertech.org/pkgcache
+CACHE_URL_BASE=http://127.0.0.1
 
 
 # all packages needed for kamikaze builds

@@ -1,0 +1,8 @@
+#!/bin/bash
+#From build-tor-vm.sh. Slightly modified and mostly untested
+#
+sudo apt-get -y install \
+git-core autoconf patch flex bison gawk ccache g++ \
+libncurses5 libncurses5-dev ncurses-base ncurses-bin libncursesw5 \
+zlib-bin zlibc zlib-bin libzzip-dev zlib1g-dev zlib1g-dbg
+

@@ -1,0 +1,3 @@
+[submodule "build/repos/kamikaze"]
+	path = build/repos/kamikaze
+	url = git://nbd.name/openwrt.git
